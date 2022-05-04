@@ -31,14 +31,14 @@ class GraiaCommandAnalyser(DefaultCommandAnalyser[MessageChain]):
             #     res = split(unit.text.lstrip(' '), separate)
             #     if not res:
             #         continue
-            #     raw_data.append(res)
+            #     raw_data[i] = res
             #     __t = True
             # elif isinstance(unit, Unknown):
             #     if self.is_raise_exception:
             #         exc = UnexpectedElement(f"{unit.type}({unit})")
             #     continue
             # elif unit.__class__.__name__ not in self.filter_out:
-            #     raw_data.append(unit.text)
+            #     raw_data[i] = unit
             if isinstance(unit, Plain):
                 res = split(unit.text.lstrip(' '), separate)
                 if not res:
