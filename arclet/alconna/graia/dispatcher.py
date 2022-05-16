@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 from typing import Literal, Callable, Optional, TypedDict, TypeVar, Generic
-from arclet.alconna import Alconna, help_manager
+from arclet.alconna import Alconna, output_manager
 from arclet.alconna.arpamar import Arpamar
-from arclet.alconna.arpamar.duplication import AlconnaDuplication, generate_duplication
-from arclet.alconna.arpamar.stub import ArgsStub, OptionStub, SubcommandStub
+from arclet.alconna.components.duplication import AlconnaDuplication, generate_duplication
+from arclet.alconna.components.stub import ArgsStub, OptionStub, SubcommandStub
 
 from graia.broadcast.entities.event import Dispatchable
 from graia.broadcast.exceptions import ExecutionStop
@@ -22,14 +22,12 @@ from graia.ariadne.util import resolve_dispatchers_mixin
 
 from loguru import logger
 
-T_Origin = TypeVar('T_Origin')
 T_Source = TypeVar('T_Source')
 
 
 @dataclass
-class AlconnaProperty(Generic[T_Origin, T_Source]):
+class AlconnaProperty(Generic[T_Source]):
     """对解析结果的封装"""
-    origin: T_Origin
     result: Arpamar
     help_text: Optional[str] = field(default=None)
     source: T_Source = field(default=None)
@@ -69,7 +67,7 @@ class AlconnaHelpMessage(Dispatchable):
 
 
 class _AlconnaLocalStorage(TypedDict):
-    alconna_result: AlconnaProperty[MessageChain, MessageEvent]
+    alconna_result: AlconnaProperty[MessageEvent]
 
 
 class AlconnaDispatcher(BaseDispatcher):
@@ -101,11 +99,10 @@ class AlconnaDispatcher(BaseDispatcher):
     async def beforeExecution(self, interface: DispatcherInterface):
 
         async def reply_help_message(
-                origin: MessageChain,
                 result: Arpamar,
                 help_text: Optional[str] = None,
                 source: Optional[MessageEvent] = None,
-        ) -> AlconnaProperty[MessageChain, MessageEvent]:
+        ) -> AlconnaProperty[MessageEvent]:
             app: Ariadne = get_running()
             if result.matched is False and help_text:
                 if self.help_flag == "reply":
@@ -114,15 +111,15 @@ class AlconnaDispatcher(BaseDispatcher):
                         await app.sendGroupMessage(source.sender.group, help_message)
                     else:
                         await app.sendMessage(source.sender, help_message)  # type: ignore
-                    return AlconnaProperty(origin, result, None, source)
+                    return AlconnaProperty(result, None, source)
                 if self.help_flag == "post":
                     dispatchers = resolve_dispatchers_mixin(
                         [source.Dispatcher]) + [AlconnaHelpDispatcher(self.command, help_text, source)]
                     for listener in interface.broadcast.default_listener_generator(AlconnaHelpMessage):
                         await interface.broadcast.Executor(listener, dispatchers=dispatchers)
                         listener.oplog.clear()
-                    return AlconnaProperty(origin, result, None, source)
-            return AlconnaProperty(origin, result, help_text, source)
+                    return AlconnaProperty(result, None, source)
+            return AlconnaProperty(result, help_text, source)
 
         message: MessageChain = await interface.lookup_param("message", MessageChain, None)
         if not self.allow_quote and message.has(Quote):
@@ -135,17 +132,17 @@ class AlconnaDispatcher(BaseDispatcher):
                 nonlocal may_help_text
                 may_help_text = string
 
-            help_manager.require_send_action(_h, self.command.name)
+            output_manager.require_send_action(_h, self.command.name)
 
             _res = self.command.parse(message)
         except Exception as e:
             logger.warning(f"{self.command} error: {e}")
             raise ExecutionStop
         else:
-            _property = await reply_help_message(message, _res, may_help_text, event)
+            _property = await reply_help_message(_res, may_help_text, event)
             local_storage: _AlconnaLocalStorage = interface.local_storage  # type: ignore
             if not _property.result.matched and not _property.help_text:  # noqa
-                if "-h" in str(_property.origin):
+                if "-h" in str(_property.result.origin):
                     raise ExecutionStop
                 if self.skip_for_unmatch:
                     raise ExecutionStop
