@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Literal, Callable, Optional, TypedDict, TypeVar, Generic
 from arclet.alconna import Alconna, output_manager
 from arclet.alconna.arpamar import Arpamar
+from arclet.alconna.util import generic_isinstance, generic_issubclass
 from arclet.alconna.components.duplication import AlconnaDuplication, generate_duplication
 from arclet.alconna.components.stub import ArgsStub, OptionStub, SubcommandStub
 
@@ -13,17 +14,14 @@ from graia.broadcast.utilles import run_always_await_safely
 from graia.broadcast.entities.signatures import Force
 
 from graia.ariadne import get_running
-from graia.ariadne.app import Ariadne
+from graia.ariadne.app import Ariadne, logger
 from graia.ariadne.dispatcher import ContextDispatcher
 from graia.ariadne.event.message import GroupMessage, MessageEvent
 from graia.ariadne.message.chain import MessageChain
 from graia.ariadne.message.element import Quote
 from graia.ariadne.util import resolve_dispatchers_mixin
 
-from loguru import logger
-
 T_Source = TypeVar('T_Source')
-
 
 @dataclass
 class AlconnaProperty(Generic[T_Source]):
@@ -71,6 +69,7 @@ class _AlconnaLocalStorage(TypedDict):
 
 
 class AlconnaDispatcher(BaseDispatcher):
+    success_hook = 'None'
 
     def __init__(
             self,
@@ -137,15 +136,17 @@ class AlconnaDispatcher(BaseDispatcher):
             _res = self.command.parse(message)
         except Exception as e:
             logger.warning(f"{self.command} error: {e}")
-            raise ExecutionStop
+            raise ExecutionStop from e
         else:
+            if not _res.head_matched and self.skip_for_unmatch:
+                raise ExecutionStop
+            if not _res.matched and not may_help_text and self.skip_for_unmatch:
+                raise ExecutionStop
+            self.__class__.success_hook = self.command.command
             _property = await reply_help_message(_res, may_help_text, event)
             local_storage: _AlconnaLocalStorage = interface.local_storage  # type: ignore
-            if not _property.result.matched and not _property.help_text:  # noqa
-                if "-h" in str(_property.result.origin):
-                    raise ExecutionStop
-                if self.skip_for_unmatch:
-                    raise ExecutionStop
+            if not _res.matched and not _property.help_text:
+                raise ExecutionStop
             local_storage['alconna_result'] = _property
 
     async def catch(self, interface: DispatcherInterface):
@@ -155,9 +156,9 @@ class AlconnaDispatcher(BaseDispatcher):
         default_duplication.set_target(res.result)
         if interface.annotation == AlconnaDuplication:
             return default_duplication
-        if issubclass(interface.annotation, AlconnaDuplication):
+        if generic_issubclass(interface.annotation, AlconnaDuplication):
             return interface.annotation(self.command).set_target(res.result)
-        if issubclass(interface.annotation, AlconnaProperty):
+        if generic_issubclass(interface.annotation, AlconnaProperty):
             return res
         if interface.annotation == ArgsStub:
             arg = ArgsStub(self.command.args)
@@ -171,11 +172,11 @@ class AlconnaDispatcher(BaseDispatcher):
             return res.result
         if interface.annotation == str and interface.name == "help_text":
             return res.help_text
-        if issubclass(interface.annotation, Alconna):
+        if generic_issubclass(interface.annotation, Alconna):
             return self.command
         if interface.name in res.result.all_matched_args:
-            if isinstance(res.result.all_matched_args[interface.name], interface.annotation):
+            if generic_isinstance(res.result.all_matched_args[interface.name], interface.annotation):
                 return res.result.all_matched_args[interface.name]
             return Force()
-        if issubclass(interface.annotation, MessageEvent) or interface.annotation == MessageEvent:
+        if generic_issubclass(interface.annotation, MessageEvent) or interface.annotation == MessageEvent:
             return Force(res.source)

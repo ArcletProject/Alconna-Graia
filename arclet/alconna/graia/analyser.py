@@ -23,6 +23,12 @@ class GraiaCommandAnalyser(DefaultCommandAnalyser[MessageChain]):
 
     def process_message(self, data: MessageChain) -> 'GraiaCommandAnalyser':
         """命令分析功能, 传入字符串或消息链, 应当在失败时返回fail的arpamar"""
+        if isinstance(data, str):
+            exp = ValueError(f"{data} is not a MessageChain")
+            if self.is_raise_exception:
+                raise exp
+            self.temporary_data["fail"] = exp
+            return self
         self.origin_data = data
         separates = self.separators
         i, __t, exc = 0, False, None

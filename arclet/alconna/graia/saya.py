@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import Union
-
+from typing import Union, Any
+import inspect
+from pathlib import Path
 from graia.broadcast import Broadcast
 from graia.saya.behaviour import Behaviour
 from graia.saya.cube import Cube
@@ -17,11 +18,29 @@ class AlconnaSchema(BaseSchema):
     command: Union[str, Alconna, AlconnaDispatcher]
 
     @classmethod
-    def using(cls, command: str, *options: str, namespace: str = "Graia", flag: str = "reply") -> "AlconnaSchema":
-        return cls(command=AlconnaDispatcher(
-            alconna=AlconnaString(command, *options).reset_namespace(namespace),
-            help_flag=flag  # type: ignore
-        ))
+    def using(cls, command: str, *options: str, flag: str = "reply") -> "AlconnaSchema":
+        return cls(
+            command=AlconnaDispatcher(
+                alconna=AlconnaString(command, *options),
+                help_flag=flag  # type: ignore
+            )
+        )
+
+    def record(self, func: Any, manager: CommandManager):
+        command: Alconna
+        if isinstance(self.command, str):
+            command = manager.get_command(self.command)
+        elif isinstance(self.command, AlconnaDispatcher):
+            command = self.command.command
+        else:
+            command = self.command
+        try:
+            file = inspect.getsourcefile(func)
+        except TypeError:
+            return
+        if file:
+            path = Path(file)
+            command.reset_namespace(f"{path.parts[-2]}.{path.stem}")
 
 
 class AlconnaBehaviour(Behaviour):
@@ -39,12 +58,14 @@ class AlconnaBehaviour(Behaviour):
             for dispatcher in listener.dispatchers:
                 if isinstance(dispatcher, AlconnaDispatcher):
                     cube.metaclass.command = dispatcher.command
+                    cube.metaclass.record(cube.content, self.manager)
                     return True
             else:
                 if isinstance(cube.metaclass.command, AlconnaDispatcher):
                     listener.dispatchers.append(cube.metaclass.command)
-                    return True
+                    cube.metaclass.record(cube.content, self.manager)
                 return
+        cube.metaclass.record(cube.content, self.manager)
         return True
 
     def uninstall(self, cube: Cube[AlconnaSchema]):
