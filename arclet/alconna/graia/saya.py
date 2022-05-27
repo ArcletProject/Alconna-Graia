@@ -40,7 +40,7 @@ class AlconnaSchema(BaseSchema):
             return
         if file:
             path = Path(file)
-            command.reset_namespace(f"{path.parts[-2]}.{path.stem}")
+            command.reset_namespace(f"{path.parts[-2]}/{path.stem}")
 
 
 class AlconnaBehaviour(Behaviour):
@@ -64,6 +64,7 @@ class AlconnaBehaviour(Behaviour):
                 if isinstance(cube.metaclass.command, AlconnaDispatcher):
                     listener.dispatchers.append(cube.metaclass.command)
                     cube.metaclass.record(cube.content, self.manager)
+                    return True
                 return
         cube.metaclass.record(cube.content, self.manager)
         return True
