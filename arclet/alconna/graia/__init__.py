@@ -12,4 +12,4 @@ from .dispatcher import AlconnaDispatcher, AlconnaHelpMessage, AlconnaProperty
 from .saya import AlconnaSchema, AlconnaBehaviour
 from .utils import ImgOrUrl, fetch_name
 
-Alconna.default_analyser = GraiaCommandAnalyser
+Alconna.config(analyser_type=GraiaCommandAnalyser)

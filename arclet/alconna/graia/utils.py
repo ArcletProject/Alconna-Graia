@@ -1,9 +1,9 @@
 from typing import Union
+
 from graia.ariadne.model import Friend
-from graia.broadcast.builtin.decorators import Depend
-from graia.ariadne import get_running
 from graia.ariadne.app import Ariadne
 from graia.ariadne.message.element import At, Image
+from graia.broadcast.builtin.decorators import Depend
 
 from arclet.alconna.typing import PatternModel, pattern_map, BasePattern
 from .dispatcher import AlconnaProperty
@@ -31,14 +31,14 @@ def fetch_name(path: str = "name"):
     要求 Alconna 命令中含有 Args[path;O:[str, At]] 参数
     """
 
-    async def __wrapper__(result: AlconnaProperty):
+    async def __wrapper__(app: Ariadne, result: AlconnaProperty):
         event = result.source
         arp = result.result
         if t := arp.all_matched_args.get(path, None):
             if isinstance(t, At):
                 target = t.display
                 if not target:
-                    target = (await get_running(Ariadne).getUserProfile(t.target)).nickname
+                    target = (await app.getUserProfile(t.target)).nickname
             else:
                 target = t
         elif isinstance(event.sender, Friend):

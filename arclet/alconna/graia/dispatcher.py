@@ -131,7 +131,7 @@ class AlconnaDispatcher(BaseDispatcher):
                 nonlocal may_help_text
                 may_help_text = string
 
-            output_manager.require_send_action(_h, self.command.name)
+            output_manager.set_send_action(_h, self.command.name)
 
             _res = self.command.parse(message)
         except Exception as e:
