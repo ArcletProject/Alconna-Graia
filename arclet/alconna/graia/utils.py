@@ -38,7 +38,7 @@ def fetch_name(path: str = "name"):
             if isinstance(t, At):
                 target = t.display
                 if not target:
-                    target = (await app.getUserProfile(t.target)).nickname
+                    target = (await app.get_user_profile(t.target)).nickname
             else:
                 target = t
         elif isinstance(event.sender, Friend):
