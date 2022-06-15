@@ -8,7 +8,7 @@ Alconna 对于 Graia 系列的支持
 """
 from arclet.alconna import Alconna
 from .analyser import GraiaCommandAnalyser
-from .dispatcher import AlconnaDispatcher, AlconnaHelpMessage, AlconnaProperty
+from .dispatcher import AlconnaDispatcher, AlconnaHelpMessage, AlconnaProperty, Query
 from .saya import AlconnaSchema, AlconnaBehaviour
 from .utils import ImgOrUrl, fetch_name
 

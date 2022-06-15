@@ -1,13 +1,12 @@
-from arclet.alconna.graia import Alconna, AlconnaDispatcher, AlconnaHelpMessage
-from arclet.alconna import Args, Arpamar, AlconnaDuplication
-from arclet.alconna import ArgsStub, command_manager
+from arclet.alconna.graia import Alconna, AlconnaDispatcher, AlconnaHelpMessage, Query
+from arclet.alconna import Args, Arpamar
+from arclet.alconna import command_manager
 
 from graia.broadcast import Broadcast
-from graia.ariadne.message.chain import MessageChain
 from graia.ariadne.event.message import GroupMessage
-from graia.ariadne.model import Member, Group
+from graia.ariadne.model import Group
 from graia.ariadne.app import Ariadne
-from graia.ariadne.adapter import MiraiSession
+from graia.ariadne.connection.config import config
 from graia.ariadne.context import ariadne_ctx
 import asyncio
 
@@ -15,9 +14,12 @@ loop = asyncio.get_event_loop()
 
 bcc = Broadcast(loop=loop)
 
-bot = Ariadne(loop=loop, broadcast=bcc,
-              use_loguru_traceback=False,
-              connect_info=MiraiSession(host="http://localhost:8080", verify_key="1234567890abcdef", account=123456789))
+Ariadne.config(loop=loop, broadcast=bcc)
+bot = Ariadne(
+    connection=config(
+        123456789, "1234567890abcdef"
+    )
+)
 
 alc = Alconna(
     command="!test",
@@ -27,7 +29,7 @@ alc = Alconna(
 
 alc1 = Alconna(
     command="!jrrp",
-    main_args=Args["sth":str:1123]
+    main_args=Args["sth", str, 1123]
 )
 
 
@@ -36,7 +38,7 @@ ariadne_ctx.set(bot)
 
 @bcc.receiver(
     GroupMessage, dispatchers=[
-        AlconnaDispatcher(alconna=alc, help_flag='post', skip_for_unmatch=True)
+        AlconnaDispatcher(alconna=alc, help_flag='stay', skip_for_unmatch=True)
     ]
 )
 async def test(group: Group, result: Arpamar):
@@ -45,24 +47,23 @@ async def test(group: Group, result: Arpamar):
     print(command_manager.all_command_help())
 
 
-# @bcc.receiver(
-#     FriendMessage, dispatchers=[
-#         AlconnaDispatcher(alconna=alc1, help_flag='stay')
-#     ]
-# )
-# async def test(friend: Friend, sth: ArgsStub):
-#     print("sign:", sth.origin)
-#     print("listener:", friend)
-
-
 @bcc.receiver(
     GroupMessage, dispatchers=[
-        AlconnaDispatcher(alconna=alc1, help_flag='post')
+        AlconnaDispatcher(alconna=alc1, help_flag='stay')
     ]
 )
-async def test2(group: Group, result: Arpamar):
+async def test2(
+        group: Group,
+        result: Arpamar,
+        aaa: Query[str] = "sth",
+        bbb: str = Query("sth"),
+        ccc: Query = "sth",
+        ddd=Query("sth")
+):
     print("sign:", result)
     print("listener:", group)
+    print("sth:", aaa, bbb, ccc, ddd)
+    print("sth_res:", aaa.result, bbb, ccc.result, ddd.result)
 
 
 @bcc.receiver(AlconnaHelpMessage)
@@ -71,17 +72,63 @@ async def test_event(help_string: str, app: Ariadne, event: GroupMessage):
     print(app)
     print(event.sender.group)
 
-
-m1 = Member(id=12345678, memberName="test1", permission="MEMBER", group=Group(id=987654321, name="test", permission="OWNER"))
-m2 = Member(id=54322411, memberName="test2", permission="MEMBER", group=Group(id=123456789, name="test", permission="OWNER"))
-m3 = Member(id=42425665, memberName="test3", permission="MEMBER", group=Group(id=987654321, name="test", permission="OWNER"))
-#frd = Friend.parse_obj({"id": 12345678, "nickname": "test", "remark": "none"})
-#frd1 = Friend.parse_obj({"id": 54322411, "nickname": "test1", "remark": "none1"})
-msg = MessageChain.create(f"!test --help")
-msg1 = MessageChain.create(f"!jrrp --help")
-ev = GroupMessage(sender=m1, messageChain=msg)
-ev1 = GroupMessage(sender=m2, messageChain=msg1)
-ev2 = GroupMessage(sender=m3, messageChain=msg)
+ev = GroupMessage.parse_obj(
+    {
+        'messageChain': [{"type": "Plain", "text": "!test --help"}],
+        'sender': {
+            "id": 12345678,
+            "memberName": "test1",
+            "specialTitle": "",
+            "permission": "MEMBER",
+            "joinTimestamp": 0,
+            "lastSpeakTimestamp": 0,
+            "muteTimeRemaining": 0,
+            "group": {
+                "id": 987654321,
+                "name": "test",
+                "permission": "OWNER",
+            },
+        }
+    }
+)
+ev1 = GroupMessage.parse_obj(
+    {
+        'messageChain': [{"type": "Plain", "text": "!jrrp -h"}],
+        'sender': {
+            "id": 54322411,
+            "memberName": "test2",
+            "specialTitle": "",
+            "permission": "MEMBER",
+            "joinTimestamp": 0,
+            "lastSpeakTimestamp": 0,
+            "muteTimeRemaining": 0,
+            "group": {
+                "id": 123456789,
+                "name": "test",
+                "permission": "OWNER",
+            },
+        }
+    }
+)
+ev2 = GroupMessage.parse_obj(
+    {
+        'messageChain': [{"type": "Plain", "text": "!jrrp 334"}],
+        'sender': {
+            "id": 42425665,
+            "memberName": "test3",
+            "specialTitle": "",
+            "permission": "MEMBER",
+            "joinTimestamp": 0,
+            "lastSpeakTimestamp": 0,
+            "muteTimeRemaining": 0,
+            "group": {
+                "id": 987654321,
+                "name": "test",
+                "permission": "OWNER",
+            },
+        }
+    }
+)
 
 
 async def main():
@@ -94,3 +141,4 @@ async def main():
 
 
 loop.run_until_complete(main())
+print(AlconnaDispatcher.success_hook)

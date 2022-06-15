@@ -7,7 +7,7 @@ from graia.ariadne.message.chain import MessageChain
 from graia.ariadne.event.message import GroupMessage
 from graia.ariadne.model import Member, Group
 from graia.ariadne.app import Ariadne
-from graia.ariadne.adapter import MiraiSession
+from graia.ariadne.connection.config import config
 from graia.ariadne.context import ariadne_ctx
 from graia.saya import Saya
 from graia.saya.builtins.broadcast import BroadcastBehaviour
@@ -19,9 +19,12 @@ loop = asyncio.get_event_loop()
 
 bcc = Broadcast(loop=loop)
 
-bot = Ariadne(loop=loop, broadcast=bcc,
-              use_loguru_traceback=False,
-              connect_info=MiraiSession(host="http://localhost:8080", verify_key="1234567890abcdef", account=123456789))
+Ariadne.config(loop=loop, broadcast=bcc)
+bot = Ariadne(
+    connection=config(
+        123456789, "1234567890abcdef"
+    )
+)
 ariadne_ctx.set(bot)
 
 saya = Saya(bcc)
