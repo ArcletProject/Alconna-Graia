@@ -162,7 +162,7 @@ class AlconnaDispatcher(BaseDispatcher):
             _res = self.command.parse(message)
         except Exception as e:
             logger.warning(f"{self.command} error: {e}")
-            raise ExecutionStop from e
+            interface.stop()
         else:
             if not _res.head_matched and self.skip_for_unmatch:
                 raise ExecutionStop
@@ -174,6 +174,7 @@ class AlconnaDispatcher(BaseDispatcher):
             if not _res.matched and not _property.help_text:
                 raise ExecutionStop
             local_storage['alconna_result'] = _property
+            return
 
     async def catch(self, interface: DispatcherInterface):
         local_storage: _AlconnaLocalStorage = interface.local_storage  # type: ignore
@@ -182,9 +183,9 @@ class AlconnaDispatcher(BaseDispatcher):
         default_duplication.set_target(res.result)
         if interface.annotation == AlconnaDuplication:
             return default_duplication
-        if generic_issubclass(interface.annotation, AlconnaDuplication):
+        if generic_issubclass(AlconnaDuplication, interface.annotation):
             return interface.annotation(self.command).set_target(res.result)
-        if generic_issubclass(interface.annotation, AlconnaProperty):
+        if generic_issubclass(AlconnaProperty, interface.annotation):
             return res
         if interface.annotation == ArgsStub:
             arg = ArgsStub(self.command.args)
