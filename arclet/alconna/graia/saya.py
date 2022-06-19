@@ -15,7 +15,7 @@ from .dispatcher import AlconnaDispatcher
 
 @dataclass
 class AlconnaSchema(BaseSchema):
-    command: Union[str, Alconna, AlconnaDispatcher]
+    command: Union[Alconna, AlconnaDispatcher]
 
     @classmethod
     def using(cls, command: str, *options: str, flag: str = "reply") -> "AlconnaSchema":
@@ -72,7 +72,6 @@ class AlconnaBehaviour(Behaviour):
         if not isinstance(cube.metaclass, AlconnaSchema):
             return
         if isinstance(cube.metaclass.command, AlconnaDispatcher):
-            self.broadcast.getListener(cube.content).dispatchers.remove(cube.metaclass.command)
             cmd = cube.metaclass.command.command
         else:
             cmd = cube.metaclass.command

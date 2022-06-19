@@ -16,7 +16,7 @@ def __valid(text: Union[Image, str]):
 
 
 ImgOrUrl = BasePattern(
-    model=PatternModel.TYPE_CONVERT, origin=str, converter=__valid, alias='img_url',
+    model=PatternModel.TYPE_CONVERT, origin_type=str, converter=__valid, alias='img_url',
     accepts=[str, Image]
 )
 """

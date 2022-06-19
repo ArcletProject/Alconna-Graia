@@ -19,7 +19,7 @@ alc = Alconna(
 
 alc1 = Alconna(
     command="jrrp",
-    main_args=Args["sth":str:1123]
+    main_args=Args["sth", str, 1123]
 )
 
 alc2 = Alconna("{city}今日天气")
@@ -27,11 +27,10 @@ alc2 = Alconna("{city}今日天气")
 
 @channel.use(
     ListenerSchema(
-        [GroupMessage],
-        inline_dispatchers=[AlconnaDispatcher(alconna=alc1)]
+        [GroupMessage]
     )
 )
-@channel.use(AlconnaSchema("jrrp"))
+@channel.use(AlconnaSchema(AlconnaDispatcher(alconna=alc1)))
 async def test2(group: Group, result: AlconnaProperty):
     print("sign:", result.result)
     print("listener:", group)

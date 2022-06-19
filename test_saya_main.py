@@ -36,6 +36,7 @@ saya.install_behaviours(
 with saya.module_context():
     saya.require("test_saya_module")
 
+saya.reload_channel(saya.channels['test_saya_module'])
 
 m1 = Member(id=12345678, memberName="test1", permission="MEMBER", group=Group(id=987654321, name="test", permission="OWNER"))
 m2 = Member(id=54322411, memberName="test2", permission="MEMBER", group=Group(id=123456789, name="test", permission="OWNER"))
