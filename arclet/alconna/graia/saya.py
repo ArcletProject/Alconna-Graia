@@ -40,7 +40,7 @@ class AlconnaSchema(BaseSchema):
             return
         if file:
             path = Path(file)
-            command.reset_namespace(f"{path.parts[-2]}/{path.stem}")
+            command.reset_namespace(f"{path.parts[-2]}.{path.stem}")
 
 
 class AlconnaBehaviour(Behaviour):
@@ -53,23 +53,21 @@ class AlconnaBehaviour(Behaviour):
     def allocate(self, cube: Cube[AlconnaSchema]):
         if not isinstance(cube.metaclass, AlconnaSchema):
             return
-        listener = self.broadcast.getListener(cube.content)
-        if listener:
+        if listener := self.broadcast.getListener(cube.content):
             for dispatcher in listener.dispatchers:
                 if isinstance(dispatcher, AlconnaDispatcher):
                     cube.metaclass.command = dispatcher.command
                     cube.metaclass.record(cube.content, self.manager)
                     return True
-            else:
-                if isinstance(cube.metaclass.command, AlconnaDispatcher):
-                    listener.dispatchers.append(cube.metaclass.command)
-                    cube.metaclass.record(cube.content, self.manager)
-                    return True
-                return
+            if isinstance(cube.metaclass.command, AlconnaDispatcher):
+                listener.dispatchers.append(cube.metaclass.command)
+                cube.metaclass.record(cube.content, self.manager)
+                return True
+            return
         cube.metaclass.record(cube.content, self.manager)
         return True
 
-    def uninstall(self, cube: Cube[AlconnaSchema]):
+    def release(self, cube: Cube[AlconnaSchema]):
         if not isinstance(cube.metaclass, AlconnaSchema):
             return
         if isinstance(cube.metaclass.command, AlconnaDispatcher):

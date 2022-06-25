@@ -2,17 +2,16 @@ import sys
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Literal, Callable, Optional, TypedDict, TypeVar, Generic, get_origin, get_args
-from arclet.alconna import Alconna, output_manager
+from arclet.alconna import Alconna, output_manager, Empty
 from arclet.alconna.arpamar import Arpamar
-from arclet.alconna.util import generic_isinstance, generic_issubclass
+from arclet.alconna.util import generic_isinstance
 from arclet.alconna.components.duplication import AlconnaDuplication, generate_duplication
 from arclet.alconna.components.stub import ArgsStub, OptionStub, SubcommandStub
-
 from graia.broadcast.entities.event import Dispatchable
 from graia.broadcast.exceptions import ExecutionStop
 from graia.broadcast.entities.dispatcher import BaseDispatcher
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
-from graia.broadcast.utilles import run_always_await_safely
+from graia.broadcast.utilles import run_always_await
 from graia.broadcast.entities.signatures import Force
 
 from graia.ariadne.app import Ariadne, logger
@@ -20,6 +19,7 @@ from graia.ariadne.dispatcher import ContextDispatcher
 from graia.ariadne.event.message import GroupMessage, MessageEvent
 from graia.ariadne.message.chain import MessageChain
 from graia.ariadne.message.element import Quote
+from graia.ariadne.typing import generic_issubclass
 from graia.ariadne.util import resolve_dispatchers_mixin
 
 T_Source = TypeVar('T_Source')
@@ -38,17 +38,28 @@ sys.addaudithook(success_hook)
 
 class Query(Generic[T]):
     result: T
+    available: bool
     path: str
 
-    def __init__(self, path: str):
+    def __init__(self, path: str, default: Optional[T] = None):
         self.path = path
+        self.result = default
+        self.available = False
 
     def set_result(self, obj: T):
-        self.result = obj
+        if obj != Empty:
+            self.available = True
+            self.result = obj
         return self
 
     def __repr__(self):
-        return f"query['{self.path}' >> {self.result}]"
+        return f"query<{self.available}>['{self.path}' >> {self.result}]"
+
+
+@dataclass
+class Match(Generic[T]):
+    result: T
+    available: bool
 
 
 @dataclass
@@ -99,8 +110,8 @@ class _AlconnaLocalStorage(TypedDict):
 class AlconnaDispatcher(BaseDispatcher):
     def __init__(
             self,
-            *,
             alconna: "Alconna",
+            *,
             help_flag: Literal["reply", "post", "stay"] = "stay",
             skip_for_unmatch: bool = True,
             help_handler: Optional[Callable[[str], MessageChain]] = None,
@@ -122,7 +133,6 @@ class AlconnaDispatcher(BaseDispatcher):
         self.allow_quote = allow_quote
 
     async def beforeExecution(self, interface: DispatcherInterface):
-
         async def reply_help_message(
                 result: Arpamar,
                 help_text: Optional[str] = None,
@@ -131,7 +141,7 @@ class AlconnaDispatcher(BaseDispatcher):
             app: Ariadne = Ariadne.current()
             if result.matched is False and help_text:
                 if self.help_flag == "reply":
-                    help_message: MessageChain = await run_always_await_safely(self.help_handler, help_text)
+                    help_message: MessageChain = await run_always_await(self.help_handler, help_text)
                     if isinstance(source, GroupMessage):
                         await app.send_group_message(source.sender.group, help_message)
                     else:
@@ -157,7 +167,7 @@ class AlconnaDispatcher(BaseDispatcher):
                 nonlocal may_help_text
                 may_help_text = string
 
-            output_manager.set_send_action(_h, self.command.name)
+            output_manager.set_action(_h, self.command.name)
 
             _res = self.command.parse(message)
         except Exception as e:
@@ -185,7 +195,9 @@ class AlconnaDispatcher(BaseDispatcher):
             return default_duplication
         if generic_issubclass(AlconnaDuplication, interface.annotation):
             return interface.annotation(self.command).set_target(res.result)
-        if generic_issubclass(AlconnaProperty, interface.annotation):
+        if isinstance(interface.annotation, type) and issubclass(interface.annotation, AlconnaProperty):
+            return res
+        if get_origin(interface.annotation) is AlconnaProperty:
             return res
         if interface.annotation == ArgsStub:
             arg = ArgsStub(self.command.args)
@@ -201,21 +213,20 @@ class AlconnaDispatcher(BaseDispatcher):
             return res.help_text
         if generic_issubclass(interface.annotation, Alconna):
             return self.command
+        if interface.annotation == Match:
+            r = res.result.all_matched_args.get(interface.name, Empty)
+            return Match(r, r != Empty)
+        if get_origin(interface.annotation) == Match:
+            r = res.result.all_matched_args.get(interface.name, Empty)
+            return Match(r, generic_isinstance(r, get_args(interface.annotation)[0]))
+        if isinstance(interface.default, Query):
+            return Query(interface.default.path, interface.default.result).set_result(
+                res.result.query_with(get_args(interface.annotation)[0], interface.default.path, Empty)
+                if get_origin(interface.annotation) is Query else res.result.query(interface.default.path, Empty)
+            )
         if interface.name in res.result.all_matched_args:
             if generic_isinstance(res.result.all_matched_args[interface.name], interface.annotation):
                 return res.result.all_matched_args[interface.name]
-            return Force()
-        if isinstance(interface.default, Query):
-            if not interface.annotation:
-                return interface.default.set_result(res.result.query(interface.default.path))
-            return Force(res.result.query_with(interface.annotation, interface.default.path))
-        if get_origin(interface.annotation) is Query:
-            if isinstance(interface.default, str):
-                return Query(interface.default).set_result(
-                    res.result.query_with(get_args(interface.annotation)[0], interface.default)
-                )
-            return Query('').set_result(res.result.query_with(get_args(interface.annotation)[0]))
-        if interface.annotation is Query and isinstance(interface.default, str):
-            return Query(interface.default).set_result(res.result.query(interface.default))
+            return
         if generic_issubclass(interface.annotation, MessageEvent) or interface.annotation == MessageEvent:
             return Force(res.source)

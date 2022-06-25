@@ -3,7 +3,7 @@ import setuptools
 setuptools.setup(
     name="arclet-alconna-graia",
     url="https://github.com/ArcletProject/Alconna-Graia",
-    version="0.1.1.1",
+    version="0.2.0",
     author="ArcletProject",
     author_email="rf_tar_railt@qq.com",
     description="Support Alconna to GraiaProject",
@@ -18,6 +18,11 @@ setuptools.setup(
         "Programming Language :: Python :: 3.10",
         "Operating System :: OS Independent",
     ],
+    entry_points={
+        'creart.creators': [
+            'alconna_behavior = arclet.alconna.graia.create:AlconnaBehaviorCreator'
+        ]
+    },
     keywords=['alconna', 'graia', 'dispatcher', 'arclet'],
     python_requires='>=3.8',
     project_urls={

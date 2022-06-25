@@ -1,6 +1,7 @@
-from arclet.alconna.graia import Alconna, AlconnaDispatcher, AlconnaHelpMessage, Query
-from arclet.alconna import Args, Arpamar
-from arclet.alconna import command_manager
+from arclet.alconna.graia import Alconna, AlconnaDispatcher, AlconnaHelpMessage, Match, Query, success_record, \
+    AlconnaProperty, match_path
+from arclet.alconna import Args, Arpamar, AlconnaDuplication
+from arclet.alconna import ArgsStub, command_manager
 
 from graia.broadcast import Broadcast
 from graia.ariadne.event.message import GroupMessage
@@ -27,12 +28,6 @@ alc = Alconna(
     help_text="test_dispatch"
 )
 
-alc1 = Alconna(
-    command="!jrrp",
-    main_args=Args["sth", str, 1123]
-)
-
-
 ariadne_ctx.set(bot)
 
 
@@ -47,23 +42,21 @@ async def test(group: Group, result: Arpamar):
     print(command_manager.all_command_help())
 
 
+alc1 = Alconna("!jrrp", Args["sth", str, 1123])
+
+
 @bcc.receiver(
-    GroupMessage, dispatchers=[
-        AlconnaDispatcher(alconna=alc1, help_flag='stay')
-    ]
+    GroupMessage,
+    dispatchers=[AlconnaDispatcher(alconna=alc1, help_flag='stay')]
 )
 async def test2(
         group: Group,
-        result: Arpamar,
-        aaa: Query[str] = "sth",
-        bbb: str = Query("sth"),
-        ccc: Query = "sth",
-        ddd=Query("sth")
+        result: AlconnaProperty[GroupMessage],
+        sth: Match[str]
 ):
-    print("sign:", result)
+    print("sign:", result.result)
     print("listener:", group)
-    print("sth:", aaa, bbb, ccc, ddd)
-    print("sth_res:", aaa.result, bbb, ccc.result, ddd.result)
+    print("match", sth.available, sth.result)
 
 
 @bcc.receiver(AlconnaHelpMessage)
@@ -71,6 +64,24 @@ async def test_event(help_string: str, app: Ariadne, event: GroupMessage):
     print(help_string)
     print(app)
     print(event.sender.group)
+
+
+alc2 = Alconna("test11") + "foo/bar:int"
+
+
+@bcc.receiver(
+    GroupMessage,
+    dispatchers=[AlconnaDispatcher(alc2, help_flag='stay')],
+    decorators=[match_path("foo.bar")]
+)
+async def test3(
+        group: Group,
+        result: AlconnaProperty[GroupMessage],
+        bar: Match[int]
+):
+    print("result:", result.result)
+    print("match", bar.available, bar.result)
+
 
 ev = GroupMessage.parse_obj(
     {
@@ -130,6 +141,46 @@ ev2 = GroupMessage.parse_obj(
     }
 )
 
+ev3 = GroupMessage.parse_obj(
+    {
+        'messageChain': [{"type": "Plain", "text": "test11"}],
+        'sender': {
+            "id": 42425665,
+            "memberName": "test3",
+            "specialTitle": "",
+            "permission": "MEMBER",
+            "joinTimestamp": 0,
+            "lastSpeakTimestamp": 0,
+            "muteTimeRemaining": 0,
+            "group": {
+                "id": 987654321,
+                "name": "test",
+                "permission": "OWNER",
+            },
+        }
+    }
+)
+
+ev4 = GroupMessage.parse_obj(
+    {
+        'messageChain': [{"type": "Plain", "text": "test11 foo 123"}],
+        'sender': {
+            "id": 42425665,
+            "memberName": "test3",
+            "specialTitle": "",
+            "permission": "MEMBER",
+            "joinTimestamp": 0,
+            "lastSpeakTimestamp": 0,
+            "muteTimeRemaining": 0,
+            "group": {
+                "id": 987654321,
+                "name": "test",
+                "permission": "OWNER",
+            },
+        }
+    }
+)
+
 
 async def main():
     bcc.postEvent(ev)
@@ -138,7 +189,11 @@ async def main():
     await asyncio.sleep(0.1)
     bcc.postEvent(ev2)
     await asyncio.sleep(0.1)
+    bcc.postEvent(ev3)
+    await asyncio.sleep(0.1)
+    bcc.postEvent(ev4)
+    await asyncio.sleep(0.1)
 
 
 loop.run_until_complete(main())
-print(AlconnaDispatcher.success_hook)
+print(success_record)

@@ -4,19 +4,18 @@ from graia.ariadne.model import Friend
 from graia.ariadne.app import Ariadne
 from graia.ariadne.message.element import At, Image
 from graia.broadcast.builtin.decorators import Depend
+from graia.broadcast.exceptions import ExecutionStop
 
 from arclet.alconna.typing import PatternModel, pattern_map, BasePattern
 from .dispatcher import AlconnaProperty
 
 
 def __valid(text: Union[Image, str]):
-    if isinstance(text, Image):
-        return text.url
-    return pattern_map['url'].match(text)
+    return text.url if isinstance(text, Image) else pattern_map['url'].match(text)
 
 
 ImgOrUrl = BasePattern(
-    model=PatternModel.TYPE_CONVERT, origin_type=str, converter=__valid, alias='img_url',
+    model=PatternModel.TYPE_CONVERT, origin=str, converter=__valid, alias='img_url',
     accepts=[str, Image]
 )
 """
@@ -35,19 +34,26 @@ def fetch_name(path: str = "name"):
         event = result.source
         arp = result.result
         if t := arp.all_matched_args.get(path, None):
-            if isinstance(t, At):
-                target = t.display
-                if not target:
-                    target = (await app.get_user_profile(t.target)).nickname
-            else:
-                target = t
+            return t.display or (await app.getUserProfile(t.target)).nickname if isinstance(t, At) else t
         elif isinstance(event.sender, Friend):
-            target = event.sender.nickname
+            return event.sender.nickname
         else:
-            target = event.sender.name
-        return target
+            return event.sender.name
 
     return Depend(__wrapper__)
 
 
-__all__ = ["ImgOrUrl", "fetch_name"]
+def match_path(path: str):
+    """
+    当 Arpamar 解析成功后
+    """
+
+    def __wrapper__(result: AlconnaProperty):
+        if result.result.query(path, "\0") == "\0" and not result.help_text:
+            raise ExecutionStop
+        return True
+
+    return Depend(__wrapper__)
+
+
+__all__ = ["ImgOrUrl", "fetch_name", "match_path"]
