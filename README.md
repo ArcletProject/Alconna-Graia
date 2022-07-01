@@ -44,7 +44,7 @@ alc = Alconna("!jrrp", Args["sth", str, 1123])
 
 @channel.use(AlconnaSchema(AlconnaDispatcher(alc)))
 @channel.use(ListenerSchema([GroupMessage]))
-async def test2(group: Group, result: AlconnaProperty, sth: Match[str]):
+async def test2(group: Group, result: AlconnaProperty[GroupMessage], sth: Match[str]):
     print("sign:", result.result)
     print("sender:", group)
     print("match", sth.available, sth.result)
@@ -55,12 +55,11 @@ async def test2(group: Group, result: AlconnaProperty, sth: Match[str]):
 in main.py:
 ```python
 from arclet.alconna.graia import AlconnaBehaviour
+from creart import create
 ...
 
-saya = Saya(...)
-saya.install_behaviors(
-    AlconnaBehaviour(...)
-)
+saya = create(Saya)
+create(AlconnaBehaviour)
 
 with saya.module_context():
     saya.require("module")
