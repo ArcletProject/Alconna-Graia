@@ -18,19 +18,14 @@ class AlconnaSchema(BaseSchema):
     command: Union[Alconna, AlconnaDispatcher]
 
     @classmethod
-    def using(cls, command: str, *options: str, flag: str = "reply") -> "AlconnaSchema":
+    def from_(cls, command: str, *options: str, flag: str = "reply") -> "AlconnaSchema":
         return cls(
-            command=AlconnaDispatcher(
-                alconna=AlconnaString(command, *options),
-                help_flag=flag  # type: ignore
-            )
+            AlconnaDispatcher(AlconnaString(command, *options), help_flag=flag)  # type: ignore
         )
 
-    def record(self, func: Any, manager: CommandManager):
+    def record(self, func: Any):
         command: Alconna
-        if isinstance(self.command, str):
-            command = manager.get_command(self.command)
-        elif isinstance(self.command, AlconnaDispatcher):
+        if isinstance(self.command, AlconnaDispatcher):
             command = self.command.command
         else:
             command = self.command
@@ -40,7 +35,7 @@ class AlconnaSchema(BaseSchema):
             return
         if file:
             path = Path(file)
-            command.reset_namespace(f"{path.parts[-2]}.{path.stem}")
+            command.reset_namespace(f"{path.parts[-2]}/{path.stem}")
 
 
 class AlconnaBehaviour(Behaviour):
@@ -57,14 +52,14 @@ class AlconnaBehaviour(Behaviour):
             for dispatcher in listener.dispatchers:
                 if isinstance(dispatcher, AlconnaDispatcher):
                     cube.metaclass.command = dispatcher.command
-                    cube.metaclass.record(cube.content, self.manager)
+                    cube.metaclass.record(cube.content)
                     return True
             if isinstance(cube.metaclass.command, AlconnaDispatcher):
                 listener.dispatchers.append(cube.metaclass.command)
-                cube.metaclass.record(cube.content, self.manager)
+                cube.metaclass.record(cube.content)
                 return True
             return
-        cube.metaclass.record(cube.content, self.manager)
+        cube.metaclass.record(cube.content)
         return True
 
     def release(self, cube: Cube[AlconnaSchema]):
