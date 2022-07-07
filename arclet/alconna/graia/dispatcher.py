@@ -66,38 +66,38 @@ class Match(Generic[T]):
 class AlconnaProperty(Generic[T_Source]):
     """对解析结果的封装"""
     result: Arpamar
-    help_text: Optional[str] = field(default=None)
+    output_text: Optional[str] = field(default=None)
     source: T_Source = field(default=None)
 
 
-class AlconnaHelpDispatcher(BaseDispatcher):
+class AlconnaOutputDispatcher(BaseDispatcher):
     mixin = [ContextDispatcher]
 
-    def __init__(self, alconna: "Alconna", help_string: str, source_event: MessageEvent):
+    def __init__(self, alconna: "Alconna", text: str, source: MessageEvent):
         self.command = alconna
-        self.help_string = help_string
-        self.source_event = source_event
+        self.output = text
+        self.source_event = source
 
     async def catch(self, interface: "DispatcherInterface"):
-        if interface.name == "help_string" and interface.annotation == str:
-            return self.help_string
+        if interface.name == "output" and interface.annotation == str:
+            return self.output
         if isinstance(interface.annotation, Alconna):
             return self.command
         if issubclass(interface.annotation, MessageEvent) or interface.annotation == MessageEvent:
             return self.source_event
 
 
-class AlconnaHelpMessage(Dispatchable):
+class AlconnaOutputMessage(Dispatchable):
     """
-    Alconna帮助信息发送事件
-    如果触发的某个命令的帮助选项, 当AlconnaDisptcher的reply_help为False时, 会发送该事件
+    Alconna 信息输出事件
+    如果触发的某个命令的可能输出 (帮助信息、模糊匹配、报错等), AlconnaDisptcher的send_flag为post时, 会发送该事件
     """
 
     command: "Alconna"
     """命令"""
 
-    help_string: str
-    """帮助信息"""
+    output: str
+    """输出信息"""
 
     source_event: MessageEvent
     """来源事件"""
@@ -112,79 +112,81 @@ class AlconnaDispatcher(BaseDispatcher):
             self,
             alconna: "Alconna",
             *,
-            help_flag: Literal["reply", "post", "stay"] = "stay",
+            send_flag: Literal["reply", "post", "stay"] = "stay",
             skip_for_unmatch: bool = True,
-            help_handler: Optional[Callable[[str], MessageChain]] = None,
+            send_handler: Optional[Callable[[str], MessageChain]] = None,
             allow_quote: bool = False
     ):
         """
         构造 Alconna调度器
         Args:
             alconna (Alconna): Alconna实例
-            help_flag ("reply", "post", "stay"): 帮助信息发送方式
+            send_flag ("reply", "post", "stay"): 输出信息的发送方式
             skip_for_unmatch (bool): 当指令匹配失败时是否跳过对应的事件监听器, 默认为 True
             allow_quote (bool): 是否允许引用回复消息触发对应的命令, 默认为 False
         """
         super().__init__()
         self.command = alconna
-        self.help_flag = help_flag
+        self.send_flag = send_flag
         self.skip_for_unmatch = skip_for_unmatch
-        self.help_handler = help_handler or (lambda x: MessageChain(x))
+        self.send_handler = send_handler or (lambda x: MessageChain(x))
         self.allow_quote = allow_quote
 
     async def beforeExecution(self, interface: DispatcherInterface):
-        async def reply_help_message(
+        async def send_output(
                 result: Arpamar,
-                help_text: Optional[str] = None,
+                output_text: Optional[str] = None,
                 source: Optional[MessageEvent] = None,
         ) -> AlconnaProperty[MessageEvent]:
             app: Ariadne = Ariadne.current()
-            if result.matched is False and help_text:
-                if self.help_flag == "reply":
-                    help_message: MessageChain = await run_always_await(self.help_handler, help_text)
+            if result.matched is False and output_text:
+                if self.send_flag == "reply":
+                    help_message: MessageChain = await run_always_await(self.send_handler, output_text)
                     if isinstance(source, GroupMessage):
                         await app.send_group_message(source.sender.group, help_message)
                     else:
                         await app.send_message(source.sender, help_message)  # type: ignore
                     return AlconnaProperty(result, None, source)
-                if self.help_flag == "post":
+                if self.send_flag == "post":
                     dispatchers = resolve_dispatchers_mixin(
-                        [source.Dispatcher]) + [AlconnaHelpDispatcher(self.command, help_text, source)]
-                    for listener in interface.broadcast.default_listener_generator(AlconnaHelpMessage):
+                        [source.Dispatcher]) + [AlconnaOutputDispatcher(self.command, output_text, source)]
+                    for listener in interface.broadcast.default_listener_generator(AlconnaOutputMessage):
                         await interface.broadcast.Executor(listener, dispatchers=dispatchers)
                         listener.oplog.clear()
                     return AlconnaProperty(result, None, source)
-            return AlconnaProperty(result, help_text, source)
+            return AlconnaProperty(result, output_text, source)
 
         message: MessageChain = await interface.lookup_param("message", MessageChain, None)
         if not self.allow_quote and message.has(Quote):
             raise ExecutionStop
         event: MessageEvent = interface.event
+        may_help_text = None
+
+        def _h(string):
+            nonlocal may_help_text
+            may_help_text = string
+
         try:
-            may_help_text = None
-
-            def _h(string):
-                nonlocal may_help_text
-                may_help_text = string
-
             output_manager.set_action(_h, self.command.name)
-
             _res = self.command.parse(message)
         except Exception as e:
-            logger.warning(f"{self.command} error: {e}")
-            interface.stop()
-        else:
-            if not _res.head_matched and self.skip_for_unmatch:
-                raise ExecutionStop
-            if not _res.matched and not may_help_text and self.skip_for_unmatch:
-                raise ExecutionStop
+            _res = Arpamar(self.command)
+            _res.head_matched = False
+            _res.matched = False
+            _res.error_info = repr(e)
+            _res.error_data = []
+        if _res.matched:
             sys.audit("success_analysis", self.command.command)
-            _property = await reply_help_message(_res, may_help_text, event)
-            local_storage: _AlconnaLocalStorage = interface.local_storage  # type: ignore
-            if not _res.matched and not _property.help_text:
-                raise ExecutionStop
-            local_storage['alconna_result'] = _property
-            return
+        elif not may_help_text and ((not _res.head_matched) or self.skip_for_unmatch):
+            raise ExecutionStop
+        if not may_help_text and _res.error_info:
+            may_help_text = str(_res.error_info)
+        _property = await send_output(_res, may_help_text, event)
+        local_storage: _AlconnaLocalStorage = interface.local_storage  # type: ignore
+        if not _res.matched and not _property.output_text:
+            raise ExecutionStop
+        local_storage['alconna_result'] = _property
+        return
 
     async def catch(self, interface: DispatcherInterface):
         local_storage: _AlconnaLocalStorage = interface.local_storage  # type: ignore
@@ -210,7 +212,7 @@ class AlconnaDispatcher(BaseDispatcher):
         if interface.annotation == Arpamar:
             return res.result
         if interface.annotation == str and interface.name == "help_text":
-            return res.help_text
+            return res.output_text
         if generic_issubclass(interface.annotation, Alconna):
             return self.command
         if interface.annotation == Match:

@@ -19,7 +19,15 @@ ImgOrUrl = BasePattern(
     accepts=[str, Image]
 )
 """
-内置类型, 允许传入图片元素(Image)或者链接(URL)
+内置类型, 允许传入图片元素(Image)或者链接(URL)，返回链接
+"""
+
+AtID = BasePattern(
+    model=PatternModel.TYPE_CONVERT, origin=int, alias='at_id', accepts=[str, At, int],
+    converter=lambda x: x.target if isinstance(x, At) else int(str(x).lstrip('@'))
+)
+"""
+内置类型，允许传入提醒元素(At)或者'@xxxx'式样的字符串或者数字, 返回数字
 """
 
 
@@ -49,11 +57,11 @@ def match_path(path: str):
     """
 
     def __wrapper__(result: AlconnaProperty):
-        if result.result.query(path, "\0") == "\0" and not result.help_text:
+        if result.result.query(path, "\0") == "\0" and not result.output_text:
             raise ExecutionStop
         return True
 
     return Depend(__wrapper__)
 
 
-__all__ = ["ImgOrUrl", "fetch_name", "match_path"]
+__all__ = ["ImgOrUrl", "AtID", "fetch_name", "match_path"]

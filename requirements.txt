@@ -1,4 +1,4 @@
-arclet-alconna>=1.0.2
+arclet-alconna>=1.0.3
 graia-saya~=0.0.16
 graia-ariadne>=0.7.14
 graia-amnesia>=0.5.0
