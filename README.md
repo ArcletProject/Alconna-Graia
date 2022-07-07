@@ -82,11 +82,14 @@ class AlconnaDispatcher(BaseDispatcher):
 ```
 
 `alconna`: 使用的 Alconna 指令
+
 `send_flag`: 解析期间输出信息的发送方式
 - reply: 直接发送给指令发送者
 - post: 以事件通过 Broadcast 广播
 - stay: 存入 AlconnaProperty 传递给事件处理器
 
 `skip_for_unmatch`: 解析失败时是否跳过, 否则错误信息按 send_flag 处理
+
 `send_handler`: send_flag 为 reply 时 输出信息的预处理器
+
 `allow_quote`: 是否允许以回复的方式触发指令
