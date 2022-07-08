@@ -53,13 +53,20 @@ def fetch_name(path: str = "name"):
 
 def match_path(path: str):
     """
-    当 Arpamar 解析成功后
+    当 Arpamar 解析成功后, 依据 path 是否存在以继续执行事件处理
+
+    当 path 为 ‘$main’ 时表示认定当且仅当主命令匹配
     """
 
     def __wrapper__(result: AlconnaProperty):
-        if result.result.query(path, "\0") == "\0" and not result.output_text:
+        if path == '$main':
+            if not result.result.components:
+                return True
             raise ExecutionStop
-        return True
+        else:
+            if result.result.query(path, "\0") == "\0":
+                raise ExecutionStop
+            return True
 
     return Depend(__wrapper__)
 

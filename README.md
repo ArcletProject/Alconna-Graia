@@ -71,13 +71,13 @@ with saya.module_context():
 ```python
 class AlconnaDispatcher(BaseDispatcher):
     def __init__(
-            self,
-            alconna: "Alconna",
-            *,
-            send_flag: Literal["reply", "post", "stay"] = "stay",
-            skip_for_unmatch: bool = True,
-            send_handler: Optional[Callable[[str], MessageChain]] = None,
-            allow_quote: bool = False
+        self,
+        alconna: "Alconna",
+        *,
+        send_flag: Literal["reply", "post", "stay"] = "stay",
+        skip_for_unmatch: bool = True,
+        send_handler: Optional[Callable[[str], MessageChain]] = None,
+        allow_quote: bool = False
     ): ...
 ```
 

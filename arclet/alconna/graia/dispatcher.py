@@ -175,12 +175,12 @@ class AlconnaDispatcher(BaseDispatcher):
             _res.matched = False
             _res.error_info = repr(e)
             _res.error_data = []
-        if _res.matched:
-            sys.audit("success_analysis", self.command.command)
-        elif not may_help_text and ((not _res.head_matched) or self.skip_for_unmatch):
+        if not may_help_text and not _res.matched and ((not _res.head_matched) or self.skip_for_unmatch):
             raise ExecutionStop
         if not may_help_text and _res.error_info:
-            may_help_text = str(_res.error_info)
+            may_help_text = str(_res.error_info).strip('\'').strip('\\n').split('\\n')[-1]
+        if not may_help_text and _res.matched:
+            sys.audit("success_analysis", self.command.command)
         _property = await send_output(_res, may_help_text, event)
         local_storage: _AlconnaLocalStorage = interface.local_storage  # type: ignore
         if not _res.matched and not _property.output_text:
