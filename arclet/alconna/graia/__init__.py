@@ -10,6 +10,6 @@ from arclet.alconna import Alconna
 from .analyser import GraiaCommandAnalyser
 from .dispatcher import AlconnaDispatcher, AlconnaOutputMessage, AlconnaProperty, Query, Match, success_record
 from .saya import AlconnaSchema, AlconnaBehaviour
-from .utils import ImgOrUrl, fetch_name, match_path, AtID
+from .utils import ImgOrUrl, fetch_name, match_path, AtID, command
 
 Alconna.config(analyser_type=GraiaCommandAnalyser)

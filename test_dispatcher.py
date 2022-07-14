@@ -1,6 +1,6 @@
-from arclet.alconna.graia import Alconna, AlconnaDispatcher, AlconnaHelpMessage, Match, Query, success_record, \
+from arclet.alconna.graia import Alconna, AlconnaDispatcher, AlconnaOutputMessage, Match, Query, success_record, \
     AlconnaProperty, match_path
-from arclet.alconna import Args, Arpamar, AlconnaDuplication
+from arclet.alconna import Args, Arpamar, Duplication
 from arclet.alconna import ArgsStub, command_manager
 
 from graia.broadcast import Broadcast
@@ -33,7 +33,7 @@ ariadne_ctx.set(bot)
 
 @bcc.receiver(
     GroupMessage, dispatchers=[
-        AlconnaDispatcher(alconna=alc, help_flag='stay', skip_for_unmatch=True)
+        AlconnaDispatcher(alconna=alc, send_flag='stay', skip_for_unmatch=True)
     ]
 )
 async def test(group: Group, result: Arpamar):
@@ -47,7 +47,7 @@ alc1 = Alconna("!jrrp", Args["sth", str, 1123])
 
 @bcc.receiver(
     GroupMessage,
-    dispatchers=[AlconnaDispatcher(alconna=alc1, help_flag='stay')]
+    dispatchers=[AlconnaDispatcher(alconna=alc1, send_flag='stay')]
 )
 async def test2(
         group: Group,
@@ -59,7 +59,7 @@ async def test2(
     print("match", sth.available, sth.result)
 
 
-@bcc.receiver(AlconnaHelpMessage)
+@bcc.receiver(AlconnaOutputMessage)
 async def test_event(help_string: str, app: Ariadne, event: GroupMessage):
     print(help_string)
     print(app)
@@ -71,7 +71,7 @@ alc2 = Alconna("test11") + "foo/bar:int"
 
 @bcc.receiver(
     GroupMessage,
-    dispatchers=[AlconnaDispatcher(alc2, help_flag='stay')],
+    dispatchers=[AlconnaDispatcher(alc2, send_flag='stay')],
     decorators=[match_path("foo.bar")]
 )
 async def test3(

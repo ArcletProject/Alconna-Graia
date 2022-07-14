@@ -5,7 +5,7 @@ from typing import Literal, Callable, Optional, TypedDict, TypeVar, Generic, get
 from arclet.alconna import Alconna, output_manager, Empty
 from arclet.alconna.arpamar import Arpamar
 from arclet.alconna.util import generic_isinstance
-from arclet.alconna.components.duplication import AlconnaDuplication, generate_duplication
+from arclet.alconna.components.duplication import Duplication, generate_duplication
 from arclet.alconna.components.stub import ArgsStub, OptionStub, SubcommandStub
 from graia.broadcast.entities.event import Dispatchable
 from graia.broadcast.exceptions import ExecutionStop
@@ -14,7 +14,7 @@ from graia.broadcast.interfaces.dispatcher import DispatcherInterface
 from graia.broadcast.utilles import run_always_await
 from graia.broadcast.entities.signatures import Force
 
-from graia.ariadne.app import Ariadne, logger
+from graia.ariadne.app import Ariadne
 from graia.ariadne.dispatcher import ContextDispatcher
 from graia.ariadne.event.message import GroupMessage, MessageEvent
 from graia.ariadne.message.chain import MessageChain
@@ -193,9 +193,9 @@ class AlconnaDispatcher(BaseDispatcher):
         res = local_storage['alconna_result']
         default_duplication = generate_duplication(self.command)
         default_duplication.set_target(res.result)
-        if interface.annotation == AlconnaDuplication:
+        if interface.annotation == Duplication:
             return default_duplication
-        if generic_issubclass(AlconnaDuplication, interface.annotation):
+        if generic_issubclass(Duplication, interface.annotation):
             return interface.annotation(self.command).set_target(res.result)
         if isinstance(interface.annotation, type) and issubclass(interface.annotation, AlconnaProperty):
             return res

@@ -1,6 +1,5 @@
-from arclet.alconna.graia import Alconna, AlconnaDispatcher
-from arclet.alconna.graia.dispatcher import AlconnaProperty
-from arclet.alconna import Args
+from arclet.alconna.graia import Alconna, AlconnaDispatcher, command
+from arclet.alconna import Args, Arpamar
 
 from graia.ariadne.event.message import GroupMessage
 from graia.ariadne.model import Group
@@ -31,15 +30,15 @@ alc2 = Alconna("{city}今日天气")
     )
 )
 @channel.use(AlconnaSchema(AlconnaDispatcher(alconna=alc1)))
-async def test2(group: Group, result: AlconnaProperty):
-    print("sign:", result.result)
+async def test2(group: Group, result: Arpamar):
+    print("sign:", result)
     print("listener:", group)
 
 
 @channel.use(AlconnaSchema(AlconnaDispatcher(alconna=alc)))
 @channel.use(ListenerSchema([GroupMessage]))
-async def test2(group: Group, result: AlconnaProperty):
-    print("test:", result.result)
+async def test2(group: Group, result: Arpamar):
+    print("test:", result)
     print("listener:", group)
 
 
@@ -50,13 +49,19 @@ async def test2(group: Group, result: AlconnaProperty):
         inline_dispatchers=[AlconnaDispatcher(alconna=alc2)]
     )
 )
-async def test3(group: Group, result: AlconnaProperty):
-    print("city:", result.result.header)
+async def test3(group: Group, result: Arpamar):
+    print("city:", result.header)
     print("listener:", group)
 
 
-@channel.use(AlconnaSchema.using("ghrepo <link:url>"))
+@channel.use(AlconnaSchema.from_("ghrepo <link:url>"))
 @channel.use(ListenerSchema([GroupMessage]))
-async def test4(group: Group, result: AlconnaProperty):
-    print("ghrepo:", result.result.link)
+async def test4(group: Group, result: Arpamar):
+    print("ghrepo:", result.link)
     print("listener:", group)
+
+
+@command(Alconna("hello!"), private=False)
+async def test5(group: Group, result: Arpamar):
+    print("result:", result)
+    print("group:", group)

@@ -1,13 +1,18 @@
 from typing import Union
 
+from graia.saya.cube import Cube
+from graia.saya.builtins.broadcast import ListenerSchema
 from graia.ariadne.model import Friend
 from graia.ariadne.app import Ariadne
 from graia.ariadne.message.element import At, Image
+from graia.ariadne.event.message import GroupMessage, FriendMessage
+from graia.ariadne.util.saya import ensure_cube_as_listener, Wrapper, T_Callable
 from graia.broadcast.builtin.decorators import Depend
 from graia.broadcast.exceptions import ExecutionStop
 
+from arclet.alconna import Alconna
 from arclet.alconna.typing import PatternModel, pattern_map, BasePattern
-from .dispatcher import AlconnaProperty
+from .dispatcher import AlconnaProperty, AlconnaDispatcher
 
 
 def __valid(text: Union[Image, str]):
@@ -71,4 +76,30 @@ def match_path(path: str):
     return Depend(__wrapper__)
 
 
-__all__ = ["ImgOrUrl", "AtID", "fetch_name", "match_path"]
+def command(alconna: Alconna, guild: bool = True, private: bool = True, send_error: bool = False) -> Wrapper:
+    """
+    saya-util 形式的注册一个消息事件监听器并携带 AlconnaDispatcher
+
+    Args:
+        alconna: 使用的 Alconna 命令
+        guild: 命令是否群聊可用
+        private: 命令是否私聊可用
+        send_error: 是否发送错误信息
+    """
+    if '$' in alconna.help_text:
+        alconna.help_text = alconna.help_text.replace('$', alconna.headers[0], 1)
+
+    def wrapper(func: T_Callable) -> T_Callable:
+        cube: Cube[ListenerSchema] = ensure_cube_as_listener(func)
+        if guild:
+            cube.metaclass.listening_events.append(GroupMessage)
+        if private:
+            cube.metaclass.listening_events.append(FriendMessage)
+        cube.metaclass.inline_dispatchers.append(
+            AlconnaDispatcher(alconna, send_flag='reply', skip_for_unmatch=not send_error))
+        return func
+
+    return wrapper
+
+
+__all__ = ["ImgOrUrl", "AtID", "fetch_name", "match_path", "command"]

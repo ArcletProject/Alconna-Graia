@@ -65,6 +65,35 @@ with saya.module_context():
     saya.require("module")
 
 ```
+### 使用 Saya util
+
+in module.py:
+```python
+from arclet.alconna.graia import Match, command
+from arclet.alconna import Alconna, Args, Arpamar
+...
+channel = Channel.current()
+
+@command(Alconna("!jrrp", Args["sth", str, 1123]), private=False)
+async def test2(group: Group, result: Arpamar, sth: Match[str]):
+    print("sign:", result)
+    print("sender:", group)
+    print("match", sth.available, sth.result)
+
+
+```
+
+in main.py:
+```python
+from creart import create
+...
+
+saya = create(Saya)
+
+with saya.module_context():
+    saya.require("module")
+
+```
 
 ## AlconnaDispatcher 参数说明
 
@@ -93,3 +122,9 @@ class AlconnaDispatcher(BaseDispatcher):
 `send_handler`: send_flag 为 reply 时 输出信息的预处理器
 
 `allow_quote`: 是否允许以回复的方式触发指令
+
+## 附加组件
+
+`Query`
+
+`Match`
