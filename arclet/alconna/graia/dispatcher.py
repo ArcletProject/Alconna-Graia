@@ -14,7 +14,6 @@ from graia.broadcast.interfaces.dispatcher import DispatcherInterface
 from graia.broadcast.utilles import run_always_await
 from graia.broadcast.entities.signatures import Force
 
-from graia.ariadne.app import Ariadne
 from graia.ariadne.dispatcher import ContextDispatcher
 from graia.ariadne.event.message import GroupMessage, MessageEvent
 from graia.ariadne.message.chain import MessageChain
@@ -138,6 +137,7 @@ class AlconnaDispatcher(BaseDispatcher):
                 output_text: Optional[str] = None,
                 source: Optional[MessageEvent] = None,
         ) -> AlconnaProperty[MessageEvent]:
+            from graia.ariadne.app import Ariadne
             app: Ariadne = Ariadne.current()
             if result.matched is False and output_text:
                 if self.send_flag == "reply":

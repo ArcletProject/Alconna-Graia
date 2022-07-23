@@ -1,9 +1,8 @@
-from typing import Union
+from typing import Union, TYPE_CHECKING
 
 from graia.saya.cube import Cube
 from graia.saya.builtins.broadcast import ListenerSchema
 from graia.ariadne.model import Friend
-from graia.ariadne.app import Ariadne
 from graia.ariadne.message.element import At, Image
 from graia.ariadne.event.message import GroupMessage, FriendMessage
 from graia.ariadne.util.saya import ensure_cube_as_listener, Wrapper, T_Callable
@@ -14,6 +13,8 @@ from arclet.alconna import Alconna
 from arclet.alconna.typing import PatternModel, pattern_map, BasePattern
 from .dispatcher import AlconnaProperty, AlconnaDispatcher
 
+if TYPE_CHECKING:
+    from graia.ariadne.app import Ariadne
 
 def __valid(text: Union[Image, str]):
     return text.url if isinstance(text, Image) else pattern_map['url'].match(text)
@@ -43,7 +44,7 @@ def fetch_name(path: str = "name"):
     要求 Alconna 命令中含有 Args[path;O:[str, At]] 参数
     """
 
-    async def __wrapper__(app: Ariadne, result: AlconnaProperty):
+    async def __wrapper__(app: 'Ariadne', result: AlconnaProperty):
         event = result.source
         arp = result.result
         if t := arp.all_matched_args.get(path, None):

@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Type
 from creart import AbstractCreator, CreateTargetInfo, it, exists_module, mixin
-from graia.creart.broadcast import BroadcastCreator
-from graia.creart.saya import SayaCreator
 
 if TYPE_CHECKING:
     from arclet.alconna.graia.saya import AlconnaBehaviour
@@ -22,7 +20,8 @@ class AlconnaBehaviorCreator(AbstractCreator):
             author=["ArcletProject@github"],
         ),
     )
-
+    from graia.creart.broadcast import BroadcastCreator
+    from graia.creart.saya import SayaCreator
     @staticmethod
     @mixin(BroadcastCreator, SayaCreator)
     def available() -> bool:
