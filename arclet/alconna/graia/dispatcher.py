@@ -8,12 +8,11 @@ from arclet.alconna.util import generic_isinstance
 from arclet.alconna.components.duplication import Duplication, generate_duplication
 from arclet.alconna.components.stub import ArgsStub, OptionStub, SubcommandStub
 from graia.broadcast.entities.event import Dispatchable
-from graia.broadcast.exceptions import ExecutionStop
+from graia.broadcast.exceptions import ExecutionStop, PropagationCancelled
 from graia.broadcast.entities.dispatcher import BaseDispatcher
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
 from graia.broadcast.utilles import run_always_await
 from graia.broadcast.entities.signatures import Force
-
 from graia.ariadne.dispatcher import ContextDispatcher
 from graia.ariadne.event.message import GroupMessage, MessageEvent
 from graia.ariadne.message.chain import MessageChain
@@ -25,6 +24,7 @@ T_Source = TypeVar('T_Source')
 T = TypeVar("T")
 
 success_record = deque(maxlen=10)
+output_cache = {}
 
 
 def success_hook(event, args):
@@ -138,23 +138,28 @@ class AlconnaDispatcher(BaseDispatcher):
                 source: Optional[MessageEvent] = None,
         ) -> AlconnaProperty[MessageEvent]:
             from graia.ariadne.app import Ariadne
+
             app: Ariadne = Ariadne.current()
-            if result.matched is False and output_text and source:
-                if self.send_flag == "reply":
-                    help_message: MessageChain = await run_always_await(self.send_handler, output_text)
-                    if isinstance(source, GroupMessage):
-                        await app.send_group_message(source.sender.group, help_message)
-                    else:
-                        await app.send_message(source.sender, help_message)  # type: ignore
-                    return AlconnaProperty(result, None, source)
-                if self.send_flag == "post":
-                    dispatchers = resolve_dispatchers_mixin(
-                        [source.Dispatcher]) + [AlconnaOutputDispatcher(self.command, output_text, source)]
-                    for listener in interface.broadcast.default_listener_generator(AlconnaOutputMessage):
-                        await interface.broadcast.Executor(listener, dispatchers=dispatchers)
-                        listener.oplog.clear()
-                    return AlconnaProperty(result, None, source)
-            return AlconnaProperty(result, output_text, source)
+            if self.command not in output_cache:
+                output_cache.clear()
+                output_cache[self.command] = True
+                if result.matched is False and output_text:
+                    if self.send_flag == "reply":
+                        help_message: MessageChain = await run_always_await(self.send_handler, output_text)
+                        if isinstance(source, GroupMessage):
+                            await app.send_group_message(source.sender.group, help_message)
+                        else:
+                            await app.send_message(source.sender, help_message)  # type: ignore
+                        return AlconnaProperty(result, None, source)
+                    if self.send_flag == "post":
+                        dispatchers = resolve_dispatchers_mixin(
+                            [source.Dispatcher]) + [AlconnaOutputDispatcher(self.command, output_text, source)]
+                        for listener in interface.broadcast.default_listener_generator(AlconnaOutputMessage):
+                            await interface.broadcast.Executor(listener, dispatchers=dispatchers)
+                            listener.oplog.clear()
+                        return AlconnaProperty(result, None, source)
+                return AlconnaProperty(result, output_text, source)
+            return AlconnaProperty(result, None, source)
 
         message: MessageChain = await interface.lookup_param("message", MessageChain, None)
         if not self.allow_quote and message.has(Quote):
@@ -187,7 +192,7 @@ class AlconnaDispatcher(BaseDispatcher):
             _property = await send_output(_res, may_help_text, None)
         local_storage: _AlconnaLocalStorage = interface.local_storage  # type: ignore
         if not _res.matched and not _property.output_text:
-            raise ExecutionStop
+            raise PropagationCancelled
         local_storage['alconna_result'] = _property
         return
 

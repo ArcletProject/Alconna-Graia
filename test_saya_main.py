@@ -1,5 +1,5 @@
-from arclet.alconna.graia import Alconna, AlconnaDispatcher, AlconnaHelpMessage
-from arclet.alconna import Args, Arpamar, AlconnaDuplication
+from arclet.alconna.graia import Alconna, AlconnaDispatcher, AlconnaOutputMessage
+from arclet.alconna import Args, Arpamar, Duplication
 from arclet.alconna import ArgsStub, command_manager
 
 from graia.broadcast import Broadcast
@@ -43,10 +43,10 @@ m2 = Member(id=54322411, memberName="test2", permission="MEMBER", group=Group(id
 m3 = Member(id=42425665, memberName="test3", permission="MEMBER", group=Group(id=987654321, name="test", permission="OWNER"))
 #frd = Friend.parse_obj({"id": 12345678, "nickname": "test", "remark": "none"})
 #frd1 = Friend.parse_obj({"id": 54322411, "nickname": "test1", "remark": "none1"})
-msg = MessageChain.create(f"!test --help")
-msg1 = MessageChain.create(f"jrrp --help")
-msg2 = MessageChain.create(f"北京今日天气")
-msg3 = MessageChain.create("ghrepo https://github.com/ArcletProject/Alconna")
+msg = MessageChain("!test --help")
+msg1 = MessageChain("jrrp --help")
+msg2 = MessageChain("北京今日天气")
+msg3 = MessageChain("ghrepo https://github.com/ArcletProject/Alconna")
 ev = GroupMessage(sender=m1, messageChain=msg)
 ev1 = GroupMessage(sender=m2, messageChain=msg1)
 ev2 = GroupMessage(sender=m3, messageChain=msg)
