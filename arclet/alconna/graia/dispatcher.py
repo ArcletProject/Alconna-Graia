@@ -139,7 +139,7 @@ class AlconnaDispatcher(BaseDispatcher):
         ) -> AlconnaProperty[MessageEvent]:
             from graia.ariadne.app import Ariadne
             app: Ariadne = Ariadne.current()
-            if result.matched is False and output_text:
+            if result.matched is False and output_text and source:
                 if self.send_flag == "reply":
                     help_message: MessageChain = await run_always_await(self.send_handler, output_text)
                     if isinstance(source, GroupMessage):
@@ -159,7 +159,7 @@ class AlconnaDispatcher(BaseDispatcher):
         message: MessageChain = await interface.lookup_param("message", MessageChain, None)
         if not self.allow_quote and message.has(Quote):
             raise ExecutionStop
-        event: MessageEvent = interface.event
+
         may_help_text = None
 
         def _h(string):
@@ -181,7 +181,10 @@ class AlconnaDispatcher(BaseDispatcher):
             may_help_text = str(_res.error_info).strip('\'').strip('\\n').split('\\n')[-1]
         if not may_help_text and _res.matched:
             sys.audit("success_analysis", self.command.command)
-        _property = await send_output(_res, may_help_text, event)
+        try:
+            _property = await send_output(_res, may_help_text, interface.event)
+        except LookupError:
+            _property = await send_output(_res, may_help_text, None)
         local_storage: _AlconnaLocalStorage = interface.local_storage  # type: ignore
         if not _res.matched and not _property.output_text:
             raise ExecutionStop
@@ -209,7 +212,7 @@ class AlconnaDispatcher(BaseDispatcher):
             return default_duplication.option(interface.name)
         if interface.annotation == SubcommandStub:
             return default_duplication.subcommand(interface.name)
-        if interface.annotation == Arpamar:
+        if interface.annotation == Arpamar or get_origin(interface.annotation) == Arpamar:
             return res.result
         if interface.annotation == str and interface.name == "help_text":
             return res.output_text
