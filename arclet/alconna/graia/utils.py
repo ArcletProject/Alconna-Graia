@@ -119,4 +119,4 @@ def command(alconna: Alconna, guild: bool = True, private: bool = True, send_err
     return wrapper
 
 
-__all__ = ["ImgOrUrl", "AtID", "fetch_name", "match_path", "command"]
+__all__ = ["ImgOrUrl", "AtID", "fetch_name", "match_path", "command", "match_value"]
