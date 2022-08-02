@@ -20,7 +20,7 @@ class AlconnaSchema(BaseSchema):
     @classmethod
     def from_(cls, command: str, *options: str, flag: str = "reply") -> "AlconnaSchema":
         return cls(
-            AlconnaDispatcher(AlconnaString(command, *options), help_flag=flag)  # type: ignore
+            AlconnaDispatcher(AlconnaString(command, *options), send_flag=flag)  # type: ignore
         )
 
     def record(self, func: Any):

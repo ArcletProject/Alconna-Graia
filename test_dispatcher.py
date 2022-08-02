@@ -33,7 +33,7 @@ ariadne_ctx.set(bot)
 
 @bcc.receiver(
     GroupMessage, dispatchers=[
-        AlconnaDispatcher(alconna=alc, send_flag='stay', skip_for_unmatch=True)
+        AlconnaDispatcher(command=alc, send_flag='stay', skip_for_unmatch=True)
     ]
 )
 async def test(group: Group, result: Arpamar):
@@ -47,7 +47,7 @@ alc1 = Alconna("!jrrp", Args["sth", str, 1123])
 
 @bcc.receiver(
     GroupMessage,
-    dispatchers=[AlconnaDispatcher(alconna=alc1, send_flag='stay')]
+    dispatchers=[AlconnaDispatcher(command=alc1, send_flag='stay')]
 )
 async def test2(
         group: Group,

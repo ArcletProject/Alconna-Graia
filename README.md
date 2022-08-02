@@ -20,7 +20,7 @@ alc = Alconna("!jrrp", Args["sth", str, 1123])
 
 @app.broadcast.receiver(
     GroupMessage,
-    dispatchers=[AlconnaDispatcher(alc, help_flag='stay')]
+    dispatchers=[AlconnaDispatcher(alc, send_flag='stay')]
 )
 async def test2(
         group: Group,
@@ -65,7 +65,7 @@ with saya.module_context():
     saya.require("module")
 
 ```
-### 使用 Saya util
+### 使用 Saya Util
 
 in module.py:
 ```python
@@ -101,7 +101,7 @@ with saya.module_context():
 class AlconnaDispatcher(BaseDispatcher):
     def __init__(
         self,
-        alconna: "Alconna",
+        command: Union[Alconna, AlconnaGroup],
         *,
         send_flag: Literal["reply", "post", "stay"] = "stay",
         skip_for_unmatch: bool = True,
@@ -110,7 +110,7 @@ class AlconnaDispatcher(BaseDispatcher):
     ): ...
 ```
 
-`alconna`: 使用的 Alconna 指令
+`command`: 使用的 Alconna 指令
 
 `send_flag`: 解析期间输出信息的发送方式
 - reply: 直接发送给指令发送者
@@ -128,3 +128,7 @@ class AlconnaDispatcher(BaseDispatcher):
 `Query`
 
 `Match`
+
+## 文档
+
+[链接](https://graiax.cn/guide/alconna.html#kirakira%E2%98%86dokidoki%E7%9A%84dispatcher)

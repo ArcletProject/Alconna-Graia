@@ -1,9 +1,9 @@
 import sys
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Literal, Callable, Optional, TypedDict, TypeVar, Generic, get_origin, get_args
-from arclet.alconna import Alconna, output_manager, Empty
-from arclet.alconna.arpamar import Arpamar
+from typing import Literal, Callable, Optional, TypedDict, TypeVar, Generic, get_origin, get_args, Union
+from arclet.alconna import output_manager, Empty, Arpamar
+from arclet.alconna.core import Alconna, AlconnaGroup
 from arclet.alconna.util import generic_isinstance
 from arclet.alconna.components.duplication import Duplication, generate_duplication
 from arclet.alconna.components.stub import ArgsStub, OptionStub, SubcommandStub
@@ -72,15 +72,15 @@ class AlconnaProperty(Generic[T_Source]):
 class AlconnaOutputDispatcher(BaseDispatcher):
     mixin = [ContextDispatcher]
 
-    def __init__(self, alconna: "Alconna", text: str, source: MessageEvent):
-        self.command = alconna
+    def __init__(self, command: Union[Alconna, AlconnaGroup], text: str, source: MessageEvent):
+        self.command = command
         self.output = text
         self.source_event = source
 
     async def catch(self, interface: "DispatcherInterface"):
         if interface.name == "output" and interface.annotation == str:
             return self.output
-        if isinstance(interface.annotation, Alconna):
+        if isinstance(interface.annotation, (Alconna, AlconnaGroup)):
             return self.command
         if issubclass(interface.annotation, MessageEvent) or interface.annotation == MessageEvent:
             return self.source_event
@@ -92,7 +92,7 @@ class AlconnaOutputMessage(Dispatchable):
     如果触发的某个命令的可能输出 (帮助信息、模糊匹配、报错等), AlconnaDisptcher的send_flag为post时, 会发送该事件
     """
 
-    command: "Alconna"
+    command: Union[Alconna, AlconnaGroup]
     """命令"""
 
     output: str
@@ -109,7 +109,7 @@ class _AlconnaLocalStorage(TypedDict):
 class AlconnaDispatcher(BaseDispatcher):
     def __init__(
             self,
-            alconna: "Alconna",
+            command: Union[Alconna, AlconnaGroup],
             *,
             send_flag: Literal["reply", "post", "stay"] = "stay",
             skip_for_unmatch: bool = True,
@@ -119,13 +119,13 @@ class AlconnaDispatcher(BaseDispatcher):
         """
         构造 Alconna调度器
         Args:
-            alconna (Alconna): Alconna实例
+            command (Alconna | AlconnaGroup): Alconna实例
             send_flag ("reply", "post", "stay"): 输出信息的发送方式
             skip_for_unmatch (bool): 当指令匹配失败时是否跳过对应的事件监听器, 默认为 True
             allow_quote (bool): 是否允许引用回复消息触发对应的命令, 默认为 False
         """
         super().__init__()
-        self.command = alconna
+        self.command = command
         self.send_flag = send_flag
         self.skip_for_unmatch = skip_for_unmatch
         self.send_handler = send_handler or (lambda x: MessageChain(x))
@@ -140,9 +140,11 @@ class AlconnaDispatcher(BaseDispatcher):
             from graia.ariadne.app import Ariadne
 
             app: Ariadne = Ariadne.current()
-            if self.command not in output_cache:
-                output_cache.clear()
-                output_cache[self.command] = True
+            id_ = id(source) if source else 0
+            cache = output_cache.setdefault(id_, {})
+            if self.command not in cache:
+                cache.clear()
+                cache[self.command] = True
                 if result.matched is False and output_text:
                     if self.send_flag == "reply":
                         help_message: MessageChain = await run_always_await(self.send_handler, output_text)
@@ -175,7 +177,7 @@ class AlconnaDispatcher(BaseDispatcher):
             output_manager.set_action(_h, self.command.name)
             _res = self.command.parse(message)
         except Exception as e:
-            _res = Arpamar(self.command)
+            _res = Arpamar(self.command.commands[0] if self.command._group else self.command)
             _res.head_matched = False
             _res.matched = False
             _res.error_info = repr(e)
@@ -185,7 +187,8 @@ class AlconnaDispatcher(BaseDispatcher):
         if not may_help_text and _res.error_info:
             may_help_text = str(_res.error_info).strip('\'').strip('\\n').split('\\n')[-1]
         if not may_help_text and _res.matched:
-            sys.audit("success_analysis", self.command.command)
+            output_cache.clear()
+            sys.audit("success_analysis", self.command)
         try:
             _property = await send_output(_res, may_help_text, interface.event)
         except LookupError:
@@ -199,18 +202,19 @@ class AlconnaDispatcher(BaseDispatcher):
     async def catch(self, interface: DispatcherInterface):
         local_storage: _AlconnaLocalStorage = interface.local_storage  # type: ignore
         res = local_storage['alconna_result']
-        default_duplication = generate_duplication(self.command)
+        command: Alconna = self.command.commands[0] if self.command._group else self.command
+        default_duplication = generate_duplication(command)
         default_duplication.set_target(res.result)
         if interface.annotation == Duplication:
             return default_duplication
         if generic_issubclass(Duplication, interface.annotation):
-            return interface.annotation(self.command).set_target(res.result)
+            return interface.annotation(command).set_target(res.result)
         if isinstance(interface.annotation, type) and issubclass(interface.annotation, AlconnaProperty):
             return res
         if get_origin(interface.annotation) is AlconnaProperty:
             return res
         if interface.annotation == ArgsStub:
-            arg = ArgsStub(self.command.args)
+            arg = ArgsStub(command.args)
             arg.set_result(res.result.main_args)
             return arg
         if interface.annotation == OptionStub:
@@ -221,7 +225,7 @@ class AlconnaDispatcher(BaseDispatcher):
             return res.result
         if interface.annotation == str and interface.name == "help_text":
             return res.output_text
-        if generic_issubclass(interface.annotation, Alconna):
+        if generic_issubclass(interface.annotation, (Alconna, AlconnaGroup)):
             return self.command
         if interface.annotation == Match:
             r = res.result.all_matched_args.get(interface.name, Empty)

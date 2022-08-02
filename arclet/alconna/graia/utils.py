@@ -1,3 +1,4 @@
+import inspect
 from typing import Union, Any
 
 from graia.saya.cube import Cube
@@ -9,7 +10,7 @@ from graia.ariadne.util.saya import ensure_cube_as_listener, Wrapper, T_Callable
 from graia.broadcast.builtin.decorators import Depend
 from graia.broadcast.exceptions import ExecutionStop
 
-from arclet.alconna import Alconna, Empty
+from arclet.alconna import Alconna, Empty, AlconnaFormat
 from arclet.alconna.typing import PatternModel, pattern_map, BasePattern
 from .dispatcher import AlconnaProperty, AlconnaDispatcher
 
@@ -104,7 +105,7 @@ def command(alconna: Alconna, guild: bool = True, private: bool = True, send_err
         send_error: 是否发送错误信息
     """
     if '$' in alconna.help_text:
-        alconna.help_text = alconna.help_text.replace('$', alconna.headers[0], 1)
+        alconna.help_text = alconna.help_text.replace('$', alconna.headers[0])
 
     def wrapper(func: T_Callable) -> T_Callable:
         cube: Cube[ListenerSchema] = ensure_cube_as_listener(func)
@@ -119,4 +120,14 @@ def command(alconna: Alconna, guild: bool = True, private: bool = True, send_err
     return wrapper
 
 
-__all__ = ["ImgOrUrl", "AtID", "fetch_name", "match_path", "command", "match_value"]
+def from_command(format_command: str) -> Wrapper:
+    def wrapper(func: T_Callable) -> T_Callable:
+        custom_args = {v.name: v.annotation for v in inspect.signature(func).parameters.values()}
+        cube: Cube[ListenerSchema] = ensure_cube_as_listener(func)
+        cube.metaclass.inline_dispatchers.append(
+            AlconnaDispatcher(AlconnaFormat(format_command, custom_args), send_flag='reply'))
+        return func
+    return wrapper
+
+
+__all__ = ["ImgOrUrl", "AtID", "fetch_name", "match_path", "command", "match_value", "from_command"]

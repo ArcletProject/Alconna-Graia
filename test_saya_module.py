@@ -29,13 +29,13 @@ alc2 = Alconna("{city}今日天气")
         [GroupMessage]
     )
 )
-@channel.use(AlconnaSchema(AlconnaDispatcher(alconna=alc1)))
+@channel.use(AlconnaSchema(AlconnaDispatcher(command=alc1)))
 async def test2(group: Group, result: Arpamar):
     print("sign:", result)
     print("listener:", group)
 
 
-@channel.use(AlconnaSchema(AlconnaDispatcher(alconna=alc)))
+@channel.use(AlconnaSchema(AlconnaDispatcher(command=alc)))
 @channel.use(ListenerSchema([GroupMessage]))
 async def test2(group: Group, result: Arpamar):
     print("test:", result)
@@ -46,7 +46,7 @@ async def test2(group: Group, result: Arpamar):
 @channel.use(
     ListenerSchema(
         [GroupMessage],
-        inline_dispatchers=[AlconnaDispatcher(alconna=alc2)]
+        inline_dispatchers=[AlconnaDispatcher(command=alc2)]
     )
 )
 async def test3(group: Group, result: Arpamar):

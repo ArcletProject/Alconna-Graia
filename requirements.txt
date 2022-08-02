@@ -1,7 +1,0 @@
-arclet-alconna~=1.1.0
-graia-saya~=0.0.16
-graia-ariadne>=0.7.14
-graia-amnesia>=0.5.0
-graia-broadcast>=0.18.0
-creart~=0.2.1
-creart-graia~=0.1.5
