@@ -48,7 +48,7 @@ def fetch_name(path: str = "name"):
         event = result.source
         arp = result.result
         if t := arp.all_matched_args.get(path, None):
-            return t.display or (await app.getUserProfile(t.target)).nickname if isinstance(t, At) else t
+            return t.display or (await app.get_user_profile(t.target)).nickname if isinstance(t, At) else t
         elif isinstance(event.sender, Friend):
             return event.sender.nickname
         else:
