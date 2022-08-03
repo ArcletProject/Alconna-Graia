@@ -69,10 +69,9 @@ with saya.module_context():
 
 in module.py:
 ```python
-from arclet.alconna.graia import Match, command
+from arclet.alconna.graia import Match, command, from_command
 from arclet.alconna import Alconna, Args, Arpamar
 ...
-channel = Channel.current()
 
 @command(Alconna("!jrrp", Args["sth", str, 1123]), private=False)
 async def test2(group: Group, result: Arpamar, sth: Match[str]):
@@ -80,7 +79,9 @@ async def test2(group: Group, result: Arpamar, sth: Match[str]):
     print("sender:", group)
     print("match", sth.available, sth.result)
 
-
+@from_command("foo bar {baz}")
+async def test2(baz: int):
+    print("baz", baz)
 ```
 
 in main.py:
@@ -128,6 +129,22 @@ class AlconnaDispatcher(BaseDispatcher):
 `Query`
 
 `Match`
+
+## 便捷方法
+
+```python
+from arclet.alconna.graia import Alc, Match
+...
+
+app = Ariadne(...)
+
+@app.broadcast.receiver(
+    GroupMessage, dispatchers=[Alc.from_format("foo bar {baz:int}")]
+)
+async def test2(group: Group, baz: Match[int]):
+    print("sender:", group)
+    print("match", baz.available, baz.result)
+```
 
 ## 文档
 

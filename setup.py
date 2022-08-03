@@ -3,14 +3,14 @@ import setuptools
 setuptools.setup(
     name="arclet-alconna-graia",
     url="https://github.com/ArcletProject/Alconna-Graia",
-    version="0.4.4",
+    version="0.4.5",
     author="ArcletProject",
     author_email="rf_tar_railt@qq.com",
     description="Support Alconna to GraiaProject",
     license='AGPL-3.0',
     packages=['arclet.alconna.graia'],
     install_requires=[
-        'arclet-alconna<1.2.0, >=1.1.2.1',
+        'arclet-alconna<1.2.0, >=1.1.2.2',
         'graia-saya~=0.0.16',
         'graia-ariadne<1.0.0, >=0.7.14',
         'graia-amnesia>=0.5.0',

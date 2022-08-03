@@ -1,5 +1,5 @@
 import inspect
-from typing import Union, Any
+from typing import Union, Any, Dict, Optional
 
 from graia.saya.cube import Cube
 from graia.saya.builtins.broadcast import ListenerSchema
@@ -120,9 +120,10 @@ def command(alconna: Alconna, guild: bool = True, private: bool = True, send_err
     return wrapper
 
 
-def from_command(format_command: str) -> Wrapper:
+def from_command(format_command: str, args: Optional[Dict[str, Union[type, BasePattern]]] = None) -> Wrapper:
     def wrapper(func: T_Callable) -> T_Callable:
         custom_args = {v.name: v.annotation for v in inspect.signature(func).parameters.values()}
+        custom_args.update(args or {})
         cube: Cube[ListenerSchema] = ensure_cube_as_listener(func)
         cube.metaclass.inline_dispatchers.append(
             AlconnaDispatcher(AlconnaFormat(format_command, custom_args), send_flag='reply'))

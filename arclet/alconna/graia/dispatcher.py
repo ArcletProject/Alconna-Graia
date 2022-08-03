@@ -1,8 +1,8 @@
 import sys
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Literal, Callable, Optional, TypedDict, TypeVar, Generic, get_origin, get_args, Union
-from arclet.alconna import output_manager, Empty, Arpamar
+from typing import Literal, Callable, Optional, TypedDict, TypeVar, Generic, get_origin, get_args, Union, Dict
+from arclet.alconna import output_manager, Empty, Arpamar, AlconnaFormat, BasePattern, AlconnaString
 from arclet.alconna.core import Alconna, AlconnaGroup
 from arclet.alconna.util import generic_isinstance
 from arclet.alconna.components.duplication import Duplication, generate_duplication
@@ -107,6 +107,14 @@ class _AlconnaLocalStorage(TypedDict):
 
 
 class AlconnaDispatcher(BaseDispatcher):
+    @classmethod
+    def from_format(cls, command: str, args: Optional[Dict[str, Union[type, BasePattern]]] = None):
+        return cls(AlconnaFormat(command, args), send_flag='reply')
+
+    @classmethod
+    def from_command(cls, command: str, *options: str):
+        return cls(AlconnaString(command, *options), send_flag='reply')
+
     def __init__(
             self,
             command: Union[Alconna, AlconnaGroup],

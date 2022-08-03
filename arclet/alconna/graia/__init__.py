@@ -13,3 +13,4 @@ from .saya import AlconnaSchema, AlconnaBehaviour
 from .utils import ImgOrUrl, fetch_name, match_path, AtID, command, match_value, from_command
 
 Alconna.config(analyser_type=GraiaCommandAnalyser)
+Alc = AlconnaDispatcher
