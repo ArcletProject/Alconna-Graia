@@ -10,11 +10,14 @@ from graia.amnesia.message.element import Text
 
 class GraiaCommandAnalyser(DefaultCommandAnalyser[MessageChain]):
     """Graia Project 相关的解析器"""
+
+    filter_out = ["Source", "File", "Quote"]
+
     @staticmethod
     def converter(command: str):
         return MessageChain([Text(command)])
 
-    def process(self, data: MessageChain) -> 'GraiaCommandAnalyser':
+    def process(self, data: MessageChain) -> "GraiaCommandAnalyser":
         """命令分析功能, 传入字符串或消息链, 应当在失败时返回fail的arpamar"""
         if isinstance(data, str):
             exp = ValueError(f"{data} is not a MessageChain")
@@ -37,7 +40,9 @@ class GraiaCommandAnalyser(DefaultCommandAnalyser[MessageChain]):
                 self.raw_data.append(unit)
             i += 1
         if i < 1:
-            exp = NullMessage(config.lang.analyser_handle_null_message.format(target=data))
+            exp = NullMessage(
+                config.lang.analyser_handle_null_message.format(target=data)
+            )
             if self.is_raise_exception:
                 raise exp
             self.temporary_data["fail"] = exp

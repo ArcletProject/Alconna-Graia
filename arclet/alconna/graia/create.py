@@ -22,6 +22,7 @@ class AlconnaBehaviorCreator(AbstractCreator):
     )
     from graia.creart.broadcast import BroadcastCreator
     from graia.creart.saya import SayaCreator
+
     @staticmethod
     @mixin(BroadcastCreator, SayaCreator)
     def available() -> bool:

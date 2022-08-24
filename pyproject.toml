@@ -1,0 +1,43 @@
+[project]
+name = "arclet-alconna-graia"
+version = "0.4.6"
+description = "Support Alconna to GraiaProject"
+authors = [
+    {name = "RF-Tar-Railt", email = "rf_tar_railt@qq.com"}
+]
+dependencies = [
+    "arclet-alconna<1.2.0, >=1.1.2.2",
+    "creart-graia~=0.1.5",
+    "creart~=0.2.1",
+    "graia-amnesia>=0.5.0",
+    "graia-ariadne<1.0.0, >=0.7.14",
+    "graia-broadcast>=0.18.0",
+    "graia-saya~=0.0.16",
+    "nepattern>=0.1.2",
+]
+requires-python = ">=3.8"
+readme = "README.md"
+license = {text = "AGPL-3.0"}
+keywords = ["alconna", "graia", "dispatcher", "arclet"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+]
+[project.urls]
+Homepage = "https://github.com/ArcletProject/Alconna-Graia"
+Documentation = "https://arcletproject.github.io/docs/alconna/tutorial"
+"Bug Reports" = "https://github.com/ArcletProject/Alconna/issues"
+Source = "https://github.com/ArcletProject/Alconna"
+[project.entry-points."creart.creators"]
+alconna_behavior = "arclet.alconna.graia.create:AlconnaBehaviorCreator"
+
+[build-system]
+requires = ["pdm-pep517>=1.0.0"]
+build-backend = "pdm.pep517.api"
+
+[tool]
+[tool.pdm]
