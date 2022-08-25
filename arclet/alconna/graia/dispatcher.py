@@ -8,21 +8,19 @@ from typing import (
     TypedDict,
     TypeVar,
     Generic,
-    get_origin,
     get_args,
     Union,
     Dict,
+    Any
 )
 from arclet.alconna import (
     output_manager,
     Empty,
     Arpamar,
     AlconnaFormat,
-    BasePattern,
     AlconnaString,
 )
 from arclet.alconna.core import Alconna, AlconnaGroup
-from arclet.alconna.util import generic_isinstance
 from arclet.alconna.components.duplication import Duplication, generate_duplication
 from arclet.alconna.components.stub import ArgsStub, OptionStub, SubcommandStub
 from graia.broadcast.entities.event import Dispatchable
@@ -35,7 +33,7 @@ from graia.ariadne.dispatcher import ContextDispatcher
 from graia.ariadne.event.message import GroupMessage, MessageEvent
 from graia.ariadne.message.chain import MessageChain
 from graia.ariadne.message.element import Quote
-from graia.ariadne.typing import generic_issubclass
+from graia.ariadne.typing import generic_issubclass, generic_isinstance, get_origin
 from graia.ariadne.util import resolve_dispatchers_mixin
 
 T_Source = TypeVar("T_Source")
@@ -133,7 +131,7 @@ class _AlconnaLocalStorage(TypedDict):
 class AlconnaDispatcher(BaseDispatcher):
     @classmethod
     def from_format(
-        cls, command: str, args: Optional[Dict[str, Union[type, BasePattern]]] = None
+        cls, command: str, args: Optional[Dict[str, Any]] = None
     ):
         return cls(AlconnaFormat(command, args), send_flag="reply")
 
@@ -260,37 +258,30 @@ class AlconnaDispatcher(BaseDispatcher):
         )
         default_duplication = generate_duplication(command)
         default_duplication.set_target(res.result)
-        if interface.annotation == Duplication:
+        if interface.annotation is Duplication:
             return default_duplication
         if generic_issubclass(Duplication, interface.annotation):
             return interface.annotation(command).set_target(res.result)
-        if isinstance(interface.annotation, type) and issubclass(
-            interface.annotation, AlconnaProperty
-        ):
+        if generic_issubclass(get_origin(interface.annotation), AlconnaProperty):
             return res
-        if get_origin(interface.annotation) is AlconnaProperty:
-            return res
-        if interface.annotation == ArgsStub:
+        if interface.annotation is ArgsStub:
             arg = ArgsStub(command.args)
             arg.set_result(res.result.main_args)
             return arg
-        if interface.annotation == OptionStub:
+        if interface.annotation is OptionStub:
             return default_duplication.option(interface.name)
-        if interface.annotation == SubcommandStub:
+        if interface.annotation is SubcommandStub:
             return default_duplication.subcommand(interface.name)
-        if (
-            interface.annotation == Arpamar
-            or get_origin(interface.annotation) == Arpamar
-        ):
+        if generic_issubclass(get_origin(interface.annotation), Arpamar):
             return res.result
-        if interface.annotation == str and interface.name == "help_text":
+        if interface.annotation is str and interface.name == "help_text":
             return res.output_text
         if generic_issubclass(interface.annotation, (Alconna, AlconnaGroup)):
             return self.command
-        if interface.annotation == Match:
+        if interface.annotation is Match:
             r = res.result.all_matched_args.get(interface.name, Empty)
             return Match(r, r != Empty)
-        if get_origin(interface.annotation) == Match:
+        if get_origin(interface.annotation) is Match:
             r = res.result.all_matched_args.get(interface.name, Empty)
             return Match(r, generic_isinstance(r, get_args(interface.annotation)[0]))
         if isinstance(interface.default, Query):

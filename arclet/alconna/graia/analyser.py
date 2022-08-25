@@ -2,13 +2,13 @@ from arclet.alconna.exceptions import NullMessage
 from arclet.alconna.util import split
 from arclet.alconna.config import config
 from arclet.alconna.base import StrMounter
-from arclet.alconna.builtin.analyser import DefaultCommandAnalyser
+from arclet.alconna.analysis.analyser import Analyser
 
 from graia.amnesia.message import MessageChain
 from graia.amnesia.message.element import Text
 
 
-class GraiaCommandAnalyser(DefaultCommandAnalyser[MessageChain]):
+class GraiaCommandAnalyser(Analyser[MessageChain]):
     """Graia Project 相关的解析器"""
 
     filter_out = ["Source", "File", "Quote"]
