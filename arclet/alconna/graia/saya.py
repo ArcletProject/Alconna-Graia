@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from typing import Union, Any
+from dataclasses import dataclass, field
+from typing import Union, Any, Dict
 import inspect
 from pathlib import Path
 from graia.broadcast import Broadcast
@@ -16,12 +16,17 @@ from .dispatcher import AlconnaDispatcher
 @dataclass
 class AlconnaSchema(BaseSchema):
     command: Union[Alconna, AlconnaDispatcher]
+    shortcuts: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_(cls, command: str, *options: str, flag: str = "reply") -> "AlconnaSchema":
         return cls(
             AlconnaDispatcher(AlconnaString(command, *options), send_flag=flag)  # type: ignore
         )
+
+    def shortcut(self, **kwargs):
+        self.shortcuts.update(kwargs)
+        return self
 
     def record(self, func: Any):
         command: Alconna
@@ -36,6 +41,8 @@ class AlconnaSchema(BaseSchema):
         if file:
             path = Path(file)
             command.reset_namespace(f"{path.parts[-2]}/{path.stem}")
+            for k, v in self.shortcuts:
+                command.shortcut(k, v)
 
 
 class AlconnaBehaviour(Behaviour):

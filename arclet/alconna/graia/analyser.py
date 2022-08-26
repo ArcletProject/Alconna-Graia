@@ -21,7 +21,7 @@ class GraiaCommandAnalyser(Analyser[MessageChain]):
         """命令分析功能, 传入字符串或消息链, 应当在失败时返回fail的arpamar"""
         if isinstance(data, str):
             exp = ValueError(f"{data} is not a MessageChain")
-            if self.is_raise_exception:
+            if self.raise_exception:
                 raise exp
             self.temporary_data["fail"] = exp
             return self
@@ -43,7 +43,7 @@ class GraiaCommandAnalyser(Analyser[MessageChain]):
             exp = NullMessage(
                 config.lang.analyser_handle_null_message.format(target=data)
             )
-            if self.is_raise_exception:
+            if self.raise_exception:
                 raise exp
             self.temporary_data["fail"] = exp
         else:

@@ -35,14 +35,14 @@ async def test2(
 
 in module.py:
 ```python
-from arclet.alconna.graia import AlconnaDispatcher, Match, AlconnaProperty, AlconnaSchema
+from arclet.alconna.graia import Alc, Match, AlconnaProperty, AlconnaSchema
 from arclet.alconna import Alconna, Args
 ...
 channel = Channel.current()
 
 alc = Alconna("!jrrp", Args["sth", str, 1123])
 
-@channel.use(AlconnaSchema(AlconnaDispatcher(alc)))
+@channel.use(AlconnaSchema(Alc(alc)))
 @channel.use(ListenerSchema([GroupMessage]))
 async def test2(group: Group, result: AlconnaProperty[GroupMessage], sth: Match[str]):
     print("sign:", result.result)
@@ -69,6 +69,7 @@ with saya.module_context():
 
 in module.py:
 ```python
+from graia.ariadne.util.saya import listen
 from arclet.alconna.graia import Match, command, from_command
 from arclet.alconna import Alconna, Args, Arpamar
 ...
@@ -80,6 +81,7 @@ async def test2(group: Group, result: Arpamar, sth: Match[str]):
     print("match", sth.available, sth.result)
 
 @from_command("foo bar {baz}")
+@listen(GroupMessage)
 async def test2(baz: int):
     print("baz", baz)
 ```
@@ -126,9 +128,12 @@ class AlconnaDispatcher(BaseDispatcher):
 
 ## 附加组件
 
-`Query`
+- `Match`: 查询某个参数是否匹配，如`foo: Match[int]`。使用时以 `Match.available` 判断是否匹配成功，以
+`Match.result` 获取匹配结果
 
-`Match`
+- `Query`: 查询某个参数路径是否存在，如`sth: Query[int] = Query("foo.bar")`；可以指定默认值如
+`Query("foo.bar", 1234)`。使用时以 `Query.available` 判断是否匹配成功，以 `Query.result` 获取匹配结果
+
 
 ## 便捷方法
 
@@ -144,6 +149,20 @@ app = Ariadne(...)
 async def test2(group: Group, baz: Match[int]):
     print("sender:", group)
     print("match", baz.available, baz.result)
+```
+
+or
+
+```python
+from arclet.alconna.graia import Match, AlconnaSchema
+...
+channel = Channel.current()
+
+@channel.use(AlconnaSchema.from_("foo <arg:str>", "bar"))
+@channel.use(ListenerSchema([GroupMessage]))
+async def test2(group: Group, sth: Match[str]):
+    print("sender:", group)
+    print("match", sth.available, sth.result)
 ```
 
 ## 文档

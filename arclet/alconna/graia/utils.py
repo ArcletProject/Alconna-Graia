@@ -5,6 +5,7 @@ from graia.saya.cube import Cube
 from graia.saya.builtins.broadcast import ListenerSchema
 from graia.saya import Channel
 from graia.ariadne.model import Friend
+from graia.ariadne.message.chain import MessageChain
 from graia.ariadne.message.element import At, Image
 from graia.ariadne.event.message import GroupMessage, FriendMessage
 from graia.ariadne.util.saya import ensure_cube_as_listener, Wrapper, T_Callable
@@ -105,6 +106,18 @@ def match_value(path: str, value: Any, or_not: bool = False):
     return Depend(__wrapper__)
 
 
+def shortcuts(**kwargs: Dict[str, MessageChain]) -> Wrapper:
+    def wrapper(func: T_Callable) -> T_Callable:
+        channel = Channel.current()
+        for cube in channel.content:
+            if cube.metaclass is AlconnaSchema and cube.content == func:
+                cube: Cube[AlconnaSchema]
+                cube.metaclass.shortcut(**kwargs)
+                break
+        return func
+    return wrapper
+
+
 def command(
     alconna: Alconna, guild: bool = True, private: bool = True, send_error: bool = False
 ) -> Wrapper:
@@ -117,8 +130,8 @@ def command(
         private: 命令是否私聊可用
         send_error: 是否发送错误信息
     """
-    if "$" in alconna.help_text:
-        alconna.help_text = alconna.help_text.replace("$", alconna.headers[0])
+    if alconna.meta.example and "$" in alconna.meta.example:
+        alconna.meta.example = alconna.meta.example.replace("$", alconna.headers[0])
 
     def wrapper(func: T_Callable) -> T_Callable:
         cube: Cube[ListenerSchema] = ensure_cube_as_listener(func)
@@ -174,4 +187,5 @@ __all__ = [
     "command",
     "match_value",
     "from_command",
+    "shortcuts"
 ]
