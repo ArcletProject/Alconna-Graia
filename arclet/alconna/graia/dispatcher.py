@@ -11,7 +11,9 @@ from typing import (
     get_args,
     Union,
     Dict,
-    Any
+    Any,
+    Coroutine,
+    ClassVar
 )
 from arclet.alconna import (
     output_manager,
@@ -130,14 +132,16 @@ class _AlconnaLocalStorage(TypedDict):
 
 class AlconnaDispatcher(BaseDispatcher):
     @classmethod
-    def from_format(
-        cls, command: str, args: Optional[Dict[str, Any]] = None
-    ):
+    def from_format(cls, command: str, args: Optional[Dict[str, Any]] = None):
         return cls(AlconnaFormat(command, args), send_flag="reply")
 
     @classmethod
     def from_command(cls, command: str, *options: str):
         return cls(AlconnaString(command, *options), send_flag="reply")
+
+    default_send_handler: ClassVar[Callable[
+        [str], Union[MessageChain, Coroutine[Any, Any, MessageChain]]
+    ]] = lambda x: MessageChain(x)
 
     def __init__(
         self,
@@ -145,7 +149,7 @@ class AlconnaDispatcher(BaseDispatcher):
         *,
         send_flag: Literal["reply", "post", "stay"] = "stay",
         skip_for_unmatch: bool = True,
-        send_handler: Optional[Callable[[str], MessageChain]] = None,
+        send_handler: Optional[Callable[[str], Union[MessageChain, Coroutine[Any, Any, MessageChain]]]] = None,
         allow_quote: bool = False,
     ):
         """
@@ -160,7 +164,7 @@ class AlconnaDispatcher(BaseDispatcher):
         self.command = command
         self.send_flag = send_flag
         self.skip_for_unmatch = skip_for_unmatch
-        self.send_handler = send_handler or (lambda x: MessageChain(x))
+        self.send_handler = send_handler or self.__class__.default_send_handler
         self.allow_quote = allow_quote
 
     async def beforeExecution(self, interface: DispatcherInterface):

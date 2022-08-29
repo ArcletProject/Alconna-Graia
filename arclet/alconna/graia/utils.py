@@ -106,7 +106,7 @@ def match_value(path: str, value: Any, or_not: bool = False):
     return Depend(__wrapper__)
 
 
-def shortcuts(**kwargs: Dict[str, MessageChain]) -> Wrapper:
+def shortcuts(**kwargs: MessageChain) -> Wrapper:
     def wrapper(func: T_Callable) -> T_Callable:
         channel = Channel.current()
         for cube in channel.content:
@@ -115,11 +115,16 @@ def shortcuts(**kwargs: Dict[str, MessageChain]) -> Wrapper:
                 cube.metaclass.shortcut(**kwargs)
                 break
         return func
+
     return wrapper
 
 
 def command(
-    alconna: Alconna, guild: bool = True, private: bool = True, send_error: bool = False
+    alconna: Alconna,
+    guild: bool = True,
+    private: bool = True,
+    send_error: bool = False,
+    post: bool = False,
 ) -> Wrapper:
     """
     saya-util 形式的注册一个消息事件监听器并携带 AlconnaDispatcher
@@ -129,6 +134,7 @@ def command(
         guild: 命令是否群聊可用
         private: 命令是否私聊可用
         send_error: 是否发送错误信息
+        post: 是否以事件发送输出信息
     """
     if alconna.meta.example and "$" in alconna.meta.example:
         alconna.meta.example = alconna.meta.example.replace("$", alconna.headers[0])
@@ -141,7 +147,7 @@ def command(
             cube.metaclass.listening_events.append(FriendMessage)
         cube.metaclass.inline_dispatchers.append(
             AlconnaDispatcher(
-                alconna, send_flag="reply", skip_for_unmatch=not send_error
+                alconna, send_flag="post" if post else "reply", skip_for_unmatch=not send_error  # type: ignore
             )
         )
         channel = Channel.current()
@@ -152,7 +158,9 @@ def command(
 
 
 def from_command(
-    format_command: str, args: Optional[Dict[str, Union[type, BasePattern]]] = None
+    format_command: str,
+    args: Optional[Dict[str, Union[type, BasePattern]]] = None,
+    post: bool = False,
 ) -> Wrapper:
     """
     saya-util 形式的仅注入一个 AlconnaDispatcher, 事件监听部分自行处理
@@ -160,6 +168,7 @@ def from_command(
     Args:
         format_command: 格式化命令字符串
         args: 格式化填入内容
+        post: 是否以事件发送输出信息
     """
 
     def wrapper(func: T_Callable) -> T_Callable:
@@ -170,7 +179,7 @@ def from_command(
         cube: Cube[ListenerSchema] = ensure_cube_as_listener(func)
         cmd = AlconnaFormat(format_command, custom_args)
         cube.metaclass.inline_dispatchers.append(
-            AlconnaDispatcher(cmd, send_flag="reply")
+            AlconnaDispatcher(cmd, send_flag="post" if post else "reply")  # type: ignore
         )
         channel = Channel.current()
         channel.use(AlconnaSchema(cmd))(func)
@@ -187,5 +196,5 @@ __all__ = [
     "command",
     "match_value",
     "from_command",
-    "shortcuts"
+    "shortcuts",
 ]
