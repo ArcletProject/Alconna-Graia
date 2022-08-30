@@ -57,7 +57,7 @@ def fetch_name(path: str = "name"):
         arp = result.result
         if t := arp.all_matched_args.get(path, None):
             return (
-                t.display or (await app.get_user_profile(t.target)).nickname
+                t.representation or (await app.get_user_profile(t.target)).nickname
                 if isinstance(t, At)
                 else t
             )
@@ -110,8 +110,7 @@ def shortcuts(**kwargs: MessageChain) -> Wrapper:
     def wrapper(func: T_Callable) -> T_Callable:
         channel = Channel.current()
         for cube in channel.content:
-            if cube.metaclass is AlconnaSchema and cube.content == func:
-                cube: Cube[AlconnaSchema]
+            if isinstance(cube.metaclass, AlconnaSchema) and cube.content == func:
                 cube.metaclass.shortcut(**kwargs)
                 break
         return func
