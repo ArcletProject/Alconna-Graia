@@ -41,7 +41,7 @@ class AlconnaSchema(BaseSchema):
         if file:
             path = Path(file)
             command.reset_namespace(f"{path.parts[-2]}/{path.stem}")
-            for k, v in self.shortcuts:
+            for k, v in self.shortcuts.items():
                 command.shortcut(k, v)
 
 
