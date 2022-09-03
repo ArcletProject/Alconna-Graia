@@ -24,7 +24,7 @@ dependencies = [
 
 [[package]]
 name = "arclet-alconna"
-version = "1.2.0.2"
+version = "1.2.0.6"
 requires_python = ">=3.8"
 summary = "A High-performance, Generality, Humane Command Line Arguments Parser Library."
 dependencies = [
@@ -303,9 +303,9 @@ content_hash = "sha256:9ef4407cae90cd3b9a77a128a8b38e43e5bdd98f7431101d871fabb9e
     {url = "https://files.pythonhosted.org/packages/27/6b/a89fbcfae70cf53f066ec22591938296889d3cc58fec1e1c393b10e8d71d/aiosignal-1.2.0.tar.gz", hash = "sha256:78ed67db6c7b7ced4f98e495e572106d5c432a93e1ddd1bf475e1dc05f5b7df2"},
     {url = "https://files.pythonhosted.org/packages/3b/87/fe94898f2d44a93a35d5aa74671ed28094d80753a1113d68b799fab6dc22/aiosignal-1.2.0-py3-none-any.whl", hash = "sha256:26e62109036cd181df6e6ad646f91f0dcfd05fe16d0cb924138ff2ab75d64e3a"},
 ]
-"arclet-alconna 1.2.0.2" = [
-    {url = "https://files.pythonhosted.org/packages/74/0d/fb02eb12bc4753cf27b0d43703d1136b038a35939156d805014c3b92646b/arclet_alconna-1.2.0.2-py3-none-any.whl", hash = "sha256:bd3d2f79a717d96a47cd1ebd438ce0c7d3873cd7fe7e7c2fa004090fd694b70d"},
-    {url = "https://files.pythonhosted.org/packages/7b/ee/538400fbc508b8aef6171eb623ac8acc0e0a3fda43b7853a9fd045b71942/arclet-alconna-1.2.0.2.tar.gz", hash = "sha256:97eaa88014acd14724e8f32030dfce7597fb7c1f35657db4ae7e2e6ef2f60745"},
+"arclet-alconna 1.2.0.6" = [
+    {url = "https://files.pythonhosted.org/packages/8b/c3/11d547405b4ff3f1ce7c43c6a20105da5d761b25a878d49bfa9a39b13321/arclet_alconna-1.2.0.6-py3-none-any.whl", hash = "sha256:14b2091b5cc89018a64aeac34f0486991f297c4de7af0be0054e0839ab2de0c6"},
+    {url = "https://files.pythonhosted.org/packages/b5/97/1600d883ad7abdc789515b22397651ddf2740381f3998d7902c0734f5c72/arclet-alconna-1.2.0.6.tar.gz", hash = "sha256:6e43c391aea918e1c3a261a0d2f3dae5c1691701c99856f904684b322c8ea261"},
 ]
 "async-timeout 4.0.2" = [
     {url = "https://files.pythonhosted.org/packages/54/6e/9678f7b2993537452710ffb1750c62d2c26df438aa621ad5fa9d1507a43a/async-timeout-4.0.2.tar.gz", hash = "sha256:2163e1640ddb52b7a8c80d0a67a08587e5d245cc9c553a74a847056bc2976b15"},

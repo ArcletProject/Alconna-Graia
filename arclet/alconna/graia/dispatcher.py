@@ -31,9 +31,9 @@ from graia.broadcast.entities.dispatcher import BaseDispatcher
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
 from graia.broadcast.utilles import run_always_await
 from graia.broadcast.entities.signatures import Force
+from graia.amnesia.message import MessageChain
 from graia.ariadne.dispatcher import ContextDispatcher
 from graia.ariadne.event.message import GroupMessage, MessageEvent
-from graia.ariadne.message.chain import MessageChain
 from graia.ariadne.message.element import Quote
 from graia.ariadne.typing import generic_issubclass, generic_isinstance, get_origin
 from graia.ariadne.util import resolve_dispatchers_mixin
@@ -222,7 +222,7 @@ class AlconnaDispatcher(BaseDispatcher):
 
         try:
             output_manager.set_action(_h, self.command.name)
-            _res = self.command.parse(message)
+            _res = self.command.parse(message)  # type: ignore
         except Exception as e:
             _res = Arpamar(
                 self.command.commands[0] if self.command._group else self.command

@@ -4,8 +4,8 @@ from nepattern import PatternModel, pattern_map, BasePattern, Empty
 from graia.saya.cube import Cube
 from graia.saya.builtins.broadcast import ListenerSchema
 from graia.saya import Channel
+from graia.amnesia.message import MessageChain
 from graia.ariadne.model import Friend
-from graia.ariadne.message.chain import MessageChain
 from graia.ariadne.message.element import At, Image
 from graia.ariadne.event.message import GroupMessage, FriendMessage
 from graia.ariadne.util.saya import ensure_cube_as_listener, Wrapper, T_Callable
