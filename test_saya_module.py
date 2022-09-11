@@ -1,4 +1,4 @@
-from arclet.alconna.graia import Alconna, AlconnaDispatcher, command
+from arclet.alconna.graia import Alconna, AlconnaDispatcher, alcommand
 from arclet.alconna import Args, Arpamar
 
 from graia.ariadne.event.message import GroupMessage
@@ -61,7 +61,7 @@ async def test4(group: Group, result: Arpamar):
     print("listener:", group)
 
 
-@command(Alconna("hello!"), private=False)
+@alcommand(Alconna("hello!"), private=False)
 async def test5(group: Group, result: Arpamar):
     print("result:", result)
     print("group:", group)

@@ -68,17 +68,21 @@ with saya.module_context():
 ### 使用 Saya Util
 
 in module.py:
+
 ```python
 from graia.ariadne.util.saya import listen
-from arclet.alconna.graia import Match, command, from_command
+from arclet.alconna.graia import Match, alcommand, from_command
 from arclet.alconna import Alconna, Args, Arpamar
+
 ...
 
-@command(Alconna("!jrrp", Args["sth", str, 1123]), private=False)
+
+@alcommand(Alconna("!jrrp", Args["sth", str, 1123]), private=False)
 async def test2(group: Group, result: Arpamar, sth: Match[str]):
     print("sign:", result)
     print("sender:", group)
     print("match", sth.available, sth.result)
+
 
 @from_command("foo bar {baz}")
 @listen(GroupMessage)
@@ -113,7 +117,7 @@ class AlconnaDispatcher(BaseDispatcher):
     ): ...
 ```
 
-`command`: 使用的 Alconna 指令
+`alcommand`: 使用的 Alconna 指令
 
 `send_flag`: 解析期间输出信息的发送方式
 - reply: 直接发送给指令发送者
@@ -134,6 +138,25 @@ class AlconnaDispatcher(BaseDispatcher):
 - `Query`: 查询某个参数路径是否存在，如`sth: Query[int] = Query("foo.bar")`；可以指定默认值如
 `Query("foo.bar", 1234)`。使用时以 `Query.available` 判断是否匹配成功，以 `Query.result` 获取匹配结果
 
+- `assign`: 依托路径是否匹配成功为命令分发处理器。
+
+```python
+from arclet.alconna.graia import alcommand, assign
+from arclet.alconna import Alconna, Args, Arpamar
+...
+
+alc = Alconna(...)
+
+@alcommand(alc, private=False)
+@assign("foo")
+async def foo(group: Group, result: Arpamar):
+    ...
+
+@alcommand(alc, private=False)
+@assign("bar.baz", 1)
+async def bar_baz_1(group: Group, result: Arpamar):
+    ...
+```
 
 ## 便捷方法
 

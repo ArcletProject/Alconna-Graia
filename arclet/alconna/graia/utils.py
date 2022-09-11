@@ -118,12 +118,12 @@ def shortcuts(**kwargs: MessageChain) -> Wrapper:
     return wrapper
 
 
-def command(
-    alconna: Alconna,
-    guild: bool = True,
-    private: bool = True,
-    send_error: bool = False,
-    post: bool = False,
+def alcommand(
+        alconna: Alconna,
+        guild: bool = True,
+        private: bool = True,
+        send_error: bool = False,
+        post: bool = False,
 ) -> Wrapper:
     """
     saya-util 形式的注册一个消息事件监听器并携带 AlconnaDispatcher
@@ -157,9 +157,9 @@ def command(
 
 
 def from_command(
-    format_command: str,
-    args: Optional[Dict[str, Union[type, BasePattern]]] = None,
-    post: bool = False,
+        format_command: str,
+        args: Optional[Dict[str, Union[type, BasePattern]]] = None,
+        post: bool = False,
 ) -> Wrapper:
     """
     saya-util 形式的仅注入一个 AlconnaDispatcher, 事件监听部分自行处理
@@ -187,13 +187,30 @@ def from_command(
     return wrapper
 
 
+_seminal = type("_seminal", (object,), {})
+
+
+def assign(path: str, value: Any = _seminal, or_not: bool = False) -> Wrapper:
+    def wrapper(func: T_Callable) -> T_Callable:
+        cube: Cube[ListenerSchema] = ensure_cube_as_listener(func)
+        if value == _seminal:
+            if or_not:
+                cube.metaclass.decorators.append(match_path("$main"))
+            cube.metaclass.decorators.append(match_path(path))
+        else:
+            cube.metaclass.decorators.append(match_value(path, value, or_not))
+        return func
+    return wrapper
+
+
 __all__ = [
     "ImgOrUrl",
     "AtID",
     "fetch_name",
     "match_path",
-    "command",
+    "alcommand",
     "match_value",
     "from_command",
     "shortcuts",
+    "assign"
 ]
