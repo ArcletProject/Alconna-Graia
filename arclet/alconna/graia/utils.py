@@ -1,14 +1,18 @@
+import re
 import inspect
 from typing import Union, Any, Dict, Optional
-from nepattern import PatternModel, pattern_map, BasePattern, Empty
+
+from graia.broadcast import DispatcherInterface
+from nepattern import PatternModel, pattern_map, BasePattern, Empty, type_parser, AllParam
 from graia.saya.cube import Cube
 from graia.saya.builtins.broadcast import ListenerSchema
 from graia.saya import Channel
-from graia.amnesia.message import MessageChain
+from graia.amnesia.message import MessageChain, Text
 from graia.ariadne.model import Friend
-from graia.ariadne.message.element import At, Image
+from graia.ariadne.message.element import At, Image, Quote, Source
 from graia.ariadne.event.message import GroupMessage, FriendMessage
-from graia.ariadne.util.saya import ensure_cube_as_listener, Wrapper, T_Callable
+from graia.ariadne.message.parser.base import ChainDecorator
+from graia.ariadne.util.saya import ensure_cube_as_listener, Wrapper, T_Callable, decorate
 from graia.broadcast.builtin.decorators import Depend
 from graia.broadcast.exceptions import ExecutionStop
 
@@ -200,6 +204,79 @@ def assign(path: str, value: Any = _seminal, or_not: bool = False) -> Wrapper:
         else:
             cube.metaclass.decorators.append(match_value(path, value, or_not))
         return func
+
+    return wrapper
+
+
+class Startswith(ChainDecorator):
+    def __init__(self, prefix: Any):
+        self.pattern = type_parser(prefix)
+        if self.pattern.model in (PatternModel.REGEX_MATCH, PatternModel.REGEX_CONVERT):
+            self.pattern.regex_pattern = re.compile(f"^{self.pattern.pattern}")
+
+    async def __call__(self, chain: MessageChain, interface: DispatcherInterface) -> Optional[MessageChain]:
+        header = chain.include(Quote, Source)
+        rest: MessageChain = chain.exclude(Quote, Source)
+        if not rest.content:
+            raise ExecutionStop
+        elem = rest.content[0]
+        if isinstance(elem, Text) and (res := self.pattern.validate(elem.text)).success:
+            elem.text = elem.text.replace(str(res.value), '', 1).lstrip()
+            return header + rest
+        elif self.pattern.validate(elem).success:
+            rest.content.remove(elem)
+            return header + rest
+        raise ExecutionStop
+
+
+class Endswith(ChainDecorator):
+    def __init__(self, suffix: Any):
+        self.pattern = type_parser(suffix)
+        if self.pattern.model in (PatternModel.REGEX_MATCH, PatternModel.REGEX_CONVERT):
+            self.pattern.regex_pattern = re.compile(f"{self.pattern.pattern}$")
+
+    async def __call__(self, chain: MessageChain, interface: DispatcherInterface) -> Optional[MessageChain]:
+        header = chain.include(Quote, Source)
+        rest: MessageChain = chain.exclude(Quote, Source)
+        if not rest.content:
+            raise ExecutionStop
+        elem = rest.content[-1]
+        if isinstance(elem, Text) and (res := self.pattern.validate(elem.text)).success:
+            elem.text = elem.text.replace(str(res.value), '', 1).rstrip()
+            return header + rest
+        elif self.pattern.validate(elem).success:
+            rest.content.remove(elem)
+            return header + rest
+        raise ExecutionStop
+
+
+def startswith(prefix: Any, bind: Optional[str] = None) -> Wrapper:
+    decorator = Startswith(prefix)
+    if decorator.pattern in (AllParam, Empty):
+        raise ValueError(prefix)
+
+    def wrapper(func: T_Callable):
+        cube: Cube[ListenerSchema] = ensure_cube_as_listener(func)
+        if bind:
+            return decorate({bind: decorator})(func)
+        cube.metaclass.decorators.append(decorator)
+        return func
+
+    return wrapper
+
+
+def endswith(suffix: Any, bind: Optional[str] = None) -> Wrapper:
+    decorator = Endswith(suffix)
+    if decorator.pattern in (AllParam, Empty):
+        raise ValueError(suffix)
+
+    def wrapper(func: T_Callable):
+        cube: Cube[ListenerSchema] = ensure_cube_as_listener(func)
+        if bind:
+            return decorate({bind: decorator})(func)
+        cube.metaclass.decorators.append(decorator)
+        return func
+
     return wrapper
 
 
@@ -212,5 +289,9 @@ __all__ = [
     "match_value",
     "from_command",
     "shortcuts",
-    "assign"
+    "assign",
+    "startswith",
+    "Startswith",
+    "endswith",
+    "Endswith"
 ]

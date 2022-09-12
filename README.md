@@ -71,14 +71,14 @@ in module.py:
 
 ```python
 from graia.ariadne.util.saya import listen
-from arclet.alconna.graia import Match, alcommand, from_command
+from arclet.alconna.graia import Match, alcommand, from_command, startswith, endswith
 from arclet.alconna import Alconna, Args, Arpamar
 
 ...
 
 
 @alcommand(Alconna("!jrrp", Args["sth", str, 1123]), private=False)
-async def test2(group: Group, result: Arpamar, sth: Match[str]):
+async def test1(group: Group, result: Arpamar, sth: Match[str]):
     print("sign:", result)
     print("sender:", group)
     print("match", sth.available, sth.result)
@@ -88,6 +88,16 @@ async def test2(group: Group, result: Arpamar, sth: Match[str]):
 @listen(GroupMessage)
 async def test2(baz: int):
     print("baz", baz)
+
+@startswith("foo bar")
+@listen(GroupMessage)
+async def test3(event: GroupMessage):
+    ...
+
+@endswith(int)
+@listen(GroupMessage)
+async def test4(event: GroupMessage):
+    ...
 ```
 
 in main.py:
