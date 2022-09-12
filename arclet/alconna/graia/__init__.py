@@ -19,8 +19,8 @@ from .utils import (
     assign,
     startswith,
     endswith,
-    Startswith,
-    Endswith,
+    MatchPrefix,
+    MatchSuffix,
 )
 
 Alconna.config(analyser_type=GraiaCommandAnalyser)

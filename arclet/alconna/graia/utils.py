@@ -1,24 +1,40 @@
-import re
 import inspect
-from typing import Union, Any, Dict, Optional
-
-from graia.broadcast import DispatcherInterface
-from nepattern import PatternModel, pattern_map, BasePattern, Empty, type_parser, AllParam
-from graia.saya.cube import Cube
-from graia.saya.builtins.broadcast import ListenerSchema
-from graia.saya import Channel
-from graia.amnesia.message import MessageChain, Text
-from graia.ariadne.model import Friend
-from graia.ariadne.message.element import At, Image, Quote, Source
-from graia.ariadne.event.message import GroupMessage, FriendMessage
-from graia.ariadne.message.parser.base import ChainDecorator
-from graia.ariadne.util.saya import ensure_cube_as_listener, Wrapper, T_Callable, decorate
-from graia.broadcast.builtin.decorators import Depend
-from graia.broadcast.exceptions import ExecutionStop
-
+import re
+from copy import deepcopy
+from typing import Any, Dict, Optional, Union, List, Type
+from functools import lru_cache
 from arclet.alconna import Alconna, AlconnaFormat
-from .dispatcher import AlconnaProperty, AlconnaDispatcher
+from graia.amnesia.message import MessageChain, Text, Element
+from graiax.shortcut.saya import (
+    T_Callable,
+    Wrapper,
+    decorate,
+    ensure_cube_as_listener,
+    gen_subclass
+)
+from graia.ariadne.event.message import FriendMessage, GroupMessage
+from graia.ariadne.message.element import At, Image
+from graia.ariadne.model import Friend
+from graia.broadcast import DispatcherInterface, Decorator, DecoratorInterface
+from graia.broadcast.builtin.decorators import Depend
+from graia.broadcast.builtin.derive import Derive
+from graia.broadcast.exceptions import ExecutionStop
+from graia.saya import Channel
+from graia.saya.builtins.broadcast import ListenerSchema
+from graia.saya.cube import Cube
+from nepattern import (
+    AllParam,
+    BasePattern,
+    Empty,
+    PatternModel,
+    UnionArg,
+    pattern_map,
+    type_parser,
+)
+
+from .dispatcher import AlconnaDispatcher, AlconnaProperty
 from .saya import AlconnaSchema
+from .analyser import GraiaCommandAnalyser
 
 
 def __valid(text: Union[Image, str]):
@@ -208,52 +224,149 @@ def assign(path: str, value: Any = _seminal, or_not: bool = False) -> Wrapper:
     return wrapper
 
 
-class Startswith(ChainDecorator):
-    def __init__(self, prefix: Any):
-        self.pattern = type_parser(prefix)
-        if self.pattern.model in (PatternModel.REGEX_MATCH, PatternModel.REGEX_CONVERT):
-            self.pattern.regex_pattern = re.compile(f"^{self.pattern.pattern}")
+@lru_cache()
+def search_element(name: str):
+    for i in gen_subclass(Element):
+        if i.__name__ == name:
+            return i
 
-    async def __call__(self, chain: MessageChain, interface: DispatcherInterface) -> Optional[MessageChain]:
-        header = chain.include(Quote, Source)
-        rest: MessageChain = chain.exclude(Quote, Source)
+
+def _get_filter_out() -> List[Type[Element]]:
+    return [search_element(i) for i in GraiaCommandAnalyser.filter_out]
+
+
+def _ext_prefix(pattern: Union[BasePattern, UnionArg]):
+    if isinstance(pattern, UnionArg):
+        return UnionArg(
+            [_ext_prefix(pat) for pat in pattern.for_validate]
+            + [
+                _ext_prefix(type_parser(eq)) if isinstance(eq, str) else eq
+                for eq in pattern.for_equal
+            ],
+            pattern.anti,
+        )
+    elif pattern.model in (PatternModel.REGEX_MATCH, PatternModel.REGEX_CONVERT):
+        res = deepcopy(pattern)
+        res.regex_pattern = re.compile(f"^{res.pattern}")
+        return res
+    return pattern
+
+
+def _ext_suffix(pattern: Union[BasePattern, UnionArg]):
+    if isinstance(pattern, UnionArg):
+        return UnionArg(
+            [_ext_suffix(pat) for pat in pattern.for_validate]
+            + [
+                _ext_suffix(type_parser(eq)) if isinstance(eq, str) else eq
+                for eq in pattern.for_equal
+            ],
+            pattern.anti,
+        )
+    elif pattern.model in (PatternModel.REGEX_MATCH, PatternModel.REGEX_CONVERT):
+        res = deepcopy(pattern)
+        res.regex_pattern = re.compile(f"{res.pattern}$")
+        return res
+    return pattern
+
+
+class MatchPrefix(Decorator, Derive[MessageChain]):
+    pre = True
+
+    def __init__(self, prefix: Any, extract: bool = False):
+        """
+        利用 NEPattern 的前缀匹配
+
+        Args:
+            prefix: 检测的前缀, 支持格式有 a|b , ['a', At(...)] 等
+            extract: 是否为提取模式, 默认为 False
+        """
+        pattern = type_parser(prefix)
+        if pattern in (AllParam, Empty):
+            raise ValueError(prefix)
+        self.pattern = _ext_prefix(pattern)
+        self.extract = extract
+
+    async def target(self, interface: DecoratorInterface):
+        return await self(
+            await interface.dispatcher_interface.lookup_param("message_chain", MessageChain, None),
+            interface.dispatcher_interface,
+        )
+
+    async def __call__(
+            self, chain: MessageChain, interface: DispatcherInterface
+    ) -> MessageChain:
+        header = chain.include(*_get_filter_out())
+        rest: MessageChain = chain.exclude(*_get_filter_out())
         if not rest.content:
             raise ExecutionStop
         elem = rest.content[0]
         if isinstance(elem, Text) and (res := self.pattern.validate(elem.text)).success:
-            elem.text = elem.text.replace(str(res.value), '', 1).lstrip()
+            if self.extract:
+                return MessageChain([Text(str(res.value))])
+            elem.text = elem.text[elem.text.find(str(res.value))].lstrip()
             return header + rest
         elif self.pattern.validate(elem).success:
+            if self.extract:
+                return MessageChain([elem])
             rest.content.remove(elem)
             return header + rest
         raise ExecutionStop
 
 
-class Endswith(ChainDecorator):
-    def __init__(self, suffix: Any):
-        self.pattern = type_parser(suffix)
-        if self.pattern.model in (PatternModel.REGEX_MATCH, PatternModel.REGEX_CONVERT):
-            self.pattern.regex_pattern = re.compile(f"{self.pattern.pattern}$")
+class MatchSuffix(Decorator, Derive[MessageChain]):
+    pre = True
 
-    async def __call__(self, chain: MessageChain, interface: DispatcherInterface) -> Optional[MessageChain]:
-        header = chain.include(Quote, Source)
-        rest: MessageChain = chain.exclude(Quote, Source)
+    def __init__(self, suffix: Any, extract: bool = False):
+        """
+        利用 NEPattern 的后缀匹配
+
+        Args:
+            suffix: 检测的前缀, 支持格式有 a|b , ['a', At(...)] 等
+            extract: 是否为提取模式, 默认为 False
+        """
+        pattern = type_parser(suffix)
+        if pattern in (AllParam, Empty):
+            raise ValueError(suffix)
+        self.pattern = _ext_suffix(pattern)
+        self.extract = extract
+
+    async def target(self, interface: DecoratorInterface):
+        return await self(
+            await interface.dispatcher_interface.lookup_param("message_chain", MessageChain, None),
+            interface.dispatcher_interface,
+        )
+
+    async def __call__(
+            self, chain: MessageChain, interface: DispatcherInterface
+    ) -> MessageChain:
+        header = chain.include(*_get_filter_out())
+        rest: MessageChain = chain.exclude(*_get_filter_out())
         if not rest.content:
             raise ExecutionStop
         elem = rest.content[-1]
         if isinstance(elem, Text) and (res := self.pattern.validate(elem.text)).success:
-            elem.text = elem.text.replace(str(res.value), '', 1).rstrip()
+            if self.extract:
+                return MessageChain([Text(str(res.value))])
+            elem.text = elem.text[: elem.text.rfind(str(res.value))].rstrip()
             return header + rest
         elif self.pattern.validate(elem).success:
+            if self.extract:
+                return MessageChain([elem])
             rest.content.remove(elem)
             return header + rest
         raise ExecutionStop
 
 
-def startswith(prefix: Any, bind: Optional[str] = None) -> Wrapper:
-    decorator = Startswith(prefix)
-    if decorator.pattern in (AllParam, Empty):
-        raise ValueError(prefix)
+def startswith(prefix: Any, include: bool = False, bind: Optional[str] = None) -> Wrapper:
+    """
+    MatchPrefix 的 shortcut形式
+
+    Args:
+        prefix: 需要匹配的前缀
+        include: 指示是否仅返回匹配部分, 默认为 False
+        bind: 指定注入返回值的参数名称
+    """
+    decorator = MatchPrefix(prefix, include)
 
     def wrapper(func: T_Callable):
         cube: Cube[ListenerSchema] = ensure_cube_as_listener(func)
@@ -265,10 +378,16 @@ def startswith(prefix: Any, bind: Optional[str] = None) -> Wrapper:
     return wrapper
 
 
-def endswith(suffix: Any, bind: Optional[str] = None) -> Wrapper:
-    decorator = Endswith(suffix)
-    if decorator.pattern in (AllParam, Empty):
-        raise ValueError(suffix)
+def endswith(suffix: Any, include: bool = False, bind: Optional[str] = None) -> Wrapper:
+    """
+    MatchSuffix 的 shortcut形式
+
+    Args:
+        suffix: 需要匹配的前缀
+        include: 指示是否仅返回匹配部分, 默认为 False
+        bind: 指定注入返回值的参数名称
+    """
+    decorator = MatchSuffix(suffix, include)
 
     def wrapper(func: T_Callable):
         cube: Cube[ListenerSchema] = ensure_cube_as_listener(func)
@@ -291,7 +410,7 @@ __all__ = [
     "shortcuts",
     "assign",
     "startswith",
-    "Startswith",
+    "MatchPrefix",
     "endswith",
-    "Endswith"
+    "MatchSuffix",
 ]
