@@ -3,7 +3,7 @@ import setuptools
 setuptools.setup(
     name="arclet-alconna-graia",
     url="https://github.com/ArcletProject/Alconna-Graia",
-    version="0.6.1",
+    version="0.6.2",
     author="ArcletProject",
     author_email="rf_tar_railt@qq.com",
     description="Support Alconna to GraiaProject",
@@ -17,7 +17,8 @@ setuptools.setup(
         'graia-broadcast>=0.18.0',
         'creart~=0.2.1',
         'creart-graia~=0.1.5',
-        'nepattern>=0.1.2'
+        'nepattern>=0.1.2',
+        "graiax-shortcut>=0.1.0",
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

@@ -90,7 +90,7 @@ ariadne_ctx.set(bot)
 async def test4(
         group: Group,
         event: GroupMessage,
-        message: MessageChain = MatchSuffix("url", extract=True),
+        message: MessageChain = MatchPrefix("shell"),
 ):
     print("-", message, "-")
 
@@ -214,7 +214,7 @@ ev4 = GroupMessage.parse_obj(
 
 ev5 = GroupMessage.parse_obj(
     {
-        'messageChain': [{"type": "Plain", "text": "test https://www.baidu.com"}],
+        'messageChain': [{"type": "Plain", "text": "shell echo hello"}],
         'sender': {
             "id": 42425665,
             "memberName": "test3",

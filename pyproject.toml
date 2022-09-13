@@ -1,6 +1,6 @@
 [project]
 name = "arclet-alconna-graia"
-version = "0.6.1"
+version = "0.6.2"
 description = "Support Alconna to GraiaProject"
 authors = [
     {name = "RF-Tar-Railt", email = "rf_tar_railt@qq.com"}
