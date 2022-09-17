@@ -95,17 +95,17 @@ dependencies = [
 
 [[package]]
 name = "graia-ariadne"
-version = "0.9.1"
+version = "0.9.4"
 requires_python = ">=3.8,<4.0"
 summary = "Another elegant Python QQ Bot framework for mirai and mirai-api-http v2."
 dependencies = [
-    "aiohttp<4.0,>=3.8",
+    "aiohttp~=3.8",
     "creart-graia<1.0.0,>=0.1.5",
-    "graia-amnesia<0.7.0,>=0.6.0",
+    "graia-amnesia~=0.6.0",
     "graia-broadcast~=0.18",
-    "launart<1.0.0,>=0.6.0",
-    "pydantic<2.0,>=1.8",
-    "typing-extensions<5.0,>=4.0",
+    "launart~=0.6",
+    "pydantic~=1.9",
+    "typing-extensions~=4.3",
 ]
 
 [[package]]
@@ -406,9 +406,9 @@ content_hash = "sha256:d23fec88d0c8da59a8d674fd0c3e828387ed1a7fcc92beee193900aba
     {url = "https://files.pythonhosted.org/packages/4f/0d/434bae97145de0e5bda33e4757c5def19e034fdb12a32ea2dd7d0d4d1c70/graia_amnesia-0.6.0-py3-none-any.whl", hash = "sha256:c1e347171cd42d81b10dea4fb6afef4bed4e836fa9c698ecf595ccaa5c2d1939"},
     {url = "https://files.pythonhosted.org/packages/e4/17/23accd9a4466a7cebc4cd6f74821197ad1e74b23cd5395acee7ccd19ce1f/graia-amnesia-0.6.0.tar.gz", hash = "sha256:9f4ed226ebd2ccfe5e09489e4afffd9e58ae28c3fa93211dda72c3c6b9a439f0"},
 ]
-"graia-ariadne 0.9.1" = [
-    {url = "https://files.pythonhosted.org/packages/80/98/bc79630d82fd4f09f15432c5cbc12f98bb7a867a17deddbe1b333580373e/graia_ariadne-0.9.1-py3-none-any.whl", hash = "sha256:0ddd2adebd2a01e1a56b9d6c247ebf8dba02e8268a86e0fcc569c99d294e6b33"},
-    {url = "https://files.pythonhosted.org/packages/f7/3c/9d1a0ba9fd4d08218bf9e5891a2636ddadd12028933814b390c0d6c5e790/graia-ariadne-0.9.1.tar.gz", hash = "sha256:60a7d0d85e188a9ff0bc384ce4a244adc8eb721e28450f9bdaabcd914829b6be"},
+"graia-ariadne 0.9.4" = [
+    {url = "https://files.pythonhosted.org/packages/40/7a/c07a7f1abd8edd8a82742dbc9e4bce59ee0369807bf7a5ac2b129f1c6820/graia-ariadne-0.9.4.tar.gz", hash = "sha256:a9a4bcdd3a1fb6f5ccd0024b3f6120449b4b7e434fd90a28ae63bc4367280a9c"},
+    {url = "https://files.pythonhosted.org/packages/f6/df/707ce3560cbf093d748640464dd04926bda134868d87d893d8fbcb2d2ce0/graia_ariadne-0.9.4-py3-none-any.whl", hash = "sha256:5c87d60da11c42aad32d3d70100c646e91af1b6911c14b657dd88688290fb082"},
 ]
 "graia-broadcast 0.18.2" = [
     {url = "https://files.pythonhosted.org/packages/0b/14/e155d41933b6069a0ea85dd04aca5660cdf156aee4bd8b44117b9be751a1/graia_broadcast-0.18.2-py3-none-any.whl", hash = "sha256:dcb712dc5be29419c4b65dc649c4e7c795c834fb810682f6131b313d6bd3e740"},

@@ -84,6 +84,13 @@ async def test1(group: Group, result: Arpamar, sth: Match[str]):
     print("match", sth.available, sth.result)
 
 
+@alcommand("[!|.]hello <name:str>;say <word>", send_error=True)
+async def test1(group: Group, result: Arpamar, name: Match[str]):
+    print("sign:", result)
+    print("sender:", group)
+    print("match", name.available, name.result)
+    
+    
 @from_command("foo bar {baz}")
 @listen(GroupMessage)
 async def test2(baz: int):
@@ -127,7 +134,7 @@ class AlconnaDispatcher(BaseDispatcher):
     ): ...
 ```
 
-`alcommand`: 使用的 Alconna 指令
+`command`: 使用的 Alconna 指令
 
 `send_flag`: 解析期间输出信息的发送方式
 - reply: 直接发送给指令发送者

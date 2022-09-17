@@ -136,7 +136,7 @@ class AlconnaDispatcher(BaseDispatcher):
         output_text: Optional[str] = None,
         source: Optional[MessageEvent] = None,
     ) -> AlconnaProperty[MessageEvent]:
-        if not result.matched or not output_text:
+        if not result.matched or not output_text or not isinstance(source, MessageEvent):
             return AlconnaProperty(result, None, source)
         id_ = id(source) if source else 0
         cache = output_cache.setdefault(id_, set())

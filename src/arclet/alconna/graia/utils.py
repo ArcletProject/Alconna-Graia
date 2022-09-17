@@ -3,7 +3,7 @@ import re
 from copy import deepcopy
 from typing import Any, Dict, Optional, Union, List, Type
 from functools import lru_cache
-from arclet.alconna import Alconna, AlconnaFormat
+from arclet.alconna import Alconna, AlconnaFormat, AlconnaGroup, AlconnaString
 from graia.amnesia.message import MessageChain, Text, Element
 from graiax.shortcut.saya import (
     T_Callable,
@@ -28,7 +28,6 @@ from nepattern import (
     Empty,
     PatternModel,
     UnionArg,
-    pattern_map,
     type_parser,
 )
 
@@ -37,28 +36,41 @@ from .saya import AlconnaSchema
 from .analyser import GraiaCommandAnalyser
 
 
-def __valid(text: Union[Image, str]):
-    return text.url if isinstance(text, Image) else pattern_map["url"].match(text)
-
-
-ImgOrUrl = BasePattern(
-    model=PatternModel.TYPE_CONVERT,
-    origin=str,
-    converter=__valid,
-    alias="img_url",
-    accepts=[str, Image],
-)
+ImgOrUrl = UnionArg(
+    [
+        BasePattern(
+            model=PatternModel.TYPE_CONVERT,
+            origin=str,
+            converter=lambda x: x.url,
+            alias="img",
+            accepts=[Image]
+        ),
+        type_parser('url')
+    ]
+) @ "img_url"
 """
 内置类型, 允许传入图片元素(Image)或者链接(URL)，返回链接
 """
 
-AtID = BasePattern(
-    model=PatternModel.TYPE_CONVERT,
-    origin=int,
-    alias="at_id",
-    accepts=[str, At, int],
-    converter=lambda x: x.target if isinstance(x, At) else int(str(x).lstrip("@")),
-)
+AtID = UnionArg(
+    [
+        BasePattern(
+            model=PatternModel.TYPE_CONVERT,
+            origin=int,
+            alias="at",
+            accepts=[At],
+            converter=lambda x: x.target
+        ),
+        BasePattern(
+            r"@(\d+)",
+            model=PatternModel.REGEX_CONVERT,
+            origin=int,
+            alias="@xxx",
+            accepts=[str],
+        ),
+        type_parser(int)
+    ]
+) @ "at_id"
 """
 内置类型，允许传入提醒元素(At)或者'@xxxx'式样的字符串或者数字, 返回数字
 """
@@ -139,11 +151,11 @@ def shortcuts(**kwargs: MessageChain) -> Wrapper:
 
 
 def alcommand(
-        alconna: Alconna,
-        guild: bool = True,
-        private: bool = True,
-        send_error: bool = False,
-        post: bool = False,
+    alconna: Union[Alconna, AlconnaGroup, str],
+    guild: bool = True,
+    private: bool = True,
+    send_error: bool = False,
+    post: bool = False,
 ) -> Wrapper:
     """
     saya-util 形式的注册一个消息事件监听器并携带 AlconnaDispatcher
@@ -155,6 +167,11 @@ def alcommand(
         send_error: 是否发送错误信息
         post: 是否以事件发送输出信息
     """
+    if isinstance(alconna, str):
+        if not alconna.strip():
+            raise ValueError(alconna)
+        cmds = alconna.split(";")
+        alconna = AlconnaString(cmds[0], *cmds[1:])
     if alconna.meta.example and "$" in alconna.meta.example:
         alconna.meta.example = alconna.meta.example.replace("$", alconna.headers[0])
 

@@ -1,6 +1,6 @@
 from graia.ariadne.message.chain import MessageChain
 
-from arclet.alconna.graia import Alconna, AlconnaDispatcher, AlconnaOutputMessage, Match, Query, success_record, \
+from src.arclet.alconna.graia import Alconna, AlconnaDispatcher, AlconnaOutputMessage, Match, Query, success_record, \
     AlconnaProperty, match_path, MatchSuffix, MatchPrefix
 from arclet.alconna import Args, Arpamar, Duplication
 from arclet.alconna import ArgsStub, command_manager
