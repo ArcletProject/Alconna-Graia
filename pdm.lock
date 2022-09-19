@@ -34,7 +34,7 @@ dependencies = [
 
 [[package]]
 name = "arclet-alconna-tools"
-version = "0.1.1"
+version = "0.1.2"
 requires_python = ">=3.8"
 summary = "Builtin Tools for Alconna"
 dependencies = [
@@ -242,7 +242,7 @@ summary = "Backport of pathlib-compatible object wrapper for zip files"
 
 [metadata]
 lock_version = "4.0"
-content_hash = "sha256:6c95d2ac43cbe006d4425035b7e6d0997b56062ed8e98a5fd84d7c4f276b342c"
+content_hash = "sha256:977f82c5559a770b2278c4e914396a6693bb37e859ac7a79bbcf3203a70f3def"
 
 [metadata.files]
 "aiohttp 3.8.1" = [
@@ -327,9 +327,9 @@ content_hash = "sha256:6c95d2ac43cbe006d4425035b7e6d0997b56062ed8e98a5fd84d7c4f2
     {url = "https://files.pythonhosted.org/packages/5c/a9/812eab9c257a901acc3217a606164d2d39382bd5d1cb49d740f7104d45dc/arclet_alconna-1.3.0-py3-none-any.whl", hash = "sha256:b3be3ee26e00a4724bdf5c9ab5a99209db1f3bbde96a5ef23f4d3d83b724b58d"},
     {url = "https://files.pythonhosted.org/packages/96/38/8063b898a98e333f7ed32bc9daaa15d8c373964f87c281b37528f962389f/arclet-alconna-1.3.0.tar.gz", hash = "sha256:993ed46147143f89a81eb6de13718ef31d140d8ebd01c8c4c1bdfad79f004d01"},
 ]
-"arclet-alconna-tools 0.1.1" = [
-    {url = "https://files.pythonhosted.org/packages/74/ed/72ef89bcac8cfb1de236f07ef2a32ba3edf9d93b11878df1d884dd75e185/arclet_alconna_tools-0.1.1-py3-none-any.whl", hash = "sha256:0ea174875d3ba9659bc6753909022897e610e7c165e21bbcc6ad1c4fc86f5ae9"},
-    {url = "https://files.pythonhosted.org/packages/cc/de/c72315dd7317a84649cc1f548f0468e98d6dd7cf1c350abbaeea8fadae7d/arclet-alconna-tools-0.1.1.tar.gz", hash = "sha256:ecb898d25baa07c7038a340dcc33caf7774a7610814bea0e7a3e2483f3242667"},
+"arclet-alconna-tools 0.1.2" = [
+    {url = "https://files.pythonhosted.org/packages/2d/89/c78f13361d20ed386b63136378eb1b39cd3d8ceddafc980069b88cbf347d/arclet-alconna-tools-0.1.2.tar.gz", hash = "sha256:229d2248adcda48d773d55bca038e7b6c7d685a78d075a8d36fe359faacbff2b"},
+    {url = "https://files.pythonhosted.org/packages/44/71/8b51a193214a8be7fa034b22715d8d81b2e56938194fb2bd277b62a5576c/arclet_alconna_tools-0.1.2-py3-none-any.whl", hash = "sha256:87b1f77d22d6c568a7ed066cd24ef060a4b6f71877d6043aea0cf229a29e1d8d"},
 ]
 "async-timeout 4.0.2" = [
     {url = "https://files.pythonhosted.org/packages/54/6e/9678f7b2993537452710ffb1750c62d2c26df438aa621ad5fa9d1507a43a/async-timeout-4.0.2.tar.gz", hash = "sha256:2163e1640ddb52b7a8c80d0a67a08587e5d245cc9c553a74a847056bc2976b15"},
