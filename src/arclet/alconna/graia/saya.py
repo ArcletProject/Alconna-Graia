@@ -1,15 +1,16 @@
-from dataclasses import dataclass, field
-from typing import Union, Any, Dict
 import inspect
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any, Dict, Union
+
+from arclet.alconna.core import Alconna
+from arclet.alconna.manager import CommandManager
+from arclet.alconna.tools import AlconnaString
 from graia.broadcast import Broadcast
 from graia.saya.behaviour import Behaviour
 from graia.saya.cube import Cube
 from graia.saya.schema import BaseSchema
 
-from arclet.alconna.manager import CommandManager
-from arclet.alconna.builtin.construct import AlconnaString
-from arclet.alconna.core import Alconna
 from .dispatcher import AlconnaDispatcher
 
 
@@ -40,7 +41,7 @@ class AlconnaSchema(BaseSchema):
             return
         if file:
             path = Path(file)
-            command.reset_namespace(f"{path.parts[-2]}/{path.stem}")
+            command.reset_namespace(f"{path.parts[-2]}.{path.stem}")
             for k, v in self.shortcuts.items():
                 command.shortcut(k, v)
 

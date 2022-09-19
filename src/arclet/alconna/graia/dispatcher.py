@@ -16,11 +16,10 @@ from contextlib import suppress
 from arclet.alconna import (
     output_manager,
     Empty,
-    Arpamar,
-    AlconnaFormat,
-    AlconnaString,
+    Arpamar
 )
 from arclet.alconna.core import Alconna, AlconnaGroup
+from arclet.alconna.tools import AlconnaString, AlconnaFormat
 from arclet.alconna.components.duplication import Duplication, generate_duplication
 from arclet.alconna.components.stub import ArgsStub, OptionStub, SubcommandStub
 from graia.broadcast.entities.event import Dispatchable

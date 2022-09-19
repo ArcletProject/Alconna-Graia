@@ -1,3 +1,5 @@
+from typing import List, Union, Any
+
 from arclet.alconna.exceptions import NullMessage
 from arclet.alconna.util import split
 from arclet.alconna.config import config
@@ -14,6 +16,10 @@ class GraiaCommandAnalyser(Analyser[MessageChain]):
     filter_out = ["Source", "File", "Quote"]
 
     @staticmethod
+    def generate_token(data: List[Union[Any, List[str]]]) -> int:
+        return hash(''.join(i.__repr__() for i in data))
+
+    @staticmethod
     def converter(command: str):
         return MessageChain([Text(command)])
 
@@ -26,6 +32,7 @@ class GraiaCommandAnalyser(Analyser[MessageChain]):
             self.temporary_data["fail"] = exp
             return self
         self.origin_data = data
+        keep_crlf = not self.alconna.meta.keep_crlf
         i, exc = 0, None
         for unit in data:
             if (uname := unit.__class__.__name__) in self.filter_out:
@@ -33,7 +40,7 @@ class GraiaCommandAnalyser(Analyser[MessageChain]):
             if (proc := self.preprocessors.get(uname)) and (res := proc(unit)):
                 unit = res
             if isinstance(unit, Text):
-                if not (res := split(unit.text.strip(), tuple(self.separators))):
+                if not (res := split(unit.text.strip(), tuple(self.separators), keep_crlf)):
                     continue
                 self.raw_data.append(StrMounter(res))
             else:

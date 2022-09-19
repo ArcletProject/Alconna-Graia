@@ -1,9 +1,8 @@
 import inspect
-import re
-from copy import deepcopy
 from typing import Any, Dict, Optional, Union, List, Type
 from functools import lru_cache
-from arclet.alconna import Alconna, AlconnaFormat, AlconnaGroup, AlconnaString
+from arclet.alconna import Alconna, AlconnaGroup
+from arclet.alconna.tools import AlconnaString, AlconnaFormat
 from graia.amnesia.message import MessageChain, Text, Element
 from graiax.shortcut.saya import (
     T_Callable,
@@ -252,40 +251,6 @@ def _get_filter_out() -> List[Type[Element]]:
     return [search_element(i) for i in GraiaCommandAnalyser.filter_out]
 
 
-def _ext_prefix(pattern: Union[BasePattern, UnionArg]):
-    if isinstance(pattern, UnionArg):
-        return UnionArg(
-            [_ext_prefix(pat) for pat in pattern.for_validate]
-            + [
-                _ext_prefix(type_parser(eq)) if isinstance(eq, str) else eq
-                for eq in pattern.for_equal
-            ],
-            pattern.anti,
-        )
-    elif pattern.model in (PatternModel.REGEX_MATCH, PatternModel.REGEX_CONVERT):
-        res = deepcopy(pattern)
-        res.regex_pattern = re.compile(f"^{res.pattern}")
-        return res
-    return pattern
-
-
-def _ext_suffix(pattern: Union[BasePattern, UnionArg]):
-    if isinstance(pattern, UnionArg):
-        return UnionArg(
-            [_ext_suffix(pat) for pat in pattern.for_validate]
-            + [
-                _ext_suffix(type_parser(eq)) if isinstance(eq, str) else eq
-                for eq in pattern.for_equal
-            ],
-            pattern.anti,
-        )
-    elif pattern.model in (PatternModel.REGEX_MATCH, PatternModel.REGEX_CONVERT):
-        res = deepcopy(pattern)
-        res.regex_pattern = re.compile(f"{res.pattern}$")
-        return res
-    return pattern
-
-
 class MatchPrefix(Decorator, Derive[MessageChain]):
     pre = True
 
@@ -300,7 +265,7 @@ class MatchPrefix(Decorator, Derive[MessageChain]):
         pattern = type_parser(prefix)
         if pattern in (AllParam, Empty):
             raise ValueError(prefix)
-        self.pattern = _ext_prefix(pattern)
+        self.pattern = pattern.prefixed()
         self.extract = extract
 
     async def target(self, interface: DecoratorInterface):
@@ -344,7 +309,7 @@ class MatchSuffix(Decorator, Derive[MessageChain]):
         pattern = type_parser(suffix)
         if pattern in (AllParam, Empty):
             raise ValueError(suffix)
-        self.pattern = _ext_suffix(pattern)
+        self.pattern = pattern.suffixed()
         self.extract = extract
 
     async def target(self, interface: DecoratorInterface):
