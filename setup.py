@@ -10,7 +10,7 @@ setuptools.setup(
     license='AGPL-3.0',
     packages=['arclet.alconna.graia'],
     install_requires=[
-        'arclet-alconna<1.3.0, >=1.2.0.7',
+        'arclet-alconna>=1.2.0.7, <1.4.0',
         'graia-saya~=0.0.16',
         'graia-ariadne<1.0.0, >=0.7.14',
         'graia-amnesia>=0.5.0',
