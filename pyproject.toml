@@ -1,6 +1,6 @@
 [project]
 name = "arclet-alconna-graia"
-version = "0.7.3"
+version = "0.7.4"
 description = "Support Alconna to GraiaProject"
 authors = [
     {name = "RF-Tar-Railt", email = "rf_tar_railt@qq.com"}
@@ -34,8 +34,8 @@ Homepage = "https://github.com/ArcletProject/Alconna-Graia"
 Documentation = "https://arcletproject.github.io/docs/alconna/tutorial"
 "Bug Reports" = "https://github.com/ArcletProject/Alconna/issues"
 Source = "https://github.com/ArcletProject/Alconna"
-# [project.entry-points."creart.creators"]
-# alconna_behavior = "arclet.alconna.graia.create:AlconnaBehaviorCreator"
+[project.entry-points."creart.creators"]
+alconna_behavior = "arclet.alconna.graia.create:AlconnaBehaviorCreator"
 
 [build-system]
 requires = ["pdm-pep517>=1.0.0"]
