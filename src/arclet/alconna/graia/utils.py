@@ -137,8 +137,9 @@ def match_value(path: str, value: Any, or_not: bool = False):
     return Depend(__wrapper__)
 
 
-def shortcuts(**kwargs: MessageChain) -> Wrapper:
+def shortcuts(mapping: Optional[Dict] = None, **kwargs: MessageChain) -> Wrapper:
     def wrapper(func: T_Callable) -> T_Callable:
+        kwargs.update(mapping)
         channel = Channel.current()
         for cube in channel.content:
             if isinstance(cube.metaclass, AlconnaSchema) and cube.content == func:
