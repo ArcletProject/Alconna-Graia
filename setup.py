@@ -3,7 +3,7 @@ import setuptools
 setuptools.setup(
     name="arclet-alconna-graia",
     url="https://github.com/ArcletProject/Alconna-Graia",
-    version="0.7.5",
+    version="0.7.6",
     author="ArcletProject",
     author_email="rf_tar_railt@qq.com",
     description="Support Alconna to GraiaProject",
@@ -11,7 +11,7 @@ setuptools.setup(
     packages=['arclet.alconna.graia'],
     install_requires=[
         "arclet-alconna<1.4.0, >=1.3.0",
-        "arclet-alconna-tools>=0.1.2",
+        "arclet-alconna-tools>=0.1.5",
         "creart-graia~=0.1.5",
         "creart~=0.2.1",
         "graia-amnesia>=0.5.0",
