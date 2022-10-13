@@ -27,7 +27,8 @@ from nepattern import (
     Empty,
     PatternModel,
     UnionArg,
-    type_parser,
+    URL,
+    type_parser
 )
 
 from .dispatcher import AlconnaDispatcher, AlconnaProperty
@@ -40,11 +41,11 @@ ImgOrUrl = UnionArg(
         BasePattern(
             model=PatternModel.TYPE_CONVERT,
             origin=str,
-            converter=lambda x: x.url,
+            converter=lambda _, x: x.url,
             alias="img",
             accepts=[Image]
         ),
-        type_parser('url')
+        URL
     ]
 ) @ "img_url"
 """
@@ -58,7 +59,7 @@ AtID = UnionArg(
             origin=int,
             alias="at",
             accepts=[At],
-            converter=lambda x: x.target
+            converter=lambda _, x: x.target
         ),
         BasePattern(
             r"@(\d+)",
