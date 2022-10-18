@@ -40,7 +40,7 @@ class AlconnaSchema(BaseSchema):
             file = inspect.getsourcefile(func)
         except TypeError:
             return
-        if command.namespace != config.default_namespace.name and file:
+        if command.namespace == config.default_namespace.name and file:
             path = Path(file)
             command.reset_namespace(f"{path.parts[-2]}.{path.stem}")
         for k, v in self.shortcuts.items():

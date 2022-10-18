@@ -173,7 +173,7 @@ def alcommand(
             raise ValueError(alconna)
         cmds = alconna.split(";")
         alconna = AlconnaString(cmds[0], *cmds[1:])
-    if alconna.meta.example and "$" in alconna.meta.example:
+    if alconna.meta.example and "$" in alconna.meta.example and alconna.headers:
         alconna.meta.example = alconna.meta.example.replace("$", alconna.headers[0])
 
     def wrapper(func: T_Callable) -> T_Callable:
