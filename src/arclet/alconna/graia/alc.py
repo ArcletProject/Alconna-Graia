@@ -21,7 +21,7 @@ from .saya import AlconnaSchema
 class AlcTempSchema(BaseSchema):
     options: List[Option] = field(default_factory=list)
     meta: CommandMeta = field(default=CommandMeta())
-    args: Args = field(default=Args())
+    args: Optional[Args] = field(default=None)
     namespace: Namespace = field(default=config.default_namespace)
 
 
@@ -49,7 +49,7 @@ def command(name: Optional[Any] = None, headers: Optional[List[Any]] = None) -> 
         alc = Alconna(
             name or func.__name__,
             headers or [],
-            prev.metaclass.args,
+            prev.metaclass.args or Args(),
             *prev.metaclass.options,
             meta=prev.metaclass.meta,
             namespace=prev.metaclass.namespace
