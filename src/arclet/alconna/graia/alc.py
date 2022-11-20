@@ -1,124 +1,101 @@
-from typing import List, Optional, Any, Union, Callable
-from dataclasses import dataclass, field
-from graia.saya import Channel, BaseSchema, Cube
-from graiax.shortcut.saya import ensure_cube_as_listener, Wrapper, T_Callable
+from typing import Any, Callable, Dict, List, Optional, Union
+
 from arclet.alconna import (
     Alconna,
-    Option,
-    Args,
-    CommandMeta,
     ArgField,
     ArgFlag,
+    Args,
+    CommandMeta,
     Namespace,
-    config
+    Option,
+    config,
 )
+from graia.saya.factory import BufferModifier, SchemaWrapper, buffer_modifier, factory
 
 from .dispatcher import AlconnaDispatcher
 from .saya import AlconnaSchema
 
 
-@dataclass
-class AlcTempSchema(BaseSchema):
-    options: List[Option] = field(default_factory=list)
-    meta: CommandMeta = field(default=CommandMeta())
-    args: Optional[Args] = field(default=None)
-    namespace: Namespace = field(default=config.default_namespace)
-
-
-def cube_mounted(func: Callable) -> Cube[AlcTempSchema]:
-    if hasattr(func, "__cube__"):
-        if not isinstance(func.__cube__.metaclass, AlcTempSchema):
-            raise TypeError("Cube must be AlcTempSchema")
-        return func.__cube__
-    channel = Channel.current()
-    for cube in channel.content:
-        if cube.content is func and isinstance(cube.metaclass, AlcTempSchema):
-            func.__cube__ = cube
-            break
-    else:
-        cube = Cube(func, AlcTempSchema())
-        channel.content.append(cube)
-        func.__cube__ = cube
-    return func.__cube__
-
-
-def command(name: Optional[Any] = None, headers: Optional[List[Any]] = None) -> Wrapper:
-    def wrapper(func: T_Callable):
-        prev = cube_mounted(func)
-        delattr(func, '__cube__')
+@factory
+def command(
+    name: Optional[Any] = None, headers: Optional[List[Any]] = None
+) -> SchemaWrapper:
+    def wrapper(func: Callable, buffer: Dict[str, Any]):
         alc = Alconna(
             name or func.__name__,
             headers or [],
-            prev.metaclass.args or Args(),
-            *prev.metaclass.options,
-            meta=prev.metaclass.meta,
-            namespace=prev.metaclass.namespace
+            buffer.pop("args", Args()),
+            *buffer.pop("options", []),
+            meta=buffer.pop("meta", CommandMeta()),
+            namespace=buffer.pop("namespace", config.default_namespace),
         )
         if alc.meta.example and "$" in alc.meta.example and alc.headers:
             alc.meta.example = alc.meta.example.replace("$", alc.headers[0])
-        cube = ensure_cube_as_listener(func)
-        cube.metaclass.inline_dispatchers.append(AlconnaDispatcher(alc, send_flag='reply'))
-        channel = Channel.current()
-        channel.use(AlconnaSchema(alc))(func)
-        return func
+        buffer.setdefault("dispatchers", []).append(
+            AlconnaDispatcher(alc, send_flag="reply")
+        )
+        return AlconnaSchema(alc)
 
     return wrapper
 
 
-def option(name: str, args: Optional[Args] = None, help: Optional[str] = None) -> Wrapper:
-    def wrapper(func: T_Callable):
-        cube = cube_mounted(func)
-        cube.metaclass.options.append(Option(name, args, help_text=help))
-        return func
+@buffer_modifier
+def option(
+    name: str, args: Optional[Args] = None, help: Optional[str] = None
+) -> BufferModifier:
+    return lambda buffer: buffer.setdefault("options", []).append(
+        Option(name, args, help_text=help)
+    )
+
+
+@buffer_modifier
+def main_args(args: Args) -> BufferModifier:
+    def wrapper(buffer: Dict[str, Any]):
+        buffer["args"] = args
 
     return wrapper
 
 
-def main_args(args: Args) -> Wrapper:
-    def wrapper(func: T_Callable):
-        cube = cube_mounted(func)
-        cube.metaclass.args = args
-        return func
-
-    return wrapper
-
-
+@buffer_modifier
 def argument(
-        name: str,
-        value: Optional[Any] = None,
-        default: Union[Any, ArgField, None] = None,
-        flags: Optional[List[ArgFlag]] = None,
-) -> Wrapper:
-    def wrapper(func: T_Callable):
-        cube = cube_mounted(func)
-        cube.metaclass.args = Args().add_argument(name, value=value, default=default, flags=flags)
-        return func
+    name: str,
+    value: Optional[Any] = None,
+    default: Union[Any, ArgField, None] = None,
+    flags: Optional[List[ArgFlag]] = None,
+) -> BufferModifier:
+    def wrapper(buffer: Dict[str, Any]):
+        if args := buffer.get("args"):
+            args: Args
+            args.add_argument(name, value=value, default=default, flags=flags)
+        else:
+            buffer["args"] = Args().add_argument(
+                name, value=value, default=default, flags=flags
+            )
 
     return wrapper
 
 
-def meta(content: CommandMeta) -> Wrapper:
-    def wrapper(func: T_Callable):
-        cube = cube_mounted(func)
-        cube.metaclass.meta = content
-        return func
+@buffer_modifier
+def meta(content: CommandMeta) -> BufferModifier:
+    def wrapper(buffer: Dict[str, Any]):
+        buffer["meta"] = content
 
     return wrapper
 
 
-def help(description: str, usage: Optional[str] = None, example: Optional[str] = None) -> Wrapper:
-    def wrapper(func: T_Callable):
-        cube = cube_mounted(func)
-        cube.metaclass.meta = CommandMeta(description, usage, example)
-        return func
+@buffer_modifier
+def help(
+    description: str, usage: Optional[str] = None, example: Optional[str] = None
+) -> BufferModifier:
+    def wrapper(buffer: Dict[str, Any]):
+        buffer["meta"] = CommandMeta(description, usage, example)
 
     return wrapper
 
 
-def namespace(np: Union[str, Namespace]) -> Wrapper:
-    def wrapper(func: T_Callable):
-        cube = cube_mounted(func)
-        cube.metaclass.namespace = np if isinstance(np, Namespace) else Namespace(np)
-        return func
+@buffer_modifier
+def namespace(np: Union[str, Namespace]) -> BufferModifier:
+    def wrapper(buffer: Dict[str, Any]):
+        buffer["namespace"] = np if isinstance(np, Namespace) else Namespace(np)
 
     return wrapper

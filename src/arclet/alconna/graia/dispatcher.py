@@ -30,7 +30,6 @@ from graia.broadcast.utilles import run_always_await
 from graia.amnesia.message import MessageChain
 from graia.ariadne.dispatcher import ContextDispatcher
 from graia.ariadne.event.message import GroupMessage, MessageEvent
-from graia.ariadne.message.element import Quote
 from graia.ariadne.typing import generic_issubclass, generic_isinstance, get_origin
 from graia.ariadne.util import resolve_dispatchers_mixin
 
@@ -112,7 +111,6 @@ class AlconnaDispatcher(BaseDispatcher):
         send_handler: Optional[
             Callable[[str], Union[MessageChain, Coroutine[Any, Any, MessageChain]]]
         ] = None,
-        allow_quote: bool = False,
     ):
         """
         构造 Alconna调度器
@@ -120,14 +118,12 @@ class AlconnaDispatcher(BaseDispatcher):
             command (Alconna | AlconnaGroup): Alconna实例
             send_flag ("reply", "post", "stay"): 输出信息的发送方式
             skip_for_unmatch (bool): 当指令匹配失败时是否跳过对应的事件监听器, 默认为 True
-            allow_quote (bool): 是否允许引用回复消息触发对应的命令, 默认为 False
         """
         super().__init__()
         self.command = command
         self.send_flag = send_flag
         self.skip_for_unmatch = skip_for_unmatch
         self.send_handler = send_handler or self.__class__.default_send_handler
-        self.allow_quote = allow_quote
 
     async def send_output(
         self,
@@ -169,15 +165,10 @@ class AlconnaDispatcher(BaseDispatcher):
                     listener.oplog.clear()
         return AlconnaProperty(result, None, source)
 
-    async def fetch_quote(self, message: MessageChain) -> bool:
-        return not self.allow_quote and message.has(Quote)
-
     async def beforeExecution(self, interface: DispatcherInterface):
         message: MessageChain = await interface.lookup_param(
             "message", MessageChain, None
         )
-        if await self.fetch_quote(message):
-            raise ExecutionStop
 
         may_help_text = None
 
@@ -203,9 +194,7 @@ class AlconnaDispatcher(BaseDispatcher):
         ):
             raise ExecutionStop
         if not may_help_text and _res.error_info:
-            may_help_text = (
-                str(_res.error_info).strip("'").strip("\\n").split("\\n")[-1]
-            )
+            may_help_text = _res.error_info.strip("'").strip("\\n").split("\\n")[-1]
         if not may_help_text and _res.matched:
             output_cache.clear()
             sys.audit("success_analysis", self.command)

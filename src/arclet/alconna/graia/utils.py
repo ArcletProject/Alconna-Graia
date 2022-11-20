@@ -1,76 +1,76 @@
 import inspect
-from typing import Any, Dict, Optional, Union, List, Type
 from functools import lru_cache
+from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union
+
 from arclet.alconna import Alconna, AlconnaGroup
-from arclet.alconna.tools import AlconnaString, AlconnaFormat
-from graia.amnesia.message import MessageChain, Text, Element
-from graiax.shortcut.saya import (
-    T_Callable,
-    Wrapper,
-    decorate,
-    ensure_cube_as_listener,
-    gen_subclass
-)
+from arclet.alconna.tools import AlconnaFormat, AlconnaString
+from graia.amnesia.message import Element, MessageChain, Text
 from graia.ariadne.event.message import FriendMessage, GroupMessage
 from graia.ariadne.message.element import At, Image
 from graia.ariadne.model import Friend
-from graia.broadcast import DispatcherInterface, Decorator, DecoratorInterface
+from graia.broadcast import Decorator, DecoratorInterface, DispatcherInterface
 from graia.broadcast.builtin.decorators import Depend
 from graia.broadcast.builtin.derive import Derive
 from graia.broadcast.exceptions import ExecutionStop
-from graia.saya import Channel
-from graia.saya.builtins.broadcast import ListenerSchema
-from graia.saya.cube import Cube
+from graia.saya.factory import BufferModifier, SchemaWrapper, buffer_modifier, factory
+from graiax.shortcut.saya import gen_subclass, listen
 from nepattern import (
+    URL,
     AllParam,
     BasePattern,
     Empty,
     PatternModel,
     UnionArg,
-    URL,
-    type_parser
+    type_parser,
 )
 
+from .analyser import GraiaCommandAnalyser
 from .dispatcher import AlconnaDispatcher, AlconnaProperty
 from .saya import AlconnaSchema
-from .analyser import GraiaCommandAnalyser
 
+T_Callable = TypeVar("T_Callable", bound=Callable)
 
-ImgOrUrl = UnionArg(
-    [
-        BasePattern(
-            model=PatternModel.TYPE_CONVERT,
-            origin=str,
-            converter=lambda _, x: x.url,
-            alias="img",
-            accepts=[Image]
-        ),
-        URL
-    ]
-) @ "img_url"
+ImgOrUrl = (
+    UnionArg(
+        [
+            BasePattern(
+                model=PatternModel.TYPE_CONVERT,
+                origin=str,
+                converter=lambda _, x: x.url,
+                alias="img",
+                accepts=[Image],
+            ),
+            URL,
+        ]
+    )
+    @ "img_url"
+)
 """
 内置类型, 允许传入图片元素(Image)或者链接(URL)，返回链接
 """
 
-AtID = UnionArg(
-    [
-        BasePattern(
-            model=PatternModel.TYPE_CONVERT,
-            origin=int,
-            alias="at",
-            accepts=[At],
-            converter=lambda _, x: x.target
-        ),
-        BasePattern(
-            r"@(\d+)",
-            model=PatternModel.REGEX_CONVERT,
-            origin=int,
-            alias="@xxx",
-            accepts=[str],
-        ),
-        type_parser(int)
-    ]
-) @ "at_id"
+AtID = (
+    UnionArg(
+        [
+            BasePattern(
+                model=PatternModel.TYPE_CONVERT,
+                origin=int,
+                alias="at",
+                accepts=[At],
+                converter=lambda _, x: x.target,
+            ),
+            BasePattern(
+                r"@(\d+)",
+                model=PatternModel.REGEX_CONVERT,
+                origin=int,
+                alias="@xxx",
+                accepts=[str],
+            ),
+            type_parser(int),
+        ]
+    )
+    @ "at_id"
+)
 """
 内置类型，允许传入提醒元素(At)或者'@xxxx'式样的字符串或者数字, 返回数字
 """
@@ -138,26 +138,28 @@ def match_value(path: str, value: Any, or_not: bool = False):
     return Depend(__wrapper__)
 
 
-def shortcuts(mapping: Optional[Dict] = None, **kwargs: MessageChain) -> Wrapper:
+def shortcuts(
+    mapping: Optional[Dict[str, MessageChain]] = None, **kwargs: MessageChain
+):
     def wrapper(func: T_Callable) -> T_Callable:
         kwargs.update(mapping or {})
-        channel = Channel.current()
-        for cube in channel.content:
-            if isinstance(cube.metaclass, AlconnaSchema) and cube.content == func:
-                cube.metaclass.shortcut(**kwargs)
-                break
+        if hasattr(func, "__alc_shortcuts__"):
+            getattr(func, "__alc_shortcuts__", {}).update(kwargs)
+        else:
+            setattr(func, "__alc_shortcuts__", kwargs)
         return func
 
     return wrapper
 
 
+@factory
 def alcommand(
     alconna: Union[Alconna, AlconnaGroup, str],
     guild: bool = True,
     private: bool = True,
     send_error: bool = False,
     post: bool = False,
-) -> Wrapper:
+) -> SchemaWrapper:
     """
     saya-util 形式的注册一个消息事件监听器并携带 AlconnaDispatcher
 
@@ -176,29 +178,29 @@ def alcommand(
     if alconna.meta.example and "$" in alconna.meta.example and alconna.headers:
         alconna.meta.example = alconna.meta.example.replace("$", alconna.headers[0])
 
-    def wrapper(func: T_Callable) -> T_Callable:
-        cube: Cube[ListenerSchema] = ensure_cube_as_listener(func)
+    def wrapper(func: Callable, buffer: Dict[str, Any]):
+        events = []
         if guild:
-            cube.metaclass.listening_events.append(GroupMessage)
+            events.append(GroupMessage)
         if private:
-            cube.metaclass.listening_events.append(FriendMessage)
-        cube.metaclass.inline_dispatchers.append(
+            events.append(FriendMessage)
+        buffer.setdefault("dispatchers", []).append(
             AlconnaDispatcher(
                 alconna, send_flag="post" if post else "reply", skip_for_unmatch=not send_error  # type: ignore
             )
         )
-        channel = Channel.current()
-        channel.use(AlconnaSchema(alconna))(func)
-        return func
+        listen(*events)(func)  # noqa
+        return AlconnaSchema(alconna)
 
     return wrapper
 
 
+@factory
 def from_command(
-        format_command: str,
-        args: Optional[Dict[str, Union[type, BasePattern]]] = None,
-        post: bool = False,
-) -> Wrapper:
+    format_command: str,
+    args: Optional[Dict[str, Union[type, BasePattern]]] = None,
+    post: bool = False,
+) -> SchemaWrapper:
     """
     saya-util 形式的仅注入一个 AlconnaDispatcher, 事件监听部分自行处理
 
@@ -208,19 +210,16 @@ def from_command(
         post: 是否以事件发送输出信息
     """
 
-    def wrapper(func: T_Callable) -> T_Callable:
+    def wrapper(func: Callable, buffer: Dict[str, Any]):
         custom_args = {
             v.name: v.annotation for v in inspect.signature(func).parameters.values()
         }
         custom_args.update(args or {})
-        cube: Cube[ListenerSchema] = ensure_cube_as_listener(func)
         cmd = AlconnaFormat(format_command, custom_args)
-        cube.metaclass.inline_dispatchers.append(
+        buffer.setdefault("dispatchers", []).append(
             AlconnaDispatcher(cmd, send_flag="post" if post else "reply")  # type: ignore
         )
-        channel = Channel.current()
-        channel.use(AlconnaSchema(cmd))(func)
-        return func
+        return AlconnaSchema(cmd)
 
     return wrapper
 
@@ -228,16 +227,15 @@ def from_command(
 _seminal = type("_seminal", (object,), {})
 
 
-def assign(path: str, value: Any = _seminal, or_not: bool = False) -> Wrapper:
-    def wrapper(func: T_Callable) -> T_Callable:
-        cube: Cube[ListenerSchema] = ensure_cube_as_listener(func)
+@buffer_modifier
+def assign(path: str, value: Any = _seminal, or_not: bool = False) -> BufferModifier:
+    def wrapper(buffer: Dict[str, Any]):
         if value == _seminal:
             if or_not:
-                cube.metaclass.decorators.append(match_path("$main"))
-            cube.metaclass.decorators.append(match_path(path))
+                buffer.setdefault("decorators", []).append(match_path("$main"))
+            buffer.setdefault("decorators", []).append(match_path(path))
         else:
-            cube.metaclass.decorators.append(match_value(path, value, or_not))
-        return func
+            buffer.setdefault("decorators", []).append(match_value(path, value, or_not))
 
     return wrapper
 
@@ -256,7 +254,7 @@ def _get_filter_out() -> List[Type[Element]]:
 class MatchPrefix(Decorator, Derive[MessageChain]):
     pre = True
 
-    def __init__(self, prefix: Any, extract: bool = False):
+    def __init__(self, prefix: Any, extract: bool = False):  # noqa
         """
         利用 NEPattern 的前缀匹配
 
@@ -272,12 +270,14 @@ class MatchPrefix(Decorator, Derive[MessageChain]):
 
     async def target(self, interface: DecoratorInterface):
         return await self(
-            await interface.dispatcher_interface.lookup_param("message_chain", MessageChain, None),
+            await interface.dispatcher_interface.lookup_param(
+                "message_chain", MessageChain, None
+            ),
             interface.dispatcher_interface,
         )
 
     async def __call__(
-            self, chain: MessageChain, interface: DispatcherInterface
+        self, chain: MessageChain, interface: DispatcherInterface
     ) -> MessageChain:
         header = chain.include(*_get_filter_out())
         rest: MessageChain = chain.exclude(*_get_filter_out())
@@ -287,7 +287,7 @@ class MatchPrefix(Decorator, Derive[MessageChain]):
         if isinstance(elem, Text) and (res := self.pattern.validate(elem.text)).success:
             if self.extract:
                 return MessageChain([Text(str(res.value))])
-            elem.text = elem.text[len(str(res.value)):].lstrip()
+            elem.text = elem.text[len(str(res.value)) :].lstrip()
             return header + rest
         elif self.pattern.validate(elem).success:
             if self.extract:
@@ -300,7 +300,7 @@ class MatchPrefix(Decorator, Derive[MessageChain]):
 class MatchSuffix(Decorator, Derive[MessageChain]):
     pre = True
 
-    def __init__(self, suffix: Any, extract: bool = False):
+    def __init__(self, suffix: Any, extract: bool = False):  # noqa
         """
         利用 NEPattern 的后缀匹配
 
@@ -316,12 +316,14 @@ class MatchSuffix(Decorator, Derive[MessageChain]):
 
     async def target(self, interface: DecoratorInterface):
         return await self(
-            await interface.dispatcher_interface.lookup_param("message_chain", MessageChain, None),
+            await interface.dispatcher_interface.lookup_param(
+                "message_chain", MessageChain, None
+            ),
             interface.dispatcher_interface,
         )
 
     async def __call__(
-            self, chain: MessageChain, interface: DispatcherInterface
+        self, chain: MessageChain, interface: DispatcherInterface
     ) -> MessageChain:
         header = chain.include(*_get_filter_out())
         rest: MessageChain = chain.exclude(*_get_filter_out())
@@ -341,7 +343,10 @@ class MatchSuffix(Decorator, Derive[MessageChain]):
         raise ExecutionStop
 
 
-def startswith(prefix: Any, include: bool = False, bind: Optional[str] = None) -> Wrapper:
+@buffer_modifier
+def startswith(
+    prefix: Any, include: bool = False, bind: Optional[str] = None
+) -> BufferModifier:
     """
     MatchPrefix 的 shortcut形式
 
@@ -352,17 +357,19 @@ def startswith(prefix: Any, include: bool = False, bind: Optional[str] = None) -
     """
     decorator = MatchPrefix(prefix, include)
 
-    def wrapper(func: T_Callable):
-        cube: Cube[ListenerSchema] = ensure_cube_as_listener(func)
+    def wrapper(buffer: Dict[str, Any]):
         if bind:
-            return decorate({bind: decorator})(func)
-        cube.metaclass.decorators.append(decorator)
-        return func
+            buffer.setdefault("decorator_map", {})[bind] = decorator
+        else:
+            buffer.setdefault("decorators", []).append(decorator)
 
     return wrapper
 
 
-def endswith(suffix: Any, include: bool = False, bind: Optional[str] = None) -> Wrapper:
+@buffer_modifier
+def endswith(
+    suffix: Any, include: bool = False, bind: Optional[str] = None
+) -> BufferModifier:
     """
     MatchSuffix 的 shortcut形式
 
@@ -373,12 +380,11 @@ def endswith(suffix: Any, include: bool = False, bind: Optional[str] = None) -> 
     """
     decorator = MatchSuffix(suffix, include)
 
-    def wrapper(func: T_Callable):
-        cube: Cube[ListenerSchema] = ensure_cube_as_listener(func)
+    def wrapper(buffer: Dict[str, Any]):
         if bind:
-            return decorate({bind: decorator})(func)
-        cube.metaclass.decorators.append(decorator)
-        return func
+            buffer.setdefault("decorator_map", {})[bind] = decorator
+        else:
+            buffer.setdefault("decorators", []).append(decorator)
 
     return wrapper
 

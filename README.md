@@ -89,20 +89,22 @@ async def test1(group: Group, result: Arpamar, name: Match[str]):
     print("sign:", result)
     print("sender:", group)
     print("match", name.available, name.result)
+
     
-    
+@listen(GroupMessage) 
 @from_command("foo bar {baz}")
-@listen(GroupMessage)
 async def test2(baz: int):
     print("baz", baz)
-
-@startswith("foo bar")
+    
+    
 @listen(GroupMessage)
+@startswith("foo bar")
 async def test3(event: GroupMessage):
     ...
 
-@endswith(int)
+
 @listen(GroupMessage)
+@endswith(int)
 async def test4(event: GroupMessage):
     ...
 ```
@@ -130,7 +132,6 @@ class AlconnaDispatcher(BaseDispatcher):
         send_flag: Literal["reply", "post", "stay"] = "stay",
         skip_for_unmatch: bool = True,
         send_handler: Optional[Callable[[str], MessageChain]] = None,
-        allow_quote: bool = False
     ): ...
 ```
 
@@ -144,8 +145,6 @@ class AlconnaDispatcher(BaseDispatcher):
 `skip_for_unmatch`: 解析失败时是否跳过, 否则错误信息按 send_flag 处理
 
 `send_handler`: send_flag 为 reply 时 输出信息的预处理器
-
-`allow_quote`: 是否允许以回复的方式触发指令
 
 ## 附加组件
 

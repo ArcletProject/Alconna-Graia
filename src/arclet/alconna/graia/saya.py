@@ -1,7 +1,7 @@
 import inspect
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 from arclet.alconna import config
 from arclet.alconna.core import Alconna
@@ -18,17 +18,12 @@ from .dispatcher import AlconnaDispatcher
 @dataclass
 class AlconnaSchema(BaseSchema):
     command: Union[Alconna, AlconnaDispatcher]
-    shortcuts: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_(cls, command: str, *options: str, flag: str = "reply") -> "AlconnaSchema":
         return cls(
             AlconnaDispatcher(AlconnaString(command, *options), send_flag=flag)  # type: ignore
         )
-
-    def shortcut(self, **kwargs):
-        self.shortcuts.update(kwargs)
-        return self
 
     def record(self, func: Any):
         command: Alconna
@@ -43,8 +38,9 @@ class AlconnaSchema(BaseSchema):
         if command.namespace == config.default_namespace.name and file:
             path = Path(file)
             command.reset_namespace(f"{path.parts[-2]}.{path.stem}")
-        for k, v in self.shortcuts.items():
-            command.shortcut(k, v)
+        if shortcuts := getattr(func, "__alc_shortcuts__", {}):
+            for k, v in shortcuts.items():
+                command.shortcut(k, v)
 
 
 class AlconnaBehaviour(Behaviour):
