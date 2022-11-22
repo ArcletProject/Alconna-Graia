@@ -1,9 +1,6 @@
-import inspect
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Union
 
-from arclet.alconna import config
 from arclet.alconna.core import Alconna
 from arclet.alconna.manager import CommandManager
 from arclet.alconna.tools import AlconnaString
@@ -31,13 +28,6 @@ class AlconnaSchema(BaseSchema):
             command = self.command.command
         else:
             command = self.command
-        try:
-            file = inspect.getsourcefile(func)
-        except TypeError:
-            return
-        if command.namespace == config.default_namespace.name and file:
-            path = Path(file)
-            command.reset_namespace(f"{path.parts[-2]}.{path.stem}")
         if shortcuts := getattr(func, "__alc_shortcuts__", {}):
             for k, v in shortcuts.items():
                 command.shortcut(k, v)

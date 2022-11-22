@@ -163,6 +163,8 @@ def alcommand(
     """
     saya-util 形式的注册一个消息事件监听器并携带 AlconnaDispatcher
 
+    请将其放置在装饰器的顶层
+
     Args:
         alconna: 使用的 Alconna 命令
         guild: 命令是否群聊可用
@@ -229,6 +231,9 @@ _seminal = type("_seminal", (object,), {})
 
 @buffer_modifier
 def assign(path: str, value: Any = _seminal, or_not: bool = False) -> BufferModifier:
+    """
+    match_path 与 match_value 的合并形式
+    """
     def wrapper(buffer: Dict[str, Any]):
         if value == _seminal:
             if or_not:

@@ -70,7 +70,7 @@ with saya.module_context():
 in module.py:
 
 ```python
-from graia.ariadne.util.saya import listen
+from graiax.shortcut.saya import listen
 from arclet.alconna.graia import Match, alcommand, from_command, startswith, endswith
 from arclet.alconna import Alconna, Args, Arpamar
 
