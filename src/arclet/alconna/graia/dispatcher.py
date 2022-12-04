@@ -16,7 +16,7 @@ from contextlib import suppress
 from arclet.alconna import (
     output_manager,
     Empty,
-    Arpamar
+    Arparma
 )
 from arclet.alconna.core import Alconna, AlconnaGroup
 from arclet.alconna.tools import AlconnaString, AlconnaFormat
@@ -127,7 +127,7 @@ class AlconnaDispatcher(BaseDispatcher):
 
     async def send_output(
         self,
-        result: Arpamar,
+        result: Arparma,
         output_text: Optional[str] = None,
         source: Optional[MessageEvent] = None,
     ) -> AlconnaProperty[MessageEvent]:
@@ -180,8 +180,8 @@ class AlconnaDispatcher(BaseDispatcher):
             output_manager.set_action(_h, self.command.name)
             _res = self.command.parse(message)  # type: ignore
         except Exception as e:
-            _res = Arpamar(
-                self.command.commands[0] if self.command._group else self.command
+            _res = Arparma(
+                self.command.path, message
             )
             _res.head_matched = False
             _res.matched = False
@@ -211,26 +211,23 @@ class AlconnaDispatcher(BaseDispatcher):
     async def catch(self, interface: DispatcherInterface):
         local_storage: _AlconnaLocalStorage = interface.local_storage  # type: ignore
         res = local_storage["alconna_result"]
-        command: Alconna = (
-            self.command.commands[0] if self.command._group else self.command
-        )
-        default_duplication = generate_duplication(command)
+        default_duplication = generate_duplication(self.command)
         default_duplication.set_target(res.result)
         if interface.annotation is Duplication:
             return default_duplication
         if generic_issubclass(Duplication, interface.annotation):
-            return interface.annotation(command).set_target(res.result)
+            return interface.annotation(self.command).set_target(res.result)
         if generic_issubclass(get_origin(interface.annotation), AlconnaProperty):
             return res
         if interface.annotation is ArgsStub:
-            arg = ArgsStub(command.args)
+            arg = ArgsStub(self.command.args)
             arg.set_result(res.result.main_args)
             return arg
         if interface.annotation is OptionStub:
             return default_duplication.option(interface.name)
         if interface.annotation is SubcommandStub:
             return default_duplication.subcommand(interface.name)
-        if generic_issubclass(get_origin(interface.annotation), Arpamar):
+        if generic_issubclass(get_origin(interface.annotation), Arparma):
             return res.result
         if interface.annotation is str and interface.name == "output":
             return res.output
@@ -243,13 +240,13 @@ class AlconnaDispatcher(BaseDispatcher):
             r = res.result.all_matched_args.get(interface.name, Empty)
             return Match(r, generic_isinstance(r, get_args(interface.annotation)[0]))
         if isinstance(interface.default, Query):
-            return Query(interface.default.path, interface.default.result).set_result(
-                res.result.query_with(
-                    get_args(interface.annotation)[0], interface.default.path, Empty
-                )
-                if get_origin(interface.annotation) is Query
-                else res.result.query(interface.default.path, Empty)
-            )
+            q = Query(interface.default.path, interface.default.result)
+            q.result = res.result.query(q.path, Empty)
+            if get_origin(interface.annotation) is Query:
+                q.available = generic_isinstance(q.result, get_args(interface.annotation)[0])
+            else:
+                q.available = q.result is Empty
+            return q
         if interface.name in res.result.all_matched_args:
             if generic_isinstance(
                 res.result.all_matched_args[interface.name], interface.annotation

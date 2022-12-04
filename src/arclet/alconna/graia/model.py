@@ -1,14 +1,14 @@
 from dataclasses import dataclass, field
 from typing import TypeVar, Generic, Optional
 
-from arclet.alconna import Arpamar, Empty
+from arclet.alconna import Arparma
 
 T_Source = TypeVar("T_Source")
 T = TypeVar("T")
 
 
 class Query(Generic[T]):
-    result: Optional[T]
+    result: T
     available: bool
     path: str
 
@@ -16,12 +16,6 @@ class Query(Generic[T]):
         self.path = path
         self.result = default
         self.available = False
-
-    def set_result(self, obj: T):
-        if obj != Empty:
-            self.available = True
-            self.result = obj
-        return self
 
     def __repr__(self):
         return f"Query({self.path}, {self.result})"
@@ -36,6 +30,6 @@ class Match(Generic[T]):
 @dataclass
 class AlconnaProperty(Generic[T_Source]):
     """对解析结果的封装"""
-    result: Arpamar
+    result: Arparma
     output: Optional[str] = field(default=None)
     source: T_Source = field(default=None)

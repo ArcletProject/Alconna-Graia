@@ -25,5 +25,5 @@ from .utils import (
     startswith,
 )
 
-Alconna.config(analyser_type=GraiaCommandAnalyser)
+Alconna.default_analyser(GraiaCommandAnalyser)
 Alc = AlconnaDispatcher

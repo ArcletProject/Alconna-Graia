@@ -2,7 +2,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 from arclet.alconna import (
     Alconna,
-    ArgField,
+    Field,
     ArgFlag,
     Args,
     CommandMeta,
@@ -60,15 +60,15 @@ def main_args(args: Args) -> BufferModifier:
 def argument(
     name: str,
     value: Optional[Any] = None,
-    default: Union[Any, ArgField, None] = None,
+    default: Union[Any, Field, None] = None,
     flags: Optional[List[ArgFlag]] = None,
 ) -> BufferModifier:
     def wrapper(buffer: Dict[str, Any]):
         if args := buffer.get("args"):
             args: Args
-            args.add_argument(name, value=value, default=default, flags=flags)
+            args.add(name, value=value, default=default, flags=flags)
         else:
-            buffer["args"] = Args().add_argument(
+            buffer["args"] = Args().add(
                 name, value=value, default=default, flags=flags
             )
 

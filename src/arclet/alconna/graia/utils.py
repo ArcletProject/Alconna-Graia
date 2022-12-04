@@ -55,7 +55,7 @@ AtID = (
             BasePattern(
                 model=PatternModel.TYPE_CONVERT,
                 origin=int,
-                alias="at",
+                alias="At",
                 accepts=[At],
                 converter=lambda _, x: x.target,
             ),
@@ -292,7 +292,7 @@ class MatchPrefix(Decorator, Derive[MessageChain]):
         if isinstance(elem, Text) and (res := self.pattern.validate(elem.text)).success:
             if self.extract:
                 return MessageChain([Text(str(res.value))])
-            elem.text = elem.text[len(str(res.value)) :].lstrip()
+            elem.text = elem.text[len(str(res.value)):].lstrip()
             return header + rest
         elif self.pattern.validate(elem).success:
             if self.extract:

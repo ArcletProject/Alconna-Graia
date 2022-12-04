@@ -1,9 +1,7 @@
 from typing import List, Union, Any
 
 from arclet.alconna.exceptions import NullMessage
-from arclet.alconna.util import split
 from arclet.alconna.config import config
-from arclet.alconna.base import StrMounter
 from arclet.alconna.analysis.analyser import Analyser
 
 from graia.amnesia.message import MessageChain
@@ -31,8 +29,7 @@ class GraiaCommandAnalyser(Analyser[MessageChain]):
                 raise exp
             self.temporary_data["fail"] = exp
             return self
-        self.origin_data = data
-        keep_crlf = not self.alconna.meta.keep_crlf
+        self.temporary_data["origin"] = data
         i, exc = 0, None
         for unit in data:
             if (uname := unit.__class__.__name__) in self.filter_out:
@@ -40,9 +37,9 @@ class GraiaCommandAnalyser(Analyser[MessageChain]):
             if (proc := self.preprocessors.get(uname)) and (res := proc(unit)):
                 unit = res
             if isinstance(unit, Text):
-                if not (res := split(unit.text.strip(), tuple(self.separators), keep_crlf)):
+                if not (res := unit.text.strip()):
                     continue
-                self.raw_data.append(StrMounter(res))
+                self.raw_data.append(res)
             else:
                 self.raw_data.append(unit)
             i += 1
