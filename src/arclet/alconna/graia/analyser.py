@@ -52,6 +52,7 @@ class GraiaCommandAnalyser(Analyser[MessageChain]):
             self.temporary_data["fail"] = exp
         else:
             self.ndata = i
+            self.bak_data = self.raw_data.copy()
             if self.message_cache:
                 self.temp_token = self.generate_token(self.raw_data)
         return self
