@@ -253,7 +253,11 @@ def search_element(name: str):
 
 
 def _get_filter_out() -> List[Type[Element]]:
-    return [search_element(i) for i in GraiaCommandAnalyser.filter_out]
+    res = []
+    for i in GraiaCommandAnalyser.filter_out:
+        if t := search_element(i):
+            res.append(t)
+    return res
 
 
 class MatchPrefix(Decorator, Derive[MessageChain]):
