@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING 
 from creart import AbstractCreator, CreateTargetInfo, it, exists_module, mixin
 
 if TYPE_CHECKING:
@@ -29,7 +29,7 @@ class AlconnaBehaviorCreator(AbstractCreator):
         return exists_module("arclet.alconna.graia.saya")
 
     @staticmethod
-    def create(create_type: Type['AlconnaBehaviour']) -> 'AlconnaBehaviour':
+    def create(create_type: type[AlconnaBehaviour]) -> AlconnaBehaviour:
         from graia.broadcast import Broadcast
         from graia.saya import Saya
         from arclet.alconna.manager import command_manager

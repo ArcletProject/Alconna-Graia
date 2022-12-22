@@ -1,23 +1,18 @@
+from __future__ import annotations
+
 import sys
 from collections import deque
 from typing import (
     Literal,
     Callable,
-    Optional,
     TypedDict,
     get_args,
-    Union,
-    Dict,
     Any,
     Coroutine,
     ClassVar,
 )
 from contextlib import suppress
-from arclet.alconna import (
-    output_manager,
-    Empty,
-    Arparma
-)
+from arclet.alconna import output_manager, Empty, Arparma
 from arclet.alconna.core import Alconna, AlconnaGroup
 from arclet.alconna.tools import AlconnaString, AlconnaFormat
 from arclet.alconna.components.duplication import Duplication, generate_duplication
@@ -33,10 +28,10 @@ from graia.ariadne.event.message import GroupMessage, MessageEvent
 from graia.ariadne.typing import generic_issubclass, generic_isinstance, get_origin
 from graia.ariadne.util import resolve_dispatchers_mixin
 
-from .model import Query, Match, AlconnaProperty
+from .model import Query, Match, AlconnaProperty, Header
 
 success_record = deque(maxlen=10)
-output_cache: Dict[int, set] = {}
+output_cache: dict[int, set] = {}
 
 
 def success_hook(event, args):
@@ -51,13 +46,13 @@ class AlconnaOutputDispatcher(BaseDispatcher):
     mixin = [ContextDispatcher]
 
     def __init__(
-        self, command: Union[Alconna, AlconnaGroup], text: str, source: MessageEvent
+        self, command: Alconna | AlconnaGroup, text: str, source: MessageEvent
     ):
         self.command = command
         self.output = text
         self.source_event = source
 
-    async def catch(self, interface: "DispatcherInterface"):
+    async def catch(self, interface: DispatcherInterface):
         if interface.name == "output" and interface.annotation == str:
             return self.output
         if isinstance(interface.annotation, (Alconna, AlconnaGroup)):
@@ -75,7 +70,7 @@ class AlconnaOutputMessage(Dispatchable):
     如果触发的某个命令的可能输出 (帮助信息、模糊匹配、报错等), AlconnaDisptcher的send_flag为post时, 会发送该事件
     """
 
-    command: Union[Alconna, AlconnaGroup]
+    command: Alconna | AlconnaGroup
     """命令"""
 
     output: str
@@ -91,7 +86,7 @@ class _AlconnaLocalStorage(TypedDict):
 
 class AlconnaDispatcher(BaseDispatcher):
     @classmethod
-    def from_format(cls, command: str, args: Optional[Dict[str, Any]] = None):
+    def from_format(cls, command: str, args: dict[str, Any] | None = None):
         return cls(AlconnaFormat(command, args), send_flag="reply")
 
     @classmethod
@@ -99,18 +94,17 @@ class AlconnaDispatcher(BaseDispatcher):
         return cls(AlconnaString(command, *options), send_flag="reply")
 
     default_send_handler: ClassVar[
-        Callable[[str], Union[MessageChain, Coroutine[Any, Any, MessageChain]]]
+        Callable[[str], MessageChain | Coroutine[Any, Any, MessageChain]]
     ] = lambda x: MessageChain(x)
 
     def __init__(
         self,
-        command: Union[Alconna, AlconnaGroup],
+        command: Alconna | AlconnaGroup,
         *,
         send_flag: Literal["reply", "post", "stay"] = "reply",
         skip_for_unmatch: bool = True,
-        send_handler: Optional[
-            Callable[[str], Union[MessageChain, Coroutine[Any, Any, MessageChain]]]
-        ] = None,
+        send_handler: Callable[[str], MessageChain | Coroutine[Any, Any, MessageChain]]
+        | None = None,
     ):
         """
         构造 Alconna调度器
@@ -128,8 +122,8 @@ class AlconnaDispatcher(BaseDispatcher):
     async def send_output(
         self,
         result: Arparma,
-        output_text: Optional[str] = None,
-        source: Optional[MessageEvent] = None,
+        output_text: str | None = None,
+        source: MessageEvent | None = None,
     ) -> AlconnaProperty[MessageEvent]:
         if not isinstance(source, MessageEvent) or (result.matched or not output_text):
             return AlconnaProperty(result, None, source)
@@ -180,9 +174,7 @@ class AlconnaDispatcher(BaseDispatcher):
             output_manager.set_action(_h, self.command.name)
             _res = self.command.parse(message)  # type: ignore
         except Exception as e:
-            _res = Arparma(
-                self.command.path, message
-            )
+            _res = Arparma(self.command.path, message)
             _res.head_matched = False
             _res.matched = False
             _res.error_info = repr(e)
@@ -233,6 +225,8 @@ class AlconnaDispatcher(BaseDispatcher):
             return res.output
         if generic_issubclass(interface.annotation, (Alconna, AlconnaGroup)):
             return self.command
+        if interface.annotation is Header:
+            return Header(res.result.header, bool(res.result.header))
         if interface.annotation is Match:
             r = res.result.all_matched_args.get(interface.name, Empty)
             return Match(r, r != Empty)
@@ -243,7 +237,9 @@ class AlconnaDispatcher(BaseDispatcher):
             q = Query(interface.default.path, interface.default.result)
             q.result = res.result.query(q.path, Empty)
             if get_origin(interface.annotation) is Query:
-                q.available = generic_isinstance(q.result, get_args(interface.annotation)[0])
+                q.available = generic_isinstance(
+                    q.result, get_args(interface.annotation)[0]
+                )
             else:
                 q.available = q.result is Empty
             return q

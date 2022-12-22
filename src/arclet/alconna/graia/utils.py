@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import inspect
 from functools import lru_cache
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, Callable, TypeVar 
 
 from arclet.alconna import Alconna, AlconnaGroup
 from arclet.alconna.tools import AlconnaFormat, AlconnaString
@@ -139,7 +141,7 @@ def match_value(path: str, value: Any, or_not: bool = False):
 
 
 def shortcuts(
-    mapping: Optional[Dict[str, MessageChain]] = None, **kwargs: MessageChain
+    mapping: dict[str, MessageChain] | None = None, **kwargs: MessageChain
 ):
     def wrapper(func: T_Callable) -> T_Callable:
         kwargs.update(mapping or {})
@@ -154,7 +156,7 @@ def shortcuts(
 
 @factory
 def alcommand(
-    alconna: Union[Alconna, AlconnaGroup, str],
+    alconna: Alconna | AlconnaGroup | str,
     guild: bool = True,
     private: bool = True,
     send_error: bool = False,
@@ -180,7 +182,7 @@ def alcommand(
     if alconna.meta.example and "$" in alconna.meta.example and alconna.headers:
         alconna.meta.example = alconna.meta.example.replace("$", alconna.headers[0])
 
-    def wrapper(func: Callable, buffer: Dict[str, Any]):
+    def wrapper(func: Callable, buffer: dict[str, Any]):
         events = []
         if guild:
             events.append(GroupMessage)
@@ -200,7 +202,7 @@ def alcommand(
 @factory
 def from_command(
     format_command: str,
-    args: Optional[Dict[str, Union[type, BasePattern]]] = None,
+    args: dict[str, type | BasePattern] | None = None,
     post: bool = False,
 ) -> SchemaWrapper:
     """
@@ -212,7 +214,7 @@ def from_command(
         post: 是否以事件发送输出信息
     """
 
-    def wrapper(func: Callable, buffer: Dict[str, Any]):
+    def wrapper(func: Callable, buffer: dict[str, Any]):
         custom_args = {
             v.name: v.annotation for v in inspect.signature(func).parameters.values()
         }
@@ -234,7 +236,7 @@ def assign(path: str, value: Any = _seminal, or_not: bool = False) -> BufferModi
     """
     match_path 与 match_value 的合并形式
     """
-    def wrapper(buffer: Dict[str, Any]):
+    def wrapper(buffer: dict[str, Any]):
         if value == _seminal:
             if or_not:
                 buffer.setdefault("decorators", []).append(match_path("$main"))
@@ -252,7 +254,7 @@ def search_element(name: str):
             return i
 
 
-def _get_filter_out() -> List[Type[Element]]:
+def _get_filter_out() -> list[type[Element]]:
     res = []
     for i in GraiaCommandAnalyser.filter_out:
         if t := search_element(i):
@@ -354,7 +356,7 @@ class MatchSuffix(Decorator, Derive[MessageChain]):
 
 @buffer_modifier
 def startswith(
-    prefix: Any, include: bool = False, bind: Optional[str] = None
+    prefix: Any, include: bool = False, bind: str | None = None
 ) -> BufferModifier:
     """
     MatchPrefix 的 shortcut形式
@@ -366,7 +368,7 @@ def startswith(
     """
     decorator = MatchPrefix(prefix, include)
 
-    def wrapper(buffer: Dict[str, Any]):
+    def wrapper(buffer: dict[str, Any]):
         if bind:
             buffer.setdefault("decorator_map", {})[bind] = decorator
         else:
@@ -377,7 +379,7 @@ def startswith(
 
 @buffer_modifier
 def endswith(
-    suffix: Any, include: bool = False, bind: Optional[str] = None
+    suffix: Any, include: bool = False, bind: str | None = None
 ) -> BufferModifier:
     """
     MatchSuffix 的 shortcut形式
@@ -389,7 +391,7 @@ def endswith(
     """
     decorator = MatchSuffix(suffix, include)
 
-    def wrapper(buffer: Dict[str, Any]):
+    def wrapper(buffer: dict[str, Any]):
         if bind:
             buffer.setdefault("decorator_map", {})[bind] = decorator
         else:

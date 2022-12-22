@@ -1,4 +1,6 @@
-from typing import List, Union, Any
+from __future__ import annotations
+
+from typing import Any
 
 from arclet.alconna.exceptions import NullMessage
 from arclet.alconna.config import config
@@ -14,14 +16,14 @@ class GraiaCommandAnalyser(Analyser[MessageChain]):
     filter_out = ["Source", "File", "Quote"]
 
     @staticmethod
-    def generate_token(data: List[Union[Any, List[str]]]) -> int:
+    def generate_token(data: list[Any | list[str]]) -> int:
         return hash(''.join(i.__repr__() for i in data))
 
     @staticmethod
     def converter(command: str):
         return MessageChain([Text(command)])
 
-    def process(self, data: MessageChain) -> "GraiaCommandAnalyser":
+    def process(self, data: MessageChain) -> GraiaCommandAnalyser:
         """命令分析功能, 传入字符串或消息链, 应当在失败时返回fail的arpamar"""
         if not isinstance(data, MessageChain):
             exp = ValueError(f"{data} is not a MessageChain")

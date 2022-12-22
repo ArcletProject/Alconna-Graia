@@ -1,4 +1,6 @@
-from typing import Any, Callable, Dict, List, Optional, Union
+from __future__ import annotations
+
+from typing import Any, Callable 
 
 from arclet.alconna import (
     Alconna,
@@ -18,9 +20,9 @@ from .saya import AlconnaSchema
 
 @factory
 def command(
-    name: Optional[Any] = None, headers: Optional[List[Any]] = None
+    name: Any | None = None, headers: list[Any] | None = None
 ) -> SchemaWrapper:
-    def wrapper(func: Callable, buffer: Dict[str, Any]):
+    def wrapper(func: Callable, buffer: dict[str, Any]):
         alc = Alconna(
             name or func.__name__,
             headers or [],
@@ -41,7 +43,7 @@ def command(
 
 @buffer_modifier
 def option(
-    name: str, args: Optional[Args] = None, help: Optional[str] = None
+    name: str, args: Args | None = None, help: str | None = None
 ) -> BufferModifier:
     return lambda buffer: buffer.setdefault("options", []).append(
         Option(name, args, help_text=help)
@@ -50,7 +52,7 @@ def option(
 
 @buffer_modifier
 def main_args(args: Args) -> BufferModifier:
-    def wrapper(buffer: Dict[str, Any]):
+    def wrapper(buffer: dict[str, Any]):
         buffer["args"] = args
 
     return wrapper
@@ -59,11 +61,11 @@ def main_args(args: Args) -> BufferModifier:
 @buffer_modifier
 def argument(
     name: str,
-    value: Optional[Any] = None,
-    default: Union[Any, Field, None] = None,
-    flags: Optional[List[ArgFlag]] = None,
+    value: Any | None = None,
+    default: Any | Field | None = None,
+    flags: list[ArgFlag] | None = None,
 ) -> BufferModifier:
-    def wrapper(buffer: Dict[str, Any]):
+    def wrapper(buffer: dict[str, Any]):
         if args := buffer.get("args"):
             args: Args
             args.add(name, value=value, default=default, flags=flags)
@@ -77,7 +79,7 @@ def argument(
 
 @buffer_modifier
 def meta(content: CommandMeta) -> BufferModifier:
-    def wrapper(buffer: Dict[str, Any]):
+    def wrapper(buffer: dict[str, Any]):
         buffer["meta"] = content
 
     return wrapper
@@ -85,17 +87,17 @@ def meta(content: CommandMeta) -> BufferModifier:
 
 @buffer_modifier
 def help(
-    description: str, usage: Optional[str] = None, example: Optional[str] = None
+    description: str, usage: str | None = None, example: str | None = None
 ) -> BufferModifier:
-    def wrapper(buffer: Dict[str, Any]):
+    def wrapper(buffer: dict[str, Any]):
         buffer["meta"] = CommandMeta(description, usage, example)
 
     return wrapper
 
 
 @buffer_modifier
-def namespace(np: Union[str, Namespace]) -> BufferModifier:
-    def wrapper(buffer: Dict[str, Any]):
+def namespace(np: str | Namespace) -> BufferModifier:
+    def wrapper(buffer: dict[str, Any]):
         buffer["namespace"] = np if isinstance(np, Namespace) else Namespace(np)
 
     return wrapper

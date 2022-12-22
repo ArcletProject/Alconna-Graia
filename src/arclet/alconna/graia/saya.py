@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Any, Union
+from typing import Any 
 
 from arclet.alconna.core import Alconna
 from arclet.alconna.manager import CommandManager
@@ -14,10 +16,10 @@ from .dispatcher import AlconnaDispatcher
 
 @dataclass
 class AlconnaSchema(BaseSchema):
-    command: Union[Alconna, AlconnaDispatcher]
+    command: Alconna | AlconnaDispatcher
 
     @classmethod
-    def from_(cls, command: str, *options: str, flag: str = "reply") -> "AlconnaSchema":
+    def from_(cls, command: str, *options: str, flag: str = "reply") -> AlconnaSchema:
         return cls(
             AlconnaDispatcher(AlconnaString(command, *options), send_flag=flag)  # type: ignore
         )

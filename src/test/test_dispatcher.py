@@ -1,8 +1,18 @@
 from graia.ariadne.message.chain import MessageChain
 
-from src.arclet.alconna.graia import Alconna, AlconnaDispatcher, AlconnaOutputMessage, Match, Query, success_record, \
-    AlconnaProperty, match_path, MatchSuffix, MatchPrefix
-from arclet.alconna import Args, Arpamar, Duplication
+from src.arclet.alconna.graia import (
+    Alconna,
+    AlconnaDispatcher,
+    AlconnaOutputMessage,
+    Match,
+    Query,
+    success_record,
+    AlconnaProperty,
+    match_path,
+    MatchSuffix,
+    MatchPrefix,
+)
+from arclet.alconna import Args, Arparma, Duplication, CommandMeta
 from arclet.alconna import ArgsStub, command_manager
 
 from graia.broadcast import Broadcast
@@ -17,17 +27,9 @@ loop = asyncio.get_event_loop()
 
 bcc = Broadcast(loop=loop)
 
-bot = Ariadne(
-    connection=config(
-        123456789, "1234567890abcdef"
-    )
-)
+bot = Ariadne(connection=config(123456789, "1234567890abcdef"))
 
-alc = Alconna(
-    command="!test",
-    is_raise_exception=True,
-    help_text="test_dispatch"
-)
+alc = Alconna("!test", meta=CommandMeta("test_dispatch", raise_exception=True))
 
 ariadne_ctx.set(bot)
 
@@ -84,24 +86,20 @@ ariadne_ctx.set(bot)
 #     print("match", bar.available, bar.result)
 
 
-@bcc.receiver(
-    GroupMessage
-)
+@bcc.receiver(GroupMessage)
 async def test4(
-        group: Group,
-        event: GroupMessage,
-        message: MessageChain = MatchPrefix("shell"),
+    group: Group,
+    event: GroupMessage,
+    message: MessageChain = MatchPrefix("shell"),
 ):
     print("-", message, "-")
 
+
 ev = GroupMessage.parse_obj(
     {
-        'messageChain': [{"type": "Plain", "text": "!test --help"}],
-        'source': {
-            "id": 0,
-            "time": 10
-        },
-        'sender': {
+        "messageChain": [{"type": "Plain", "text": "!test --help"}],
+        "source": {"id": 0, "time": 10},
+        "sender": {
             "id": 12345678,
             "memberName": "test1",
             "specialTitle": "",
@@ -114,17 +112,14 @@ ev = GroupMessage.parse_obj(
                 "name": "test",
                 "permission": "OWNER",
             },
-        }
+        },
     }
 )
 ev1 = GroupMessage.parse_obj(
     {
-        'source': {
-            "id": 0,
-            "time": 10
-        },
-        'messageChain': [{"type": "Plain", "text": "!jrrp -h"}],
-        'sender': {
+        "source": {"id": 0, "time": 10},
+        "messageChain": [{"type": "Plain", "text": "!jrrp -h"}],
+        "sender": {
             "id": 54322411,
             "memberName": "test2",
             "specialTitle": "",
@@ -137,17 +132,14 @@ ev1 = GroupMessage.parse_obj(
                 "name": "test",
                 "permission": "OWNER",
             },
-        }
+        },
     }
 )
 ev2 = GroupMessage.parse_obj(
     {
-        'source': {
-            "id": 0,
-            "time": 10
-        },
-        'messageChain': [{"type": "Plain", "text": "!jrrp 334"}],
-        'sender': {
+        "source": {"id": 0, "time": 10},
+        "messageChain": [{"type": "Plain", "text": "!jrrp 334"}],
+        "sender": {
             "id": 42425665,
             "memberName": "test3",
             "specialTitle": "",
@@ -160,18 +152,15 @@ ev2 = GroupMessage.parse_obj(
                 "name": "test",
                 "permission": "OWNER",
             },
-        }
+        },
     }
 )
 
 ev3 = GroupMessage.parse_obj(
     {
-        'source': {
-            "id": 0,
-            "time": 10
-        },
-        'messageChain': [{"type": "Plain", "text": "test11"}],
-        'sender': {
+        "source": {"id": 0, "time": 10},
+        "messageChain": [{"type": "Plain", "text": "test11"}],
+        "sender": {
             "id": 42425665,
             "memberName": "test3",
             "specialTitle": "",
@@ -184,14 +173,14 @@ ev3 = GroupMessage.parse_obj(
                 "name": "test",
                 "permission": "OWNER",
             },
-        }
+        },
     }
 )
 
 ev4 = GroupMessage.parse_obj(
     {
-        'messageChain': [{"type": "Plain", "text": "test11 foo 123"}],
-        'sender': {
+        "messageChain": [{"type": "Plain", "text": "test11 foo 123"}],
+        "sender": {
             "id": 42425665,
             "memberName": "test3",
             "specialTitle": "",
@@ -205,17 +194,14 @@ ev4 = GroupMessage.parse_obj(
                 "permission": "OWNER",
             },
         },
-        'source': {
-            "id": 0,
-            "time": 10
-        }
+        "source": {"id": 0, "time": 10},
     }
 )
 
 ev5 = GroupMessage.parse_obj(
     {
-        'messageChain': [{"type": "Plain", "text": "shell echo hello"}],
-        'sender': {
+        "messageChain": [{"type": "Plain", "text": "shell echo hello"}],
+        "sender": {
             "id": 42425665,
             "memberName": "test3",
             "specialTitle": "",
@@ -229,10 +215,7 @@ ev5 = GroupMessage.parse_obj(
                 "permission": "OWNER",
             },
         },
-        'source': {
-            "id": 0,
-            "time": 10
-        }
+        "source": {"id": 0, "time": 10},
     }
 )
 

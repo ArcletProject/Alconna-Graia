@@ -24,7 +24,7 @@ dependencies = [
 
 [[package]]
 name = "arclet-alconna"
-version = "1.4.2"
+version = "1.4.3"
 requires_python = ">=3.8"
 summary = "A High-performance, Generality, Humane Command Line Arguments Parser Library."
 dependencies = [
@@ -94,6 +94,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "fix-future-annotations"
+version = "0.5.0"
+requires_python = ">=3.8"
+summary = "A CLI and pre-commit hook to upgrade the typing annotations syntax to PEP 585 and PEP 604"
+dependencies = [
+    "tokenize-rt>=5.0.0",
+    "tomli; python_version < \"3.11\"",
+]
+
+[[package]]
 name = "frozenlist"
 version = "1.3.1"
 requires_python = ">=3.7"
@@ -101,7 +111,7 @@ summary = "A list-like structure which implements collections.abc.MutableSequenc
 
 [[package]]
 name = "graia-amnesia"
-version = "0.6.0"
+version = "0.7.1"
 requires_python = ">=3.8,<4.0"
 summary = "a collection of shared components for graia"
 dependencies = [
@@ -114,17 +124,17 @@ dependencies = [
 
 [[package]]
 name = "graia-ariadne"
-version = "0.9.8"
+version = "0.10.0"
 requires_python = ">=3.8,<4.0"
 summary = "Another elegant Python QQ Bot framework for mirai and mirai-api-http v2."
 dependencies = [
     "aiohttp~=3.8",
     "creart-graia<1.0.0,>=0.1.5",
-    "graia-amnesia~=0.6.0",
+    "graia-amnesia~=0.7.0",
     "graia-broadcast~=0.19",
     "launart~=0.6",
     "pydantic~=1.9",
-    "typing-extensions~=4.3",
+    "typing-extensions<5.0,>=4.4",
 ]
 
 [[package]]
@@ -157,15 +167,16 @@ dependencies = [
 
 [[package]]
 name = "graiax-shortcut"
-version = "0.2.0"
+version = "0.2.1"
 requires_python = "<4.0,>=3.8"
 summary = "Utilities for Graia Framework Community."
 dependencies = [
     "creart~=0.2",
-    "graia-amnesia<0.7.0,>=0.6.0",
+    "graia-amnesia~=0.7.0",
     "graia-broadcast<1.0.0,>=0.18",
     "graia-saya<0.1.0,>=0.0.17",
     "graia-scheduler>=0.0.8",
+    "typing-extensions>=4.4.0",
 ]
 
 [[package]]
@@ -249,6 +260,18 @@ requires_python = ">=3.8"
 summary = "a uniform status implementation for graia project"
 
 [[package]]
+name = "tokenize-rt"
+version = "5.0.0"
+requires_python = ">=3.7"
+summary = "A wrapper around the stdlib `tokenize` which roundtrips."
+
+[[package]]
+name = "tomli"
+version = "2.0.1"
+requires_python = ">=3.7"
+summary = "A lil' TOML parser"
+
+[[package]]
 name = "typing-extensions"
 version = "4.4.0"
 requires_python = ">=3.7"
@@ -278,7 +301,7 @@ summary = "Backport of pathlib-compatible object wrapper for zip files"
 
 [metadata]
 lock_version = "4.0"
-content_hash = "sha256:7f3c9b38d3830ddea969a312f823501fc7faa207d1605e062d3fc341bafa07ed"
+content_hash = "sha256:9436861a5d857ba389974be4cf20244dbcc8e3820068f9eb32f9154e24dbe161"
 
 [metadata.files]
 "aiohttp 3.8.1" = [
@@ -359,13 +382,9 @@ content_hash = "sha256:7f3c9b38d3830ddea969a312f823501fc7faa207d1605e062d3fc341b
     {url = "https://files.pythonhosted.org/packages/27/6b/a89fbcfae70cf53f066ec22591938296889d3cc58fec1e1c393b10e8d71d/aiosignal-1.2.0.tar.gz", hash = "sha256:78ed67db6c7b7ced4f98e495e572106d5c432a93e1ddd1bf475e1dc05f5b7df2"},
     {url = "https://files.pythonhosted.org/packages/3b/87/fe94898f2d44a93a35d5aa74671ed28094d80753a1113d68b799fab6dc22/aiosignal-1.2.0-py3-none-any.whl", hash = "sha256:26e62109036cd181df6e6ad646f91f0dcfd05fe16d0cb924138ff2ab75d64e3a"},
 ]
-"arclet-alconna 1.4.2" = [
-    {url = "https://files.pythonhosted.org/packages/3c/21/981fb31ca50fd22a5062d5343503451cdf319282748e428ff875c9da5d2d/arclet_alconna-1.4.2-py3-none-any.whl", hash = "sha256:e8221cf58e6b022eabf47c2afc589f99bfe46362be25353aeae82a2f16dd18af"},
-    {url = "https://files.pythonhosted.org/packages/fe/b8/1cc72d0ec8d99bb0912cb8e118517bcb14ae38fa90943d6693b71106816e/arclet-alconna-1.4.2.tar.gz", hash = "sha256:57c0d9d7ee42f5d611cf5683cbd9d5d9561ee191c021c9f2be6f5d06e9706ffe"},
-]
-"arclet-alconna-tools 0.3.0" = [
-    {url = "https://files.pythonhosted.org/packages/df/70/9f9ecb9422581b92326b278e05566a13361cfa9112a734e91e0cd17c9f76/arclet-alconna-tools-0.3.0.tar.gz", hash = "sha256:e24f48ffd8516174b650b30fa097fd64168e9389a0355dbdab8519cc6e787aa0"},
-    {url = "https://files.pythonhosted.org/packages/e4/4b/9041e35eb88a83061f642c5634e3e5a31fdb8df6236152c219918cb32413/arclet_alconna_tools-0.3.0-py3-none-any.whl", hash = "sha256:1658affc941961dc3c856669d98863a89fcc6669ae3e3c39583691ef1d657fee"},
+"arclet-alconna 1.4.3" = [
+    {url = "https://files.pythonhosted.org/packages/5b/06/e26ab877bf23b2fd488c720a5803e54f92c86af2eb544f87653767d2c2af/arclet_alconna-1.4.3-py3-none-any.whl", hash = "sha256:642a04072b0ca4b17909a07bfaa14c75ec2924f9d076b65b8c89f1223c96eb87"},
+    {url = "https://files.pythonhosted.org/packages/75/01/ea37adcc68edad1a15f44fb645ab1b4c484b5aafe0a73c2d20748f810fb7/arclet-alconna-1.4.3.tar.gz", hash = "sha256:651563d8a54b20a2541ad3088bc5b8c123aeb44676bdece02540ddd7b1f9ce6b"},
 ]
 "async-timeout 4.0.2" = [
     {url = "https://files.pythonhosted.org/packages/54/6e/9678f7b2993537452710ffb1750c62d2c26df438aa621ad5fa9d1507a43a/async-timeout-4.0.2.tar.gz", hash = "sha256:2163e1640ddb52b7a8c80d0a67a08587e5d245cc9c553a74a847056bc2976b15"},
@@ -394,6 +413,10 @@ content_hash = "sha256:7f3c9b38d3830ddea969a312f823501fc7faa207d1605e062d3fc341b
 "croniter 1.3.7" = [
     {url = "https://files.pythonhosted.org/packages/80/12/4cf1fa220d521702db5b4e3a06603cac89ecd233ad69b050aa98f08e52ce/croniter-1.3.7-py2.py3-none-any.whl", hash = "sha256:12369c67e231c8ce5f98958d76ea6e8cb5b157fda4da7429d245a931e4ed411e"},
     {url = "https://files.pythonhosted.org/packages/bc/75/71b7d4b9b364570f8a307bcfd79c89941e929ea803dcf5d0e355725f5316/croniter-1.3.7.tar.gz", hash = "sha256:72ef78d0f8337eb35393b8893ebfbfbeb340f2d2ae47e0d2d78130e34b0dd8b9"},
+]
+"fix-future-annotations 0.5.0" = [
+    {url = "https://files.pythonhosted.org/packages/15/56/d5ebafd3f1c46b43d5edd491359a870e224613ada3d1b6358a114d68d59e/fix-future-annotations-0.5.0.tar.gz", hash = "sha256:666bf5fd09068f3403b34b2dc69844955a4a7bac4df28dd345183bd18172cbfd"},
+    {url = "https://files.pythonhosted.org/packages/19/eb/7f2e259f542145d7bc4f4d664b7d9dedfa9da6ac564efeac3c5e6fa2cb33/fix_future_annotations-0.5.0-py3-none-any.whl", hash = "sha256:45b5e73b36c514a23c2fbb2b7ff26448496399bda3b98a7b78a14439639f2e59"},
 ]
 "frozenlist 1.3.1" = [
     {url = "https://files.pythonhosted.org/packages/04/a6/7d83ee70d9e4d5e4423fae9d0d6821359df0313f754eb4db4c79f779c624/frozenlist-1.3.1-cp39-cp39-win_amd64.whl", hash = "sha256:625d8472c67f2d96f9a4302a947f92a7adbc1e20bedb6aff8dbc8ff039ca6189"},
@@ -456,13 +479,13 @@ content_hash = "sha256:7f3c9b38d3830ddea969a312f823501fc7faa207d1605e062d3fc341b
     {url = "https://files.pythonhosted.org/packages/f4/98/0dc010eff663f2b75feb35b7a908cda585c87b402b198a34e3b1161e20f2/frozenlist-1.3.1-cp37-cp37m-musllinux_1_1_s390x.whl", hash = "sha256:53b2b45052e7149ee8b96067793db8ecc1ae1111f2f96fe1f88ea5ad5fd92d10"},
     {url = "https://files.pythonhosted.org/packages/f8/16/addcabc0c2483fba353f5818b56e593c363e00c83eb9c9132a42aa3c740d/frozenlist-1.3.1-cp310-cp310-win32.whl", hash = "sha256:fabb953ab913dadc1ff9dcc3a7a7d3dc6a92efab3a0373989b8063347f8705be"},
 ]
-"graia-amnesia 0.6.0" = [
-    {url = "https://files.pythonhosted.org/packages/4f/0d/434bae97145de0e5bda33e4757c5def19e034fdb12a32ea2dd7d0d4d1c70/graia_amnesia-0.6.0-py3-none-any.whl", hash = "sha256:c1e347171cd42d81b10dea4fb6afef4bed4e836fa9c698ecf595ccaa5c2d1939"},
-    {url = "https://files.pythonhosted.org/packages/e4/17/23accd9a4466a7cebc4cd6f74821197ad1e74b23cd5395acee7ccd19ce1f/graia-amnesia-0.6.0.tar.gz", hash = "sha256:9f4ed226ebd2ccfe5e09489e4afffd9e58ae28c3fa93211dda72c3c6b9a439f0"},
+"graia-amnesia 0.7.1" = [
+    {url = "https://files.pythonhosted.org/packages/49/6c/9f6c4f5badfd04e0f3118ef1509a684101dade8124031e2fe90297d3dda8/graia-amnesia-0.7.1.tar.gz", hash = "sha256:d93efde0a36b6c4463401d9f142d03e49d14d37b5d005161cf3468136aba931d"},
+    {url = "https://files.pythonhosted.org/packages/9c/16/3afcf0811a9a81352633bf24705974e8122e0031bf00ce6c1b3c1b3da500/graia_amnesia-0.7.1-py3-none-any.whl", hash = "sha256:7292c43d3caa9884bf60e827d1fd2190b076b00210a4881a907d63ba2e5bfa6d"},
 ]
-"graia-ariadne 0.9.8" = [
-    {url = "https://files.pythonhosted.org/packages/43/32/e7d19083e9c1f076573ea98d3b5fc7d35335863259ce1a2e8836d09d27da/graia_ariadne-0.9.8-py3-none-any.whl", hash = "sha256:15802d3bd8bf72be88f3d36518547ae43fcd1e84981505595790b20fe6d9dcc8"},
-    {url = "https://files.pythonhosted.org/packages/60/b4/316a9b17af0e3957086d83796a5938c0df1abdc0f2df85d4b6c107e77b85/graia-ariadne-0.9.8.tar.gz", hash = "sha256:211c47b4aebfb31aa07f769f57f4640621361770ec9f98fd73b621f187d1d86c"},
+"graia-ariadne 0.10.0" = [
+    {url = "https://files.pythonhosted.org/packages/2a/54/cc1fe03474866757d672f8a1957aa335161c187770b748cedcd238a25cfa/graia_ariadne-0.10.0-py3-none-any.whl", hash = "sha256:9c71233ae55dd8c2ef110432ff0b493eb4daa8d976304da22723dc8d19f978d4"},
+    {url = "https://files.pythonhosted.org/packages/44/0a/596d901106a40f0f6fb048fe3bb47ebae27691fb1c8109469ec169b3ae0d/graia-ariadne-0.10.0.tar.gz", hash = "sha256:70d690a9251b25bbc749d8790de2cf82cd3e8e42de003144a75582f60a61a6dc"},
 ]
 "graia-broadcast 0.19.0" = [
     {url = "https://files.pythonhosted.org/packages/18/88/c87afe3d5f6cfa0a8befc8491a5e4a648966325421fbaa0a355ac61704d2/graia_broadcast-0.19.0-py3-none-any.whl", hash = "sha256:16a6cb0eaa7e405f243d5380a7e9acdf563000e2b8158dc3bc5c2b984d1b4411"},
@@ -476,9 +499,9 @@ content_hash = "sha256:7f3c9b38d3830ddea969a312f823501fc7faa207d1605e062d3fc341b
     {url = "https://files.pythonhosted.org/packages/4c/58/0171da0e922bc07fe2216cb014d72d64b6cd38bdb7170ed046544d24a906/graia_scheduler-0.0.10-py3-none-any.whl", hash = "sha256:9e725b83aeb36c9f95754c979fe01a4b6e23eea0ae6c527e3d3bb7ca388e02aa"},
     {url = "https://files.pythonhosted.org/packages/5e/32/f3a7d761fd8ef2f617db5665fc0efa68b690bdd02d96b938c6209bce5749/graia-scheduler-0.0.10.tar.gz", hash = "sha256:fbfd2043dbeaa4faec4bf38416297dbb9b5314941b4c22f30cec643bd7fb54b9"},
 ]
-"graiax-shortcut 0.2.0" = [
-    {url = "https://files.pythonhosted.org/packages/b8/2e/187c67f751cb52308f456404f83a17768c9f685c245faf12f1181c3bf083/graiax_shortcut-0.2.0-py3-none-any.whl", hash = "sha256:95271718d0eba5ba2ad5b2f32c9e1b1090e94de3343766026682d7fd59f028a9"},
-    {url = "https://files.pythonhosted.org/packages/c8/03/cfd04b0120470d733c3232881310aa5272322ab0c265f3d41e19f883d17c/graiax-shortcut-0.2.0.tar.gz", hash = "sha256:674222544662ab5626b10428c60989c9fc0f97f42638fae0330b50014ecc1102"},
+"graiax-shortcut 0.2.1" = [
+    {url = "https://files.pythonhosted.org/packages/2d/ff/15c2f1924b0ce77e74548ee875562f09c9956bc70f0af7ce4a2328678cfe/graiax_shortcut-0.2.1-py3-none-any.whl", hash = "sha256:06c7c8736dbc5bda1b5cf63cfc55f63e8b05c20e69bb14bafe401400f4c97b68"},
+    {url = "https://files.pythonhosted.org/packages/41/25/bbe40698ae32b61e0afdf1db4acf74925cb8ef01c06cc8a45d33e116959b/graiax-shortcut-0.2.1.tar.gz", hash = "sha256:ef97971614ed4ed1197857f4decd480043dfbdbd11a3b538e577ec4ce6babba3"},
 ]
 "idna 3.3" = [
     {url = "https://files.pythonhosted.org/packages/04/a2/d918dcd22354d8958fe113e1a3630137e0fc8b44859ade3063982eacd2a4/idna-3.3-py3-none-any.whl", hash = "sha256:84d9dd047ffa80596e0f246e2eab0b391788b0503584e8945f2368256d2735ff"},
@@ -609,6 +632,14 @@ content_hash = "sha256:7f3c9b38d3830ddea969a312f823501fc7faa207d1605e062d3fc341b
 "statv 0.3.2" = [
     {url = "https://files.pythonhosted.org/packages/17/94/90af52fbb882f7d5a86f75b8f151fabb3540a01b592d5c12646b55712266/statv-0.3.2-py3-none-any.whl", hash = "sha256:32e430b21ab6a62695c67ab6cae3dba6e01e9c3fdbc9344e3236ad7a1f51d0c7"},
     {url = "https://files.pythonhosted.org/packages/eb/34/55f3fde006d8d6c1f8d2422856360a9fde6a3f81dcd79f9203cfeac5b9dc/statv-0.3.2.tar.gz", hash = "sha256:fb4df2a37bf7a792e36a6e657c74cbdef9e2cdb8de3a0762b28b35c9e13f0fdd"},
+]
+"tokenize-rt 5.0.0" = [
+    {url = "https://files.pythonhosted.org/packages/40/01/fb40ea8c465f680bf7aa3f5bee39c62ba8b7f52c38048c27aa95aff4f779/tokenize_rt-5.0.0.tar.gz", hash = "sha256:3160bc0c3e8491312d0485171dea861fc160a240f5f5766b72a1165408d10740"},
+    {url = "https://files.pythonhosted.org/packages/8d/12/4c7495f25b4c9131706f3aaffb185d4de32c02a6ee49d875e929c5b7c919/tokenize_rt-5.0.0-py2.py3-none-any.whl", hash = "sha256:c67772c662c6b3dc65edf66808577968fb10badfc2042e3027196bed4daf9e5a"},
+]
+"tomli 2.0.1" = [
+    {url = "https://files.pythonhosted.org/packages/97/75/10a9ebee3fd790d20926a90a2547f0bf78f371b2f13aa822c759680ca7b9/tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
+    {url = "https://files.pythonhosted.org/packages/c0/3f/d7af728f075fb08564c5949a9c95e44352e23dee646869fa104a3b2060a3/tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
 ]
 "typing-extensions 4.4.0" = [
     {url = "https://files.pythonhosted.org/packages/0b/8e/f1a0a5a76cfef77e1eb6004cb49e5f8d72634da638420b9ea492ce8305e8/typing_extensions-4.4.0-py3-none-any.whl", hash = "sha256:16fa4864408f655d35ec496218b85f79b3437c829e93320c7c9215ccfd92489e"},

@@ -7,7 +7,7 @@ from arclet.alconna import Alconna
 from . import alc as alc
 from .analyser import GraiaCommandAnalyser
 from .dispatcher import AlconnaDispatcher, AlconnaOutputMessage, success_record
-from .model import AlconnaProperty, Match, Query
+from .model import AlconnaProperty, Match, Query, Header
 from .saya import AlconnaBehaviour, AlconnaSchema
 from .utils import (
     AtID,
