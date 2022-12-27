@@ -1,6 +1,6 @@
 [project]
 name = "arclet-alconna-graia"
-version = "0.10.3"
+version = "0.10.4"
 description = "Support Alconna to GraiaProject"
 authors = [
     {name = "RF-Tar-Railt", email = "rf_tar_railt@qq.com"}
@@ -8,14 +8,13 @@ authors = [
 dependencies = [
     "arclet-alconna<1.5.0, >=1.4.3",
     "arclet-alconna-tools>=0.3.0",
-    "nepattern>=0.3.2",
+    "nepattern>=0.4.2",
     "creart-graia>=0.1.5",
     "creart>=0.2.1",
     "graia-amnesia>=0.5.0",
     "graia-ariadne<1.0.0, >=0.7.14",
     "graia-broadcast>=0.18.2",
     "graia-saya>=0.0.17",
-    "graiax-shortcut>=0.2.1",
 ]
 requires-python = ">=3.8"
 readme = "README.md"

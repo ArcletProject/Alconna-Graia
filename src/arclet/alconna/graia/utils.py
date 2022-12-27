@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import inspect
 from functools import lru_cache
-from typing import Any, Callable, TypeVar 
+from typing import Any, Callable, Generator, TypeVar
 
 from arclet.alconna import Alconna, AlconnaGroup
 from arclet.alconna.tools import AlconnaFormat, AlconnaString
@@ -13,9 +13,10 @@ from graia.ariadne.model import Friend
 from graia.broadcast import Decorator, DecoratorInterface, DispatcherInterface
 from graia.broadcast.builtin.decorators import Depend
 from graia.broadcast.builtin.derive import Derive
+from graia.broadcast.entities.event import Dispatchable
 from graia.broadcast.exceptions import ExecutionStop
+from graia.saya.builtins.broadcast import ListenerSchema
 from graia.saya.factory import BufferModifier, SchemaWrapper, buffer_modifier, factory
-from graiax.shortcut.saya import gen_subclass, listen
 from nepattern import (
     URL,
     AllParam,
@@ -25,10 +26,51 @@ from nepattern import (
     UnionArg,
     type_parser,
 )
+from nepattern.main import INTEGER
 
 from .analyser import GraiaCommandAnalyser
 from .dispatcher import AlconnaDispatcher, AlconnaProperty
 from .saya import AlconnaSchema
+
+T = TypeVar("T")
+
+
+def gen_subclass(cls: type[T]) -> Generator[type[T], Any, Any]:
+    yield cls
+    for sub in cls.__subclasses__():
+        yield from gen_subclass(sub)
+
+
+@factory
+def listen(*event: type[Dispatchable] | str) -> SchemaWrapper:
+    """在当前 Saya Channel 中监听指定事件
+
+    Args:
+        *event (Union[Type[Dispatchable], str]): 事件类型或事件名称
+
+    Returns:
+        Callable[[T_Callable], T_Callable]: 装饰器
+    """
+    EVENTS: dict[str, type[Dispatchable]] = {
+        e.__name__: e for e in gen_subclass(Dispatchable)
+    }
+    events: list[type[Dispatchable]] = [
+        e if isinstance(e, type) else EVENTS[e] for e in event
+    ]
+
+    def wrapper(func: Callable, buffer: dict[str, Any]) -> ListenerSchema:
+        decorator_map: dict[str, Decorator] = buffer.pop("decorator_map", {})
+        buffer["inline_dispatchers"] = buffer.pop("dispatchers", [])
+        if decorator_map:
+            sig = inspect.signature(func)
+            for param in sig.parameters.values():
+                if decorator := decorator_map.get(param.name):
+                    setattr(param, "_default", decorator)
+            func.__signature__ = sig
+        return ListenerSchema(listening_events=events, **buffer)
+
+    return wrapper
+
 
 T_Callable = TypeVar("T_Callable", bound=Callable)
 
@@ -68,7 +110,7 @@ AtID = (
                 alias="@xxx",
                 accepts=[str],
             ),
-            type_parser(int),
+            INTEGER,
         ]
     )
     @ "at_id"
@@ -140,9 +182,7 @@ def match_value(path: str, value: Any, or_not: bool = False):
     return Depend(__wrapper__)
 
 
-def shortcuts(
-    mapping: dict[str, MessageChain] | None = None, **kwargs: MessageChain
-):
+def shortcuts(mapping: dict[str, MessageChain] | None = None, **kwargs: MessageChain):
     def wrapper(func: T_Callable) -> T_Callable:
         kwargs.update(mapping or {})
         if hasattr(func, "__alc_shortcuts__"):
@@ -236,6 +276,7 @@ def assign(path: str, value: Any = _seminal, or_not: bool = False) -> BufferModi
     """
     match_path 与 match_value 的合并形式
     """
+
     def wrapper(buffer: dict[str, Any]):
         if value == _seminal:
             if or_not:
@@ -298,7 +339,7 @@ class MatchPrefix(Decorator, Derive[MessageChain]):
         if isinstance(elem, Text) and (res := self.pattern.validate(elem.text)).success:
             if self.extract:
                 return MessageChain([Text(str(res.value))])
-            elem.text = elem.text[len(str(res.value)):].lstrip()
+            elem.text = elem.text[len(str(res.value)) :].lstrip()
             return header + rest
         elif self.pattern.validate(elem).success:
             if self.extract:
