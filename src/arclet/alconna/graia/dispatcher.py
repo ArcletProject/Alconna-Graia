@@ -236,12 +236,12 @@ class AlconnaDispatcher(BaseDispatcher):
         if isinstance(interface.default, Query):
             q = Query(interface.default.path, interface.default.result)
             q.result = res.result.query(q.path, Empty)
+            if interface.annotation is Query:
+                q.available = q.result != Empty
             if get_origin(interface.annotation) is Query:
                 q.available = generic_isinstance(
                     q.result, get_args(interface.annotation)[0]
                 )
-            else:
-                q.available = q.result is Empty
             return q
         if interface.name in res.result.all_matched_args:
             if generic_isinstance(

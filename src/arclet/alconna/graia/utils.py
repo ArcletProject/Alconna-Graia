@@ -4,7 +4,7 @@ import inspect
 from functools import lru_cache
 from typing import Any, Callable, Generator, TypeVar
 
-from arclet.alconna import Alconna, AlconnaGroup
+from arclet.alconna import Alconna, AlconnaGroup, Arparma
 from arclet.alconna.tools import AlconnaFormat, AlconnaString
 from graia.amnesia.message import Element, MessageChain, Text
 from graia.ariadne.event.message import FriendMessage, GroupMessage
@@ -441,6 +441,38 @@ def endswith(
     return wrapper
 
 
+def check_account(path: str):
+    """
+    依据可能的指定路径, 检查路径是否为指向当前 bot 账号的 At 元素
+
+    Args:
+        path: 指定的路径
+    """
+    from graia.ariadne.app import Ariadne
+    def __wrapper__(app: Ariadne, arp: Arparma):
+        match: At | str = arp.query(path, "\0")
+        if isinstance(match, str):
+            return True
+        if match.target == app.account:
+            return True
+        raise ExecutionStop
+
+    return Depend(__wrapper__)
+
+
+@buffer_modifier
+def mention(path: str) -> BufferModifier:
+    """
+    检查路径是否为指向当前 bot 账号的 At 元素
+
+    Args:
+        path: 指定的路径
+    """
+    def wrapper(buffer: dict[str, Any]):
+        buffer.setdefault("decorators", []).append(check_account(path))
+
+    return wrapper
+
 __all__ = [
     "ImgOrUrl",
     "AtID",
@@ -455,4 +487,6 @@ __all__ = [
     "MatchPrefix",
     "endswith",
     "MatchSuffix",
+    "check_account",
+    "mention"
 ]
