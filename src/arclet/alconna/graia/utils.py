@@ -7,6 +7,7 @@ from typing import Any, Callable, Generator, TypeVar
 from arclet.alconna import Alconna, AlconnaGroup, Arparma
 from arclet.alconna.tools import AlconnaFormat, AlconnaString
 from graia.amnesia.message import Element, MessageChain, Text
+from graia.ariadne.app import Ariadne
 from graia.ariadne.event.message import FriendMessage, GroupMessage
 from graia.ariadne.message.element import At, Image
 from graia.ariadne.model import Friend
@@ -126,7 +127,6 @@ def fetch_name(path: str = "name"):
 
     要求 Alconna 命令中含有 Args[path;O:[str, At]] 参数
     """
-    from graia.ariadne.app import Ariadne
 
     async def __wrapper__(app: Ariadne, result: AlconnaProperty):
         event = result.source
@@ -448,7 +448,6 @@ def check_account(path: str):
     Args:
         path: 指定的路径
     """
-    from graia.ariadne.app import Ariadne
     def __wrapper__(app: Ariadne, arp: Arparma):
         match: At | str = arp.query(path, "\0")
         if isinstance(match, str):
