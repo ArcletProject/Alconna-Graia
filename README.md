@@ -8,9 +8,12 @@
 
 ### 单文件
 
+ariadne:
+
 ```python
-from arclet.alconna.graia import AlconnaDispatcher, Match, AlconnaProperty
-from arclet.alconna import Alconna, Args
+from arclet.alconna.graia import Alconna, Match, AlconnaProperty
+from arclet.alconna.ariadne import AlconnaDispatcher
+from arclet.alconna import Args
 ...
 
 app = Ariadne(...)
@@ -23,30 +26,60 @@ alc = Alconna("!jrrp", Args["sth", str, 1123])
     dispatchers=[AlconnaDispatcher(alc, send_flag='stay')]
 )
 async def test2(
-        group: Group,
-        result: AlconnaProperty[GroupMessage],
-        sth: Match[str]
+    group: Group,
+    result: AlconnaProperty[GroupMessage],
+    sth: Match[str]
 ):
     print("sign:", result.result)
     print("sender:", group)
     print("match", sth.available, sth.result)
 ```
+
+avilla:
+
+```python
+from arclet.alconna.graia import Alconna, Match, AlconnaProperty
+from arclet.alconna.avilla import AlconnaDispatcher
+from arclet.alconna import Args
+...
+
+
+broadcast = create(Broadcast)
+avilla = Avilla(...)
+
+
+alc = Alconna("!jrrp", Args["sth", str, 1123])
+
+@broadcast.receiver(
+    MessageReceived,
+    dispatchers=[AlconnaDispatcher(alc, send_flag='stay')]
+)
+async def test2(
+    context: Context,
+    result: AlconnaProperty[MessageReceived],
+    sth: Match[str]
+):
+    print("sign:", result.result)
+    print("sender:", context.scene)
+    print("match", sth.available, sth.result)
+```
+
 ### 使用 Saya
 
 in module.py:
 ```python
-from arclet.alconna.graia import Alc, Match, AlconnaProperty, AlconnaSchema
-from arclet.alconna import Alconna, Args
+from arclet.alconna.graia import Alconna, Match, AlconnaProperty, AlconnaSchema
+from arclet.alconna import Args
+from arclet.alconna.ariadne/avilla import AlconnaDispatcher
 ...
 channel = Channel.current()
 
 alc = Alconna("!jrrp", Args["sth", str, 1123])
 
-@channel.use(AlconnaSchema(Alc(alc)))
-@channel.use(ListenerSchema([GroupMessage]))
-async def test2(group: Group, result: AlconnaProperty[GroupMessage], sth: Match[str]):
+@channel.use(AlconnaSchema(AlconnaDispatcher(alc)))
+@channel.use(ListenerSchema([...]))
+async def test2(result: AlconnaProperty[...], sth: Match[str]):
     print("sign:", result.result)
-    print("sender:", group)
     print("match", sth.available, sth.result)
 
 
@@ -71,41 +104,40 @@ in module.py:
 
 ```python
 from graiax.shortcut.saya import listen
-from arclet.alconna.graia import Match, alcommand, from_command, startswith, endswith
-from arclet.alconna import Alconna, Args, Arpamar
+from arclet.alconna.graia import Alconna, Match, from_command, startswith, endswith
+from arclet.alconna import  Args, Arpamar
+from arclet.alconna.ariadne/avilla import alcommand
 
 ...
 
 
 @alcommand(Alconna("!jrrp", Args["sth", str, 1123]), private=False)
-async def test1(group: Group, result: Arpamar, sth: Match[str]):
+async def test1(result: Arpamar, sth: Match[str]):
     print("sign:", result)
-    print("sender:", group)
     print("match", sth.available, sth.result)
 
 
 @alcommand("[!|.]hello <name:str>;say <word>", send_error=True)
-async def test1(group: Group, result: Arpamar, name: Match[str]):
+async def test1(result: Arpamar, name: Match[str]):
     print("sign:", result)
-    print("sender:", group)
     print("match", name.available, name.result)
 
     
-@listen(GroupMessage) 
+@listen(...) 
 @from_command("foo bar {baz}")
 async def test2(baz: int):
     print("baz", baz)
     
     
-@listen(GroupMessage)
+@listen(...)
 @startswith("foo bar")
-async def test3(event: GroupMessage):
+async def test3(event: ...):
     ...
 
 
-@listen(GroupMessage)
+@listen(...)
 @endswith(int)
-async def test4(event: GroupMessage):
+async def test4(event: ...):
     ...
 ```
 
@@ -124,14 +156,15 @@ with saya.module_context():
 ## AlconnaDispatcher 参数说明
 
 ```python
-class AlconnaDispatcher(BaseDispatcher):
+class AlconnaDispatcher(BaseDispatcher, Generic[TOHandler]):
     def __init__(
         self,
-        command: Union[Alconna, AlconnaGroup],
+        command: Alconna | AlconnaGroup,
         *,
         send_flag: Literal["reply", "post", "stay"] = "stay",
         skip_for_unmatch: bool = True,
-        send_handler: Optional[Callable[[str], MessageChain]] = None,
+        output_handler: type[TOHandler] | None = None,
+        message_converter: Callable[[str], MessageChain | Coroutine[Any, Any, MessageChain]] | None = None,
     ): ...
 ```
 
@@ -144,7 +177,9 @@ class AlconnaDispatcher(BaseDispatcher):
 
 `skip_for_unmatch`: 解析失败时是否跳过, 否则错误信息按 send_flag 处理
 
-`send_handler`: send_flag 为 reply 时 输出信息的预处理器
+`output_handler`: 处理命令输出信息的发送的类
+
+`message_converter`: send_flag 为 reply 时 输出信息的预处理器
 
 ## 附加组件
 
@@ -154,39 +189,40 @@ class AlconnaDispatcher(BaseDispatcher):
 - `Query`: 查询某个参数路径是否存在，如`sth: Query[int] = Query("foo.bar")`；可以指定默认值如
 `Query("foo.bar", 1234)`。使用时以 `Query.available` 判断是否匹配成功，以 `Query.result` 获取匹配结果
 
+- `Header`: 表示命令头部为特殊形式时的头部匹配
+
 - `assign`: 依托路径是否匹配成功为命令分发处理器。
 
 ```python
-from arclet.alconna.graia import alcommand, assign
-from arclet.alconna import Alconna, Args, Arpamar
+from arclet.alconna.graia import assign
+from arclet.alconna.ariadne/avilla import alcommand
+from arclet.alconna import Alconna, Arpamar
 ...
 
 alc = Alconna(...)
 
 @alcommand(alc, private=False)
 @assign("foo")
-async def foo(group: Group, result: Arpamar):
+async def foo(result: Arpamar):
     ...
 
 @alcommand(alc, private=False)
 @assign("bar.baz", 1)
-async def bar_baz_1(group: Group, result: Arpamar):
+async def bar_baz_1(result: Arpamar):
     ...
 ```
 
 ## 便捷方法
 
 ```python
-from arclet.alconna.graia import Alc, Match
+from arclet.alconna.graia import Match
+from arclet.alconna.ariadne/avilla import Alc
 ...
 
-app = Ariadne(...)
-
 @app.broadcast.receiver(
-    GroupMessage, dispatchers=[Alc.from_format("foo bar {baz:int}")]
+    ..., dispatchers=[Alc.from_format("foo bar {baz:int}")]
 )
-async def test2(group: Group, baz: Match[int]):
-    print("sender:", group)
+async def test2(baz: Match[int]):
     print("match", baz.available, baz.result)
 ```
 
@@ -198,9 +234,8 @@ from arclet.alconna.graia import Match, AlconnaSchema
 channel = Channel.current()
 
 @channel.use(AlconnaSchema.from_("foo <arg:str>", "bar"))
-@channel.use(ListenerSchema([GroupMessage]))
-async def test2(group: Group, sth: Match[str]):
-    print("sender:", group)
+@channel.use(ListenerSchema([...]))
+async def test2(sth: Match[str]):
     print("match", sth.available, sth.result)
 ```
 
