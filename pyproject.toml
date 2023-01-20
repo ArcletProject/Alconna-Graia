@@ -1,13 +1,10 @@
 [project]
-name = "arclet-alconna-graia"
-version = "0.10.5"
-description = "Support Alconna to GraiaProject"
-authors = [
-    {name = "RF-Tar-Railt", email = "rf_tar_railt@qq.com"}
-]
+name = "arclet-alconna-graia-workspace"
+version = "0"
+
 dependencies = [
-    "arclet-alconna<1.5.0, >=1.4.3",
-    "arclet-alconna-tools>=0.3.0",
+    "arclet-alconna<1.6.0, >=1.5.0",
+    "arclet-alconna-tools>=0.4.0",
     "nepattern>=0.4.2",
     "creart-graia>=0.1.5",
     "creart>=0.2.1",
@@ -15,11 +12,60 @@ dependencies = [
     "graia-ariadne<1.0.0, >=0.7.14",
     "graia-broadcast>=0.18.2",
     "graia-saya>=0.0.17",
+    "avilla-core>=1.0.0a5",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
+
+[project.optional-dependencies]
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "fix-future-annotations>=0.5.0",
+    "mina-build>=0.2.6",
+]
+
+[build-system]
+requires = ["mina-build"]
+build-backend = "mina.backend"
+
+[tool]
+
+[tool.mina]
+enabled = false
+
+[tool.black]
+include = '\.pyi?$'
+line-length = 120
+target-version = ['py39']
+
+
+[tool.isort]
+profile = "black"
+
+[tool.mina.packages.core]
+includes = ["src/arclet/alconna/graia"]
+
+[tool.mina.packages.core.project]
+name = "arclet-alconna-graia"
+version = "0.11.0"
+description = "Support Alconna to GraiaProject"
+authors = [
+    {name = "RF-Tar-Railt", email = "rf_tar_railt@qq.com"}
+]
 readme = "README.md"
 license = {text = "AGPL-3.0"}
-keywords = ["alconna", "graia", "dispatcher", "arclet"]
+requires-python = ">=3.8"
+keywords = ["alconna", "graia", "arclet", "ariadne"]
+dependencies = [
+    "arclet-alconna<1.6.0, >=1.5.0",
+    "arclet-alconna-tools>=0.4.0",
+    "nepattern>=0.4.2",
+    "creart-graia>=0.1.5",
+    "creart>=0.2.1",
+    "graia-amnesia>=0.5.0",
+    "graia-broadcast>=0.18.2",
+    "graia-saya>=0.0.17",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "License :: OSI Approved :: GNU Affero General Public License v3",
@@ -28,27 +74,78 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
 ]
-[project.urls]
-Homepage = "https://github.com/ArcletProject/Alconna-Graia"
+[tool.mina.packages.core.project.urls]
+homepage = "https://github.com/ArcletProject/Alconna-Graia"
+repository = "https://github.com/ArcletProject/Alconna-Graia"
 Documentation = "https://arcletproject.github.io/docs/alconna/tutorial"
 "Bug Reports" = "https://github.com/ArcletProject/Alconna/issues"
 Source = "https://github.com/ArcletProject/Alconna"
-[project.entry-points."creart.creators"]
+[tool.mina.packages.core.project.entry-points."creart.creators"]
 alconna_behavior = "arclet.alconna.graia.create:AlconnaBehaviorCreator"
 
 
-[project.optional-dependencies]
-[build-system]
-requires = ["pdm-pep517>=1.0.0"]
-build-backend = "pdm.pep517.api"
-
-[tool]
-[tool.pdm]
-
-[tool.pdm.build]
-includes = ["src/arclet"]
-
-[tool.pdm.dev-dependencies]
-dev = [
-    "fix-future-annotations>=0.5.0",
+[tool.mina.packages.ariadne]
+includes = ["src/arclet/alconna/ariadne"]
+raw-dependencies = [
+  "arclet-alconna-graia >= 0.11.0",
 ]
+
+[tool.mina.packages.ariadne.project]
+name = "arclet-alconna-ariadne"
+version = "0.11.0"
+authors = [
+    {name = "RF-Tar-Railt", email = "rf_tar_railt@qq.com"}
+]
+dependencies = [
+    "graia-ariadne<1.0.0, >=0.7.14",
+]
+description = "Support Alconna to GraiaProject/Ariadne"
+readme = "README.md"
+license = {text = "AGPL-3.0"}
+requires-python = ">=3.8"
+keywords = ["alconna", "graia", "arclet"]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+]
+[tool.mina.packages.ariadne.project.urls]
+homepage = "https://github.com/ArcletProject/Alconna-Graia"
+repository = "https://github.com/ArcletProject/Alconna-Graia"
+
+[tool.mina.packages.avilla]
+includes = ["src/arclet/alconna/avilla"]
+raw-dependencies = [
+  "arclet-alconna-graia >= 0.11.0",
+]
+
+[tool.mina.packages.avilla.project]
+name = "arclet-alconna-avilla"
+version = "0.11.0"
+authors = [
+    {name = "RF-Tar-Railt", email = "rf_tar_railt@qq.com"}
+]
+dependencies = [
+    "avilla-core>=1.0.0a5",
+]
+description = "Support Alconna to GraiaProject/Avilla"
+readme = "README.md"
+license = {text = "AGPL-3.0"}
+requires-python = ">=3.8"
+keywords = ["alconna", "graia", "arclet", "avilla"]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+]
+[tool.mina.packages.avilla.project.urls]
+homepage = "https://github.com/ArcletProject/Alconna-Graia"
+repository = "https://github.com/ArcletProject/Alconna-Graia"
