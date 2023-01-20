@@ -6,7 +6,7 @@ from arclet.alconna import Alconna
 
 from . import alc as alc
 from .analyser import GraiaCommandAnalyser, MessageChainContainer
-from .dispatcher import AlconnaDispatcher, AlconnaOutputMessage, success_record, AlconnaGraiaOutputHandler
+from .dispatcher import AlconnaOutputMessage, success_record
 from .model import AlconnaProperty, Match, Query, Header
 from .saya import AlconnaBehaviour, AlconnaSchema
 from .tools import (
@@ -22,4 +22,3 @@ from .tools import (
 )
 
 Alconna = Alconna.default_analyser(GraiaCommandAnalyser)
-Alc = AlconnaDispatcher

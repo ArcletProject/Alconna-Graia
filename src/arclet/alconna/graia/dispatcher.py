@@ -25,7 +25,6 @@ from .utils import get_origin, generic_issubclass
 success_record = deque(maxlen=10)
 
 
-
 def success_hook(event, args):
     if event in ["success_analysis"]:
         success_record.append(args[0])
@@ -38,9 +37,7 @@ class AlconnaGraiaOutputHandler(Generic[TSource], metaclass=ABCMeta):
     output_cache: dict[int, set] = {}
 
     def __init__(
-        self,
-        dispatcher: AlconnaDispatcher,
-        convert: Callable[[str], MessageChain | Coroutine[Any, Any, MessageChain]]
+        self, dispatcher: AlconnaDispatcher, convert: Callable[[str], MessageChain | Coroutine[Any, Any, MessageChain]]
     ):
         self.dispatcher = dispatcher
         self.convert = convert

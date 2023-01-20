@@ -6,3 +6,4 @@ from .typings import ImgOrUrl, AtID
 MessageChainContainer.config(
     filter_out=["Source", "File", "Quote"]
 )
+Alc = AlconnaDispatcher
