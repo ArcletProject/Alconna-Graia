@@ -3,7 +3,7 @@ name = "arclet-alconna-graia-workspace"
 version = "0"
 
 dependencies = [
-    "arclet-alconna<1.6.0, >=1.5.0",
+    "arclet-alconna<1.6.0, >=1.5.2",
     "arclet-alconna-tools>=0.4.0",
     "nepattern>=0.4.2",
     "creart-graia>=0.1.5",
@@ -57,7 +57,7 @@ license = {text = "AGPL-3.0"}
 requires-python = ">=3.8"
 keywords = ["alconna", "graia", "arclet", "ariadne"]
 dependencies = [
-    "arclet-alconna<1.6.0, >=1.5.0",
+    "arclet-alconna<1.6.0, >=1.5.2",
     "arclet-alconna-tools>=0.4.0",
     "nepattern>=0.4.2",
     "creart-graia>=0.1.5",

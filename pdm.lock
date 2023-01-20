@@ -27,7 +27,7 @@ dependencies = [
 
 [[package]]
 name = "arclet-alconna"
-version = "1.5.1"
+version = "1.5.2"
 requires_python = ">=3.8"
 summary = "A High-performance, Generality, Humane Command Line Arguments Parser Library."
 dependencies = [
@@ -282,7 +282,7 @@ summary = "Backport of pathlib-compatible object wrapper for zip files"
 
 [metadata]
 lock_version = "4.1"
-content_hash = "sha256:050befd67bd6142bba5cb401263f4bcc531a434f73e634707907690b670b9a86"
+content_hash = "sha256:06b05cd022ffe2dfde443af10aaa81d166ab4ec78238edbf08649894b7ec20a0"
 
 [metadata.files]
 "aiohttp 3.8.1" = [
@@ -363,9 +363,9 @@ content_hash = "sha256:050befd67bd6142bba5cb401263f4bcc531a434f73e634707907690b6
     {url = "https://files.pythonhosted.org/packages/27/6b/a89fbcfae70cf53f066ec22591938296889d3cc58fec1e1c393b10e8d71d/aiosignal-1.2.0.tar.gz", hash = "sha256:78ed67db6c7b7ced4f98e495e572106d5c432a93e1ddd1bf475e1dc05f5b7df2"},
     {url = "https://files.pythonhosted.org/packages/3b/87/fe94898f2d44a93a35d5aa74671ed28094d80753a1113d68b799fab6dc22/aiosignal-1.2.0-py3-none-any.whl", hash = "sha256:26e62109036cd181df6e6ad646f91f0dcfd05fe16d0cb924138ff2ab75d64e3a"},
 ]
-"arclet-alconna 1.5.1" = [
-    {url = "https://files.pythonhosted.org/packages/79/b9/60b956751619bfdd29cf710ea0457460ea29edaef86fdfbbabb3b84e8e3b/arclet-alconna-1.5.1.tar.gz", hash = "sha256:fd65365592c8b2f60a9fec28d17f982356ba677fdb718239c9b754a72066eefb"},
-    {url = "https://files.pythonhosted.org/packages/80/6c/5bbfd799d5513312dbd3fa1812aa91a774670a222a854f95532274c6d5e1/arclet_alconna-1.5.1-py3-none-any.whl", hash = "sha256:0fbc60b3f0405953c165ee096e255fcfd2a60440dd31d0334c40e7c4426d7c1c"},
+"arclet-alconna 1.5.2" = [
+    {url = "https://files.pythonhosted.org/packages/4a/c9/ce6cbe1dc2fc0e664fa54db7d3e9e4beb3cdc42873ef98c448c10d62b91b/arclet-alconna-1.5.2.tar.gz", hash = "sha256:053e8d85f7ddfbf317407233aef9439142ddf4b9c5b494ff98b2a27b38115658"},
+    {url = "https://files.pythonhosted.org/packages/61/f7/a57b00d06031eda1cdd49b85b113142eecefc6dd0ff48e4346a3da2eb982/arclet_alconna-1.5.2-py3-none-any.whl", hash = "sha256:78f0b6bc6ddc5826d42cb80fd088c42ca38b17ca9439a021871b174ae77d3795"},
 ]
 "arclet-alconna-tools 0.4.0" = [
     {url = "https://files.pythonhosted.org/packages/36/04/323e573cda8cc11b444b69c2e934068609babacc600648e33134c0ce616a/arclet-alconna-tools-0.4.0.tar.gz", hash = "sha256:92ba4144abdf308784c802b86bcf0b016e72b0b033a155b0c76141491a6f238c"},

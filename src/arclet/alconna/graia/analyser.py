@@ -1,36 +1,27 @@
 from __future__ import annotations
 
 from typing import Any
+from typing_extensions import Self
 
 from arclet.alconna.exceptions import NullMessage
 from arclet.alconna.config import config
 from arclet.alconna.analysis.analyser import Analyser
+from arclet.alconna.analysis.container import DataCollectionContainer
 
 from graia.amnesia.message import MessageChain
 from graia.amnesia.message.element import Text
 
 
-class GraiaCommandAnalyser(Analyser[MessageChain]):
-    """Graia Project 相关的解析器"""
-
-    filter_out = ["Source", "File", "Quote"]
-
+class MessageChainContainer(DataCollectionContainer):
     @staticmethod
     def generate_token(data: list[Any | list[str]]) -> int:
         return hash(''.join(i.__repr__() for i in data))
 
-    @staticmethod
-    def converter(command: str):
-        return MessageChain([Text(command)])
-
-    def process(self, data: MessageChain) -> GraiaCommandAnalyser:
-        """命令分析功能, 传入字符串或消息链, 应当在失败时返回fail的arpamar"""
+    def build(self, data: MessageChain) -> Self:
         if not isinstance(data, MessageChain):
             exp = ValueError(f"{data} is not a MessageChain")
-            if self.raise_exception:
-                raise exp
-            self.temporary_data["fail"] = exp
-            return self
+            raise exp
+        self.reset()
         self.temporary_data["origin"] = data
         i, exc = 0, None
         for unit in data:
@@ -46,15 +37,20 @@ class GraiaCommandAnalyser(Analyser[MessageChain]):
                 self.raw_data.append(unit)
             i += 1
         if i < 1:
-            exp = NullMessage(
-                config.lang.analyser_handle_null_message.format(target=data)
-            )
-            if self.raise_exception:
-                raise exp
-            self.temporary_data["fail"] = exp
-        else:
-            self.ndata = i
-            self.bak_data = self.raw_data.copy()
-            if self.message_cache:
-                self.temp_token = self.generate_token(self.raw_data)
+            raise NullMessage(config.lang.analyser_handle_null_message.format(target=data))
+        self.ndata = i
+        self.bak_data = self.raw_data.copy()
+        if self.message_cache:
+            self.temp_token = self.generate_token(self.raw_data)
         return self
+
+
+class GraiaCommandAnalyser(Analyser[MessageChainContainer, MessageChain]):
+    """Graia Project 相关的解析器"""
+
+    @staticmethod
+    def converter(command: str):
+        return MessageChain([Text(command)])
+
+
+GraiaCommandAnalyser.default_container(MessageChainContainer)

@@ -5,7 +5,7 @@ from typing import TypeVar, Generic
 
 from arclet.alconna import Arparma
 
-T_Source = TypeVar("T_Source")
+TSource = TypeVar("TSource")
 T = TypeVar("T")
 
 
@@ -46,11 +46,11 @@ class Match(Generic[T]):
 
 
 @dataclass
-class AlconnaProperty(Generic[T_Source]):
+class AlconnaProperty(Generic[TSource]):
     """对解析结果的封装"""
     result: Arparma
     output: str | None = field(default=None)
-    source: T_Source = field(default=None)
+    source: TSource = field(default=None)
 
 
 @dataclass

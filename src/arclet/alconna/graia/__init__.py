@@ -5,27 +5,21 @@ Alconna 对于 Graia 系列的支持
 from arclet.alconna import Alconna
 
 from . import alc as alc
-from .analyser import GraiaCommandAnalyser
-from .dispatcher import AlconnaDispatcher, AlconnaOutputMessage, success_record
+from .analyser import GraiaCommandAnalyser, MessageChainContainer
+from .dispatcher import AlconnaDispatcher, AlconnaOutputMessage, success_record, AlconnaGraiaOutputHandler
 from .model import AlconnaProperty, Match, Query, Header
 from .saya import AlconnaBehaviour, AlconnaSchema
-from .utils import (
-    AtID,
-    ImgOrUrl,
+from .tools import (
     MatchPrefix,
     MatchSuffix,
-    alcommand,
     assign,
     endswith,
-    fetch_name,
     from_command,
     match_path,
     match_value,
     shortcuts,
     startswith,
-    mention,
-    check_account
 )
 
-Alconna.default_analyser(GraiaCommandAnalyser)
+Alconna = Alconna.default_analyser(GraiaCommandAnalyser)
 Alc = AlconnaDispatcher
