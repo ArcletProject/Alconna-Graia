@@ -11,8 +11,7 @@
 ariadne:
 
 ```python
-from arclet.alconna.graia import Alconna, Match, AlconnaProperty
-from arclet.alconna.ariadne import AlconnaDispatcher
+from arclet.alconna.graia import Alconna, AlconnaDispatcher, Match, AlconnaProperty
 from arclet.alconna import Args
 ...
 
@@ -38,8 +37,7 @@ async def test2(
 avilla:
 
 ```python
-from arclet.alconna.graia import Alconna, Match, AlconnaProperty
-from arclet.alconna.avilla import AlconnaDispatcher
+from arclet.alconna.graia import Alconna, AlconnaDispatcher, Match, AlconnaProperty
 from arclet.alconna import Args
 ...
 
@@ -68,9 +66,8 @@ async def test2(
 
 in module.py:
 ```python
-from arclet.alconna.graia import Alconna, Match, AlconnaProperty, AlconnaSchema
+from arclet.alconna.graia import Alconna, AlconnaDispatcher, Match, AlconnaProperty, AlconnaSchema
 from arclet.alconna import Args
-from arclet.alconna.ariadne/avilla import AlconnaDispatcher
 ...
 channel = Channel.current()
 
@@ -104,9 +101,8 @@ in module.py:
 
 ```python
 from graiax.shortcut.saya import listen
-from arclet.alconna.graia import Alconna, Match, from_command, startswith, endswith
+from arclet.alconna.graia import alcommand, Alconna, Match, from_command, startswith, endswith
 from arclet.alconna import  Args, Arpamar
-from arclet.alconna.ariadne/avilla import alcommand
 
 ...
 
@@ -163,7 +159,6 @@ class AlconnaDispatcher(BaseDispatcher, Generic[TOHandler]):
         *,
         send_flag: Literal["reply", "post", "stay"] = "stay",
         skip_for_unmatch: bool = True,
-        output_handler: type[TOHandler] | None = None,
         message_converter: Callable[[str], MessageChain | Coroutine[Any, Any, MessageChain]] | None = None,
     ): ...
 ```
@@ -176,8 +171,6 @@ class AlconnaDispatcher(BaseDispatcher, Generic[TOHandler]):
 - stay: 存入 AlconnaProperty 传递给事件处理器
 
 `skip_for_unmatch`: 解析失败时是否跳过, 否则错误信息按 send_flag 处理
-
-`output_handler`: 处理命令输出信息的发送的类
 
 `message_converter`: send_flag 为 reply 时 输出信息的预处理器
 
@@ -194,8 +187,7 @@ class AlconnaDispatcher(BaseDispatcher, Generic[TOHandler]):
 - `assign`: 依托路径是否匹配成功为命令分发处理器。
 
 ```python
-from arclet.alconna.graia import assign
-from arclet.alconna.ariadne/avilla import alcommand
+from arclet.alconna.graia import assign, alcommand
 from arclet.alconna import Alconna, Arpamar
 ...
 
@@ -215,8 +207,7 @@ async def bar_baz_1(result: Arpamar):
 ## 便捷方法
 
 ```python
-from arclet.alconna.graia import Match
-from arclet.alconna.ariadne/avilla import Alc
+from arclet.alconna.graia import Match, Alc
 ...
 
 @app.broadcast.receiver(
