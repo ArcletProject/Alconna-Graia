@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import sys
-from abc import ABCMeta, abstractmethod
 from collections import deque
-from typing import Any, Generic, Literal, TypeVar, get_args, ClassVar, Coroutine, Callable
+from typing import Any, Callable, ClassVar, Coroutine, Literal, get_args
 
 from arclet.alconna.components.duplication import Duplication, generate_duplication
 from arclet.alconna.components.stub import ArgsStub, OptionStub, SubcommandStub
@@ -15,12 +14,14 @@ from graia.broadcast.entities.dispatcher import BaseDispatcher
 from graia.broadcast.entities.event import Dispatchable
 from graia.broadcast.exceptions import ExecutionStop, PropagationCancelled
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
+from launart import Launart
 from nepattern.util import generic_isinstance
 
 from arclet.alconna import Arparma, Empty, output_manager
 
-from .model import AlconnaProperty, Header, Match, Query, TSource
-from .utils import get_origin, generic_issubclass
+from .model import AlconnaProperty, Header, Match, Query
+from .service import AlconnaGraiaInterface
+from .utils import generic_issubclass, get_origin
 
 success_record = deque(maxlen=10)
 
@@ -33,49 +34,6 @@ def success_hook(event, args):
 sys.addaudithook(success_hook)
 
 
-class AlconnaGraiaOutputHandler(Generic[TSource], metaclass=ABCMeta):
-    output_cache: dict[int, set] = {}
-
-    def __init__(
-        self, dispatcher: AlconnaDispatcher, convert: Callable[[str], MessageChain | Coroutine[Any, Any, MessageChain]]
-    ):
-        self.dispatcher = dispatcher
-        self.convert = convert
-
-    @abstractmethod
-    async def send(
-        self,
-        result: Arparma[MessageChain],
-        output_text: str | None = None,
-        source: TSource | None = None,
-    ) -> AlconnaProperty[TSource]:
-        ...
-
-    class Dispatcher(BaseDispatcher):
-        def __init__(self, command: Alconna | AlconnaGroup, text: str, source: TSource):
-            self.command = command
-            self.output = text
-            self.source_event = source
-
-        async def catch(self, interface: DispatcherInterface):
-            if interface.name == "output" and interface.annotation == str:
-                return self.output
-            if isinstance(interface.annotation, (Alconna, AlconnaGroup)):
-                return self.command
-            if issubclass(interface.annotation, type(self.source_event)) or isinstance(
-                self.source_event, interface.annotation
-            ):
-                return self.source_event
-
-
-class DefaultOutputHandler(AlconnaGraiaOutputHandler[TSource]):
-    async def send(self, result: Arparma[MessageChain], output_text: str | None = None, source: TSource | None = None):
-        return AlconnaProperty(result, None, source)
-
-
-TOHandler = TypeVar("TOHandler", bound=AlconnaGraiaOutputHandler)
-
-
 class AlconnaOutputMessage(Dispatchable):
     """
     Alconna 信息输出事件
@@ -83,7 +41,7 @@ class AlconnaOutputMessage(Dispatchable):
     """
 
 
-class AlconnaDispatcher(BaseDispatcher, Generic[TOHandler]):
+class AlconnaDispatcher(BaseDispatcher):
     @classmethod
     def from_format(cls, command: str, args: dict[str, Any] | None = None):
         return cls(AlconnaFormat(command, args), send_flag="reply")
@@ -92,18 +50,9 @@ class AlconnaDispatcher(BaseDispatcher, Generic[TOHandler]):
     def from_command(cls, command: str, *options: str):
         return cls(AlconnaString(command, *options), send_flag="reply")
 
-    handler: TOHandler
-    _global_handler: type[DefaultOutputHandler] = DefaultOutputHandler
     default_send_handler: ClassVar[
         Callable[[str], MessageChain | Coroutine[Any, Any, MessageChain]]
     ] = lambda x: MessageChain([Text(x)])
-
-    @classmethod
-    def default_handler(cls, __t: type[TOHandler] | None = None) -> type[AlconnaDispatcher[TOHandler]]:
-        """配置 AlconnaDispatcher 的默认输出处理器"""
-        if __t is not None:
-            cls._global_handler = __t
-        return cls
 
     def __init__(
         self,
@@ -111,7 +60,6 @@ class AlconnaDispatcher(BaseDispatcher, Generic[TOHandler]):
         *,
         send_flag: Literal["reply", "post", "stay"] = "reply",
         skip_for_unmatch: bool = True,
-        output_handler: type[TOHandler] | None = None,
         message_converter: Callable[[str], MessageChain | Coroutine[Any, Any, MessageChain]] | None = None,
     ):
         """
@@ -125,9 +73,14 @@ class AlconnaDispatcher(BaseDispatcher, Generic[TOHandler]):
         self.command = command
         self.send_flag = send_flag
         self.skip_for_unmatch = skip_for_unmatch
-        self.handler = (output_handler or self._global_handler)(self, message_converter or self.default_send_handler)
+        self.converter = message_converter or self.default_send_handler
 
     async def beforeExecution(self, interface: DispatcherInterface):
+        try:
+            adapter = Launart.current().get_interface(AlconnaGraiaInterface).adapter
+        except (ValueError, LookupError, AttributeError):
+            from .adapter import AlconnaGraiaAdapter
+            adapter = AlconnaGraiaAdapter.instance()
         message: MessageChain = await interface.lookup_param("message", MessageChain, None)
 
         with output_manager.capture(self.command.name) as cap:
@@ -142,12 +95,12 @@ class AlconnaDispatcher(BaseDispatcher, Generic[TOHandler]):
         if not may_help_text and _res.error_info:
             may_help_text = _res.error_info.strip("'").strip("\\n").split("\\n")[-1]
         if not may_help_text and _res.matched:
-            AlconnaGraiaOutputHandler.output_cache.clear()
+            adapter.output_cache.clear()
             sys.audit("success_analysis", self.command)
         try:
-            _property = await self.handler.send(_res, may_help_text, interface.event)
+            _property = await adapter.send(self, _res, may_help_text, interface.event)
         except LookupError:
-            _property = await self.handler.send(_res, may_help_text, None)
+            _property = await adapter.send(self, _res, may_help_text, None)
         if not _res.matched and not _property.output:
             raise PropagationCancelled
         interface.local_storage["alconna_result"] = _property

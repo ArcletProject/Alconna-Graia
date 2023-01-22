@@ -1,5 +1,4 @@
 from nepattern import (
-    URL,
     BasePattern,
     PatternModel,
     UnionArg,

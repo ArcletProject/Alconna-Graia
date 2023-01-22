@@ -4,7 +4,8 @@ import inspect
 from functools import lru_cache
 from typing import Any, Callable
 
-from arclet.alconna.tools import AlconnaFormat
+from arclet.alconna import Alconna, AlconnaGroup
+from arclet.alconna.tools import AlconnaFormat, AlconnaString
 from graia.amnesia.message import Element, MessageChain, Text
 from graia.broadcast import Decorator, DecoratorInterface, DispatcherInterface
 from graia.broadcast.builtin.decorators import Depend
@@ -14,9 +15,19 @@ from graia.saya.factory import BufferModifier, SchemaWrapper, buffer_modifier, f
 from nepattern import AllParam, BasePattern, Empty, type_parser
 
 from .analyser import MessageChainContainer
+from .adapter import AlconnaGraiaAdapter
 from .dispatcher import AlconnaDispatcher, AlconnaProperty
 from .saya import AlconnaSchema
 from .utils import T_Callable, gen_subclass
+
+
+def fetch_name(path: str = "name"):
+    """
+    在可能的命令输入中获取目标的名字
+
+    要求 Alconna 命令中含有 Args[path;O:[str, At]] 参数
+    """
+    return AlconnaGraiaAdapter.instance().fetch_name(path)
 
 
 def match_path(path: str):
@@ -66,6 +77,43 @@ def shortcuts(mapping: dict[str, MessageChain] | None = None, **kwargs: MessageC
         return func
 
     return wrapper
+
+
+@factory
+def alcommand(
+    alconna: Alconna | AlconnaGroup | str,
+    guild: bool = True,
+    private: bool = True,
+    send_error: bool = False,
+    post: bool = False,
+    private_name: str = "private",
+    guild_name: str = "guild",
+) -> SchemaWrapper:
+    """
+    saya-util 形式的注册一个消息事件监听器并携带 AlconnaDispatcher
+
+    请将其放置在装饰器的顶层
+
+    Args:
+        alconna: 使用的 Alconna 命令
+        guild: 命令是否群聊可用
+        private: 命令是否私聊可用
+        send_error: 是否发送错误信息
+        post: 是否以事件发送输出信息
+        private_name: 私聊事件下消息场景名称
+        guild_name: 群聊事件下消息场景名称
+    """
+    if isinstance(alconna, str):
+        if not alconna.strip():
+            raise ValueError(alconna)
+        cmds = alconna.split(";")
+        alconna = AlconnaString(cmds[0], *cmds[1:])
+    if alconna.meta.example and "$" in alconna.meta.example and alconna.headers:
+        alconna.meta.example = alconna.meta.example.replace("$", alconna.headers[0])
+    dispatcher = AlconnaDispatcher(
+        alconna, send_flag="post" if post else "reply", skip_for_unmatch=not send_error  # type: ignore
+    )
+    return AlconnaGraiaAdapter.instance().alcommand(dispatcher, guild, private, private_name, guild_name)
 
 
 @factory
@@ -124,7 +172,7 @@ def search_element(name: str):
 
 def _get_filter_out() -> list[type[Element]]:
     res = []
-    for i in MessageChainContainer.filter_out:
+    for i in ["Source", "Quote", "File"]:
         if t := search_element(i):
             res.append(t)
     return res
@@ -256,8 +304,36 @@ def endswith(suffix: Any, include: bool = False, bind: str | None = None) -> Buf
     return wrapper
 
 
+def check_account(path: str):
+    """
+    依据可能的指定路径, 检查路径是否可能指示为当前 bot 账号
+
+    Args:
+        path: 指定的路径
+    """
+
+    return AlconnaGraiaAdapter.instance().check_account(path)
+
+
+@buffer_modifier
+def mention(path: str) -> BufferModifier:
+    """
+    检查路径是否可能指示为当前 bot 账号
+
+    Args:
+        path: 指定的路径
+    """
+
+    def wrapper(buffer: dict[str, Any]):
+        buffer.setdefault("decorators", []).append(check_account(path))
+
+    return wrapper
+
+
 __all__ = [
+    "fetch_name",
     "match_path",
+    "alcommand",
     "match_value",
     "from_command",
     "shortcuts",
@@ -266,4 +342,6 @@ __all__ = [
     "MatchPrefix",
     "endswith",
     "MatchSuffix",
+    "check_account",
+    "mention"
 ]
