@@ -20,6 +20,8 @@ from arclet.alconna.graia import AlconnaProperty, AlconnaSchema
 from arclet.alconna.graia.adapter import AlconnaGraiaAdapter
 from arclet.alconna.graia.analyser import MessageChainContainer
 from arclet.alconna.graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
+from arclet.alconna.graia.utils import listen
+
 
 AvillaMessageEvent = Union[MessageEdited, MessageReceived]
 

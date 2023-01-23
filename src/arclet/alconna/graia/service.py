@@ -36,13 +36,21 @@ class AlconnaGraiaService(Service, Generic[TAdapter]):
         self,
         adapter_type: type[TAdapter] | None = None,
         enable_cache: bool = False,
-        cache_path: str | None = None
+        cache_dir: str | None = None
     ):
+        """
+        Args:
+            adapter_type (TAdapter | None): 选择的 Adapter 类型, 不传入时使用默认类型
+            enable_cache (bool): 是否保存命令动态添加的 shortcuts
+            cache_dir (str | None): 保存的路径
+        """
         self.adapter = (adapter_type or AlconnaGraiaAdapter.__adapter_class__)()
         self.enable_cache = enable_cache
-        _path = Path(cache_path) / "manager_cache.db"
+        root = Path(cache_dir) if cache_dir else Path(__file__).parent.parent
+        _path = root / "manager_cache.db"
         _path.parent.mkdir(exist_ok=True, parents=True)
         command_manager.cache_path = str(_path.absolute())
+        super().__init__()
 
     def get_interface(self, interface_type: type[AlconnaGraiaInterface]) -> AlconnaGraiaInterface[TAdapter]:
         return AlconnaGraiaInterface(self)
