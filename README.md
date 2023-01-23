@@ -4,6 +4,37 @@
 
 包括解析器、Dispatcher、SayaSchema 和 附加组件
 
+## 前提
+
+Alconna-Graia 现在依赖 `Launart` 的 `service` 功能
+
+你需要在你使用 Alconna-Graia 组件时加入如下代码：
+
+```python
+from launart import Launart
+from arclet.alconna.graia import AlconnaGraiaService
+from arclet.alconna.xxx import AlconnaXXXAdapter
+...
+
+manager = Launart(...)
+manager.add_service(AlconnaGraiaService(AlconnaXXXAdapter))
+```
+
+`adapater` 的使用可以直接导入：
+
+```python
+from launart import Launart
+from arclet.alconna.graia import AlconnaGraiaService
+import arclet.alconna.xxx
+...
+
+manager = Launart(...)
+manager.add_service(AlconnaGraiaService())
+```
+
+不指定 adapter 时 Alconna-Graia 默认使用基础 adapter
+
+
 ## 快速使用
 
 ### 单文件
@@ -11,10 +42,13 @@
 ariadne:
 
 ```python
-from arclet.alconna.graia import Alconna, AlconnaDispatcher, Match, AlconnaProperty
 from arclet.alconna import Args
+from arclet.alconna.graia import Alconna, AlconnaDispatcher, Match, AlconnaProperty
+from arclet.alconna.graia.service import AlconnaGraiaService
+import arclet.alconna.ariadne
 ...
-
+manager = Launart(...)
+manager.add_service(AlconnaGraiaService())
 app = Ariadne(...)
 
 
@@ -37,12 +71,14 @@ async def test2(
 avilla:
 
 ```python
-from arclet.alconna.graia import Alconna, AlconnaDispatcher, Match, AlconnaProperty
 from arclet.alconna import Args
+from arclet.alconna.graia import Alconna, AlconnaDispatcher, Match, AlconnaProperty
+from arclet.alconna.graia.service import AlconnaGraiaService
+import arclet.alconna.avilla
 ...
-
-
 broadcast = create(Broadcast)
+manager = Launart(...)
+manager.add_service(AlconnaGraiaService())
 avilla = Avilla(...)
 
 

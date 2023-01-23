@@ -29,6 +29,8 @@ class AlconnaGraiaInterface(ExportInterface["AlconnaGraiaService"], Generic[TAda
 
 class AlconnaGraiaService(Service, Generic[TAdapter]):
     adapter: TAdapter
+    id = "alconna.graia.service"
+    supported_interface_types = {AlconnaGraiaInterface}
 
     def __init__(
         self,

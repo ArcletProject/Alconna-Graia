@@ -44,14 +44,16 @@ target-version = ['py39']
 profile = "black"
 
 [tool.pdm.scripts]
-puball = "pdm mina build -a ; pdm publish --no-build"
+buildall = "pdm mina build -a"
+pub = "pdm publish --no-build"
+puball = {composite = ["buildall", "pub"]}
 
 [tool.mina.packages.core]
 includes = ["src/arclet/alconna/graia"]
 
 [tool.mina.packages.core.project]
 name = "arclet-alconna-graia"
-version = "0.11.1"
+version = "0.11.2"
 description = "Support Alconna to GraiaProject"
 authors = [
     {name = "RF-Tar-Railt", email = "rf_tar_railt@qq.com"}
@@ -92,12 +94,12 @@ alconna_behavior = "arclet.alconna.graia.create:AlconnaBehaviorCreator"
 [tool.mina.packages.ariadne]
 includes = ["src/arclet/alconna/ariadne"]
 raw-dependencies = [
-  "arclet-alconna-graia >= 0.11.1",
+  "arclet-alconna-graia >= 0.11.2",
 ]
 
 [tool.mina.packages.ariadne.project]
 name = "arclet-alconna-ariadne"
-version = "0.11.1"
+version = "0.11.2"
 authors = [
     {name = "RF-Tar-Railt", email = "rf_tar_railt@qq.com"}
 ]
@@ -125,12 +127,12 @@ repository = "https://github.com/ArcletProject/Alconna-Graia"
 [tool.mina.packages.avilla]
 includes = ["src/arclet/alconna/avilla"]
 raw-dependencies = [
-  "arclet-alconna-graia >= 0.11.1",
+  "arclet-alconna-graia >= 0.11.2",
 ]
 
 [tool.mina.packages.avilla.project]
 name = "arclet-alconna-avilla"
-version = "0.11.1"
+version = "0.11.2"
 authors = [
     {name = "RF-Tar-Railt", email = "rf_tar_railt@qq.com"}
 ]

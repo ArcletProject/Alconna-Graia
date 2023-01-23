@@ -16,10 +16,10 @@ from graia.broadcast.utilles import run_always_await
 
 from arclet.alconna import Arparma
 
-from ..graia import AlconnaProperty, AlconnaSchema
-from ..graia.adapter import AlconnaGraiaAdapter
-from ..graia.analyser import MessageChainContainer
-from ..graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
+from arclet.alconna.graia import AlconnaProperty, AlconnaSchema
+from arclet.alconna.graia.adapter import AlconnaGraiaAdapter
+from arclet.alconna.graia.analyser import MessageChainContainer
+from arclet.alconna.graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
 
 AvillaMessageEvent = Union[MessageEdited, MessageReceived]
 

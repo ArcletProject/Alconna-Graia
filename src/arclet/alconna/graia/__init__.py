@@ -10,6 +10,7 @@ from .analyser import GraiaCommandAnalyser, MessageChainContainer
 from .dispatcher import AlconnaOutputMessage, success_record, AlconnaDispatcher
 from .model import AlconnaProperty, Match, Query, Header
 from .saya import AlconnaBehaviour, AlconnaSchema
+from .service import AlconnaGraiaService
 from .tools import (
     MatchPrefix,
     MatchSuffix,
