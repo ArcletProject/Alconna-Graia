@@ -4,6 +4,13 @@
 
 包括解析器、Dispatcher、SayaSchema 和 附加组件
 
+## 安装
+
+```shell
+pip install arclet-alconna-graia[all]
+pdm add arclet-alconna-graia[all]
+```
+
 ## 前提
 
 Alconna-Graia 现在依赖 `Launart` 的 `service` 功能
@@ -30,6 +37,17 @@ import arclet.alconna.xxx
 
 manager = Launart(...)
 manager.add_service(AlconnaGraiaService())
+```
+
+或传入 endpoint, 其等价于直接导入:
+
+```python
+from launart import Launart
+from arclet.alconna.graia import AlconnaGraiaService
+...
+
+manager = Launart(...)
+manager.add_service(AlconnaGraiaService("xxx"))
 ```
 
 不指定 adapter 时 Alconna-Graia 默认使用基础 adapter

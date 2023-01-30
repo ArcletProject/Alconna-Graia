@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
+from weakref import finalize
+from contextlib import suppress
 from contextvars import ContextVar
 from typing import TYPE_CHECKING, Any, Callable, Generic, ClassVar
 
@@ -20,16 +22,26 @@ if TYPE_CHECKING:
     from .dispatcher import AlconnaDispatcher
 
 
+__all__ = ["adapter_context", "AlconnaGraiaAdapter"]
+
+
 adapter_context: ContextVar["AlconnaGraiaAdapter"] = ContextVar("alconna_graia_adapter")
 
 
 class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
-    output_cache: dict[int, set] = {}
     __adapter_class__: ClassVar[type[AlconnaGraiaAdapter]] = None  # type: ignore
 
     def __init__(self):
-        adapter_context.set(self)
-        
+        self.output_cache: dict[int, set] = {}
+        token = adapter_context.set(self)
+
+        def clr(tkn):
+            self.output_cache.clear()
+            with suppress(Exception):
+                adapter_context.reset(tkn)
+
+        finalize(self, clr, token)
+
     @classmethod
     def __init_subclass__(cls, **kwargs):
         AlconnaGraiaAdapter.__adapter_class__ = cls
@@ -118,3 +130,6 @@ class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
         source: TSource | None = None,
     ):
         return AlconnaProperty(result, None, source)
+
+
+DefaultAdapter()

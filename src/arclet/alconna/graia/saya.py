@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any 
 
 from arclet.alconna.core import Alconna
-from arclet.alconna.manager import CommandManager
+from arclet.alconna.manager import command_manager
 from arclet.alconna.tools import AlconnaString
 from graia.broadcast import Broadcast
 from graia.saya.behaviour import Behaviour
@@ -38,8 +38,7 @@ class AlconnaSchema(BaseSchema):
 class AlconnaBehaviour(Behaviour):
     """命令行为"""
 
-    def __init__(self, broadcast: Broadcast, manager: CommandManager) -> None:
-        self.manager = manager
+    def __init__(self, broadcast: Broadcast) -> None:
         self.broadcast = broadcast
 
     def allocate(self, cube: Cube[AlconnaSchema]):
@@ -66,5 +65,5 @@ class AlconnaBehaviour(Behaviour):
             cmd = cube.metaclass.command.command
         else:
             cmd = cube.metaclass.command
-        self.manager.delete(cmd)
+        command_manager.delete(cmd)
         return True

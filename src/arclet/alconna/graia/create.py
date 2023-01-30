@@ -32,12 +32,11 @@ class AlconnaBehaviorCreator(AbstractCreator):
     def create(create_type: type[AlconnaBehaviour]) -> AlconnaBehaviour:
         from graia.broadcast import Broadcast
         from graia.saya import Saya
-        from arclet.alconna.manager import command_manager
         from arclet.alconna import config
 
         broadcast = it(Broadcast)
         saya = it(Saya)
-        behavior = create_type(broadcast, command_manager)
+        behavior = create_type(broadcast)
         saya.install_behaviours(behavior)
         config.set_loop(broadcast.loop)
         return behavior
