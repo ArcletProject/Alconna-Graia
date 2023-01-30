@@ -87,10 +87,11 @@ repository = "https://github.com/ArcletProject/Alconna-Graia"
 Documentation = "https://arcletproject.github.io/docs/alconna/tutorial"
 "Bug Reports" = "https://github.com/ArcletProject/Alconna/issues"
 Source = "https://github.com/ArcletProject/Alconna"
-[tool.mina.packages.core.project.optional-dependencies]
-ariadne = ["arclet-alconna-ariadne"]
-avilla = ["arclet-alconna-avilla"]
-all = ["arclet-alconna-ariadne", "arclet-alconna-avilla"]
+
+# [tool.mina.packages.core.project.optional-dependencies]
+# ariadne = ["arclet-alconna-ariadne"]
+# avilla = ["arclet-alconna-avilla"]
+# all = ["arclet-alconna-ariadne", "arclet-alconna-avilla"]
 
 [tool.mina.packages.core.project.entry-points."creart.creators"]
 alconna_behavior = "arclet.alconna.graia.create:AlconnaBehaviorCreator"

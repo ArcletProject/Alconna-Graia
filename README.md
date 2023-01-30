@@ -7,8 +7,15 @@
 ## 安装
 
 ```shell
-pip install arclet-alconna-graia[all]
-pdm add arclet-alconna-graia[all]
+pip install arclet-alconna-graia, arclet-alconna-ariadne
+pdm add arclet-alconna-graia, arclet-alconna-ariadne
+```
+
+或
+
+```shell
+pip install arclet-alconna-graia, arclet-alconna-avilla
+pdm add arclet-alconna-graia, arclet-alconna-avilla
 ```
 
 ## 前提
