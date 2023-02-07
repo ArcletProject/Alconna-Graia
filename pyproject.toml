@@ -53,7 +53,7 @@ includes = ["src/arclet/alconna/graia"]
 
 [tool.mina.packages.core.project]
 name = "arclet-alconna-graia"
-version = "0.11.4"
+version = "0.11.5"
 description = "Support Alconna to GraiaProject"
 authors = [
     {name = "RF-Tar-Railt", email = "rf_tar_railt@qq.com"}

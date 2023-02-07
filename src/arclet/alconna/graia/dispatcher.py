@@ -89,7 +89,7 @@ class AlconnaDispatcher(BaseDispatcher):
                 _res = self.command.parse(message)  # type: ignore
             except Exception as e:
                 _res = Arparma(self.command.path, message, False, error_info=repr(e))
-        may_help_text: str | None = cap.get("output", None)
+            may_help_text: str | None = cap.get("output", None)
         if not may_help_text and not _res.matched and ((not _res.head_matched) or self.skip_for_unmatch):
             raise ExecutionStop
         if not may_help_text and _res.error_info:

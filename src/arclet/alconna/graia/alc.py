@@ -6,17 +6,18 @@ from graia.saya.factory import BufferModifier, SchemaWrapper, buffer_modifier, f
 
 from arclet.alconna import (
     Alconna,
-    ArgFlag,
     Args,
+    Arg,
     CommandMeta,
-    Field,
     Namespace,
     Option,
+    Subcommand,
     config,
 )
 
 from .dispatcher import AlconnaDispatcher
 from .saya import AlconnaSchema
+from .utils import init_spec
 
 
 @factory
@@ -39,8 +40,15 @@ def command(name: Any | None = None, headers: list[Any] | None = None) -> Schema
 
 
 @buffer_modifier
-def option(name: str, args: Args | None = None, help: str | None = None) -> BufferModifier:
-    return lambda buffer: buffer.setdefault("options", []).append(Option(name, args, help_text=help))
+@init_spec(Option)
+def option(opt: Option) -> BufferModifier:
+    return lambda buffer: buffer.setdefault("options", []).append(opt)
+
+
+@buffer_modifier
+@init_spec(Subcommand)
+def subcommand(sub: Subcommand) -> BufferModifier:
+    return lambda buffer: buffer.setdefault("options", []).append(sub)
 
 
 @buffer_modifier
@@ -52,18 +60,14 @@ def main_args(args: Args) -> BufferModifier:
 
 
 @buffer_modifier
-def argument(
-    name: str,
-    value: Any | None = None,
-    default: Any | Field | None = None,
-    flags: list[ArgFlag] | None = None,
-) -> BufferModifier:
+@init_spec(Arg)
+def argument(arg: Arg) -> BufferModifier:
     def wrapper(buffer: dict[str, Any]):
         if args := buffer.get("args"):
             args: Args
-            args.add(name, value=value, default=default, flags=flags)
+            args.__merge__(arg)
         else:
-            buffer["args"] = Args().add(name, value=value, default=default, flags=flags)
+            buffer["args"] = Args().__merge__(arg)
 
     return wrapper
 

@@ -11,8 +11,7 @@ from graia.broadcast import Decorator
 from graia.broadcast.entities.event import Dispatchable
 from graia.saya.builtins.broadcast import ListenerSchema
 from graia.saya.factory import SchemaWrapper, factory
-from typing_extensions import Annotated
-from typing_extensions import get_origin as typing_ext_get_origin
+from typing_extensions import Annotated, ParamSpec, get_origin as typing_ext_get_origin
 
 
 Unions = (Union, types.UnionType) if sys.version_info >= (3, 10) else (Union,)
@@ -87,3 +86,14 @@ def listen(*event: type[Dispatchable] | str) -> SchemaWrapper:
 
 
 T_Callable = TypeVar("T_Callable", bound=Callable)
+
+R = TypeVar("R")
+P = ParamSpec("P")
+
+
+def init_spec(fn: Callable[P, T]) -> Callable[[Callable[[T], R]], Callable[P, R]]:
+    def wrapper(func: Callable[[T], R]) -> Callable[P, R]:
+        def inner(*args: P.args, **kwargs: P.kwargs):
+            return func(fn(*args, **kwargs))
+        return inner
+    return wrapper
