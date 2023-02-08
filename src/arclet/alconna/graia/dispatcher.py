@@ -140,11 +140,15 @@ class AlconnaDispatcher(BaseDispatcher):
             return Match(r, generic_isinstance(r, get_args(interface.annotation)[0]))
         if isinstance(interface.default, Query):
             q = Query(interface.default.path, interface.default.result)
-            q.result = res.result.query(q.path, Empty)
+            result = res.result.query(q.path, Empty)
             if interface.annotation is Query:
-                q.available = q.result != Empty
+                q.available = result != Empty
             elif get_origin(interface.annotation) is Query:
-                q.available = generic_isinstance(q.result, get_args(interface.annotation)[0])
+                q.available = generic_isinstance(result, get_args(interface.annotation)[0])
+            if q.available:
+                q.result = result
+            elif interface.default.result != Empty:
+                q.available = True
             return q
         if interface.name in res.result.all_matched_args:
             if generic_isinstance(res.result.all_matched_args[interface.name], interface.annotation):
