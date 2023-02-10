@@ -8,8 +8,7 @@ from arclet.alconna.components.duplication import Duplication, generate_duplicat
 from arclet.alconna.components.stub import ArgsStub, OptionStub, SubcommandStub
 from arclet.alconna.core import Alconna, AlconnaGroup
 from arclet.alconna.tools import AlconnaFormat, AlconnaString
-from graia.amnesia.message import MessageChain
-from graia.amnesia.message.element import Text
+from graia.amnesia.message import __message_chain_class__, __text_element_class__, MessageChain
 from graia.broadcast.entities.dispatcher import BaseDispatcher
 from graia.broadcast.entities.event import Dispatchable
 from graia.broadcast.exceptions import ExecutionStop, PropagationCancelled
@@ -52,7 +51,7 @@ class AlconnaDispatcher(BaseDispatcher):
 
     default_send_handler: ClassVar[
         Callable[[str], MessageChain | Coroutine[Any, Any, MessageChain]]
-    ] = lambda x: MessageChain([Text(x)])
+    ] = lambda x: __message_chain_class__([__text_element_class__(x)])
 
     def __init__(
         self,
@@ -73,7 +72,7 @@ class AlconnaDispatcher(BaseDispatcher):
         self.command = command
         self.send_flag = send_flag
         self.skip_for_unmatch = skip_for_unmatch
-        self.converter = message_converter or self.default_send_handler
+        self.converter = message_converter or self.__class__.default_send_handler
 
     async def beforeExecution(self, interface: DispatcherInterface):
         try:
