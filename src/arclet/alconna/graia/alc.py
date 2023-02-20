@@ -14,10 +14,10 @@ from arclet.alconna import (
     Subcommand,
     config,
 )
+from arclet.alconna.util import init_spec
 
 from .dispatcher import AlconnaDispatcher
 from .saya import AlconnaSchema
-from .utils import init_spec
 
 
 @factory

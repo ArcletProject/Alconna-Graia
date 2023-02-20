@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Generic, Literal, TypeVar
 
 from launart import ExportInterface, Launart, Service
-
 from arclet.alconna import command_manager
 
 from .adapter import AlconnaGraiaAdapter

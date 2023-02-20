@@ -89,11 +89,3 @@ T_Callable = TypeVar("T_Callable", bound=Callable)
 
 R = TypeVar("R")
 P = ParamSpec("P")
-
-
-def init_spec(fn: Callable[P, T]) -> Callable[[Callable[[T], R]], Callable[P, R]]:
-    def wrapper(func: Callable[[T], R]) -> Callable[P, R]:
-        def inner(*args: P.args, **kwargs: P.kwargs):
-            return func(fn(*args, **kwargs))
-        return inner
-    return wrapper

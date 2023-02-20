@@ -9,6 +9,7 @@ from avilla.core.tools.filter import Filter
 from avilla.spec.core.message import MessageEdited, MessageReceived
 from avilla.spec.core.profile import Summary
 from graia.amnesia.message import MessageChain
+from graia.amnesia.message.element import Text
 from graia.broadcast.builtin.decorators import Depend
 from graia.broadcast.exceptions import ExecutionStop
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
@@ -16,17 +17,21 @@ from graia.broadcast.utilles import run_always_await
 
 from arclet.alconna import Arparma
 
-from arclet.alconna.graia import AlconnaProperty, AlconnaSchema
-from arclet.alconna.graia.adapter import AlconnaGraiaAdapter
-from arclet.alconna.graia.analyser import MessageChainContainer
-from arclet.alconna.graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
-from arclet.alconna.graia.utils import listen
+from ..graia import AlconnaProperty, AlconnaSchema
+from ..graia.adapter import AlconnaGraiaAdapter
+from ..graia.analyser import MessageChainContainer
+from ..graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
+from ..graia.utils import listen
 
 
 AvillaMessageEvent = Union[MessageEdited, MessageReceived]
 
 
 class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
+
+    async def lookup_source(self, interface: DispatcherInterface[AvillaMessageEvent]) -> MessageChain:
+        return interface.event.message.content
+
     async def send(
         self,
         dispatcher: AlconnaDispatcher,
@@ -108,3 +113,5 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
 
 
 MessageChainContainer.config(filter_out=[])
+MessageChainContainer.__message_chain_class__ = MessageChain
+MessageChainContainer.__text_element_class__ = Text

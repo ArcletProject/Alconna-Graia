@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from creart import AbstractCreator, CreateTargetInfo, it, exists_module, mixin
 
 if TYPE_CHECKING:
-    from arclet.alconna.graia.saya import AlconnaBehaviour
+    from .saya import AlconnaBehaviour
 
 
 class AlconnaBehaviorCreator(AbstractCreator):

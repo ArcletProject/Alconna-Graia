@@ -5,14 +5,17 @@ from typing_extensions import Self
 
 from arclet.alconna.exceptions import NullMessage
 from arclet.alconna.config import config
-from arclet.alconna.analysis.analyser import Analyser
-from arclet.alconna.analysis.container import DataCollectionContainer
+from arclet.alconna.analyser import Analyser
+from arclet.alconna.container import DataCollectionContainer
 
-from graia.amnesia.message import MessageChain
+from graia.amnesia.message import MessageChain, __message_chain_class__, __text_element_class__
 from graia.amnesia.message.element import Text
 
 
 class MessageChainContainer(DataCollectionContainer):
+    __message_chain_class__ = __message_chain_class__
+    __text_element_class__ = __text_element_class__
+
     @staticmethod
     def generate_token(data: list[Any | list[str]]) -> int:
         return hash(''.join(i.__repr__() for i in data))
@@ -48,9 +51,10 @@ class MessageChainContainer(DataCollectionContainer):
 class GraiaCommandAnalyser(Analyser[MessageChainContainer, MessageChain]):
     """Graia Project 相关的解析器"""
 
-    @staticmethod
-    def converter(command: str):
-        return MessageChain([Text(command)])
+    def converter(self, command: str):
+        return self.container.__message_chain_class__(
+            [self.container.__text_element_class__(command)]
+        )
 
 
 GraiaCommandAnalyser.default_container(MessageChainContainer)

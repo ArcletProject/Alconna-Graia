@@ -4,11 +4,11 @@ import sys
 from collections import deque
 from typing import Any, Callable, ClassVar, Coroutine, Literal, get_args
 
-from arclet.alconna.components.duplication import Duplication, generate_duplication
-from arclet.alconna.components.stub import ArgsStub, OptionStub, SubcommandStub
-from arclet.alconna.core import Alconna, AlconnaGroup
+from arclet.alconna.duplication import Duplication, generate_duplication
+from arclet.alconna.stub import ArgsStub, OptionStub, SubcommandStub
+from arclet.alconna.core import Alconna
 from arclet.alconna.tools import AlconnaFormat, AlconnaString
-from graia.amnesia.message import __message_chain_class__, __text_element_class__, MessageChain
+from graia.amnesia.message import MessageChain
 from graia.broadcast.entities.dispatcher import BaseDispatcher
 from graia.broadcast.entities.event import Dispatchable
 from graia.broadcast.exceptions import ExecutionStop, PropagationCancelled
@@ -18,6 +18,7 @@ from nepattern.util import generic_isinstance
 
 from arclet.alconna import Arparma, Empty, output_manager
 
+from .analyser import MessageChainContainer
 from .model import AlconnaProperty, Header, Match, Query
 from .service import AlconnaGraiaInterface
 from .utils import generic_issubclass, get_origin
@@ -51,11 +52,13 @@ class AlconnaDispatcher(BaseDispatcher):
 
     default_send_handler: ClassVar[
         Callable[[str], MessageChain | Coroutine[Any, Any, MessageChain]]
-    ] = lambda x: __message_chain_class__([__text_element_class__(x)])
+    ] = lambda x: MessageChainContainer.__message_chain_class__(
+        [MessageChainContainer.__text_element_class__(x)]
+    )
 
     def __init__(
         self,
-        command: Alconna | AlconnaGroup,
+        command: Alconna,
         *,
         send_flag: Literal["reply", "post", "stay"] = "reply",
         skip_for_unmatch: bool = True,
@@ -64,7 +67,7 @@ class AlconnaDispatcher(BaseDispatcher):
         """
         构造 Alconna调度器
         Args:
-            command (Alconna | AlconnaGroup): Alconna实例
+            command (Alconna): Alconna实例
             send_flag ("reply", "post", "stay"): 输出信息的发送方式
             skip_for_unmatch (bool): 当指令匹配失败时是否跳过对应的事件监听器, 默认为 True
         """
@@ -80,7 +83,7 @@ class AlconnaDispatcher(BaseDispatcher):
         except (ValueError, LookupError, AttributeError):
             from .adapter import AlconnaGraiaAdapter
             adapter = AlconnaGraiaAdapter.instance()
-        message: MessageChain = await interface.lookup_param("message", MessageChain, None)
+        message: MessageChain = await adapter.lookup_source(interface)
 
         with output_manager.capture(self.command.name) as cap:
             output_manager.set_action(lambda x: x, self.command.name)
@@ -107,12 +110,11 @@ class AlconnaDispatcher(BaseDispatcher):
 
     async def catch(self, interface: DispatcherInterface):
         res: AlconnaProperty = interface.local_storage["alconna_result"]
-        default_duplication = generate_duplication(self.command)
-        default_duplication.set_target(res.result)
+        default_duplication = generate_duplication(res.result)
         if interface.annotation is Duplication:
             return default_duplication
         if generic_issubclass(Duplication, interface.annotation):
-            return interface.annotation(self.command).set_target(res.result)
+            return interface.annotation(res.result)
         if generic_issubclass(get_origin(interface.annotation), AlconnaProperty):
             return res
         if interface.annotation is ArgsStub:
@@ -127,7 +129,7 @@ class AlconnaDispatcher(BaseDispatcher):
             return res.result
         if interface.annotation is str and interface.name == "output":
             return res.output
-        if generic_issubclass(interface.annotation, (Alconna, AlconnaGroup)):
+        if generic_issubclass(interface.annotation, Alconna):
             return self.command
         if interface.annotation is Header:
             return Header(res.result.header, bool(res.result.header))

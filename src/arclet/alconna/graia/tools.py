@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import inspect
 from functools import lru_cache
-from typing import Any, Callable
+from typing import Any, Callable, TypedDict
+from typing_extensions import NotRequired
 
-from arclet.alconna import Alconna, AlconnaGroup
+from arclet.alconna import Alconna
 from arclet.alconna.tools import AlconnaFormat, AlconnaString
 from graia.amnesia.message import Element, MessageChain, Text
 from graia.broadcast import Decorator, DecoratorInterface, DispatcherInterface
@@ -14,11 +15,17 @@ from graia.broadcast.exceptions import ExecutionStop
 from graia.saya.factory import BufferModifier, SchemaWrapper, buffer_modifier, factory
 from nepattern import AllParam, BasePattern, Empty, type_parser
 
-from .analyser import MessageChainContainer
 from .adapter import AlconnaGraiaAdapter
 from .dispatcher import AlconnaDispatcher, AlconnaProperty
 from .saya import AlconnaSchema
 from .utils import T_Callable, gen_subclass
+
+
+class GraiaShortcutArgs(TypedDict):
+    command: MessageChain
+    args: NotRequired[list[Any]]
+    options: NotRequired[dict[str, Any]]
+
 
 
 def fetch_name(path: str = "name"):
@@ -67,7 +74,7 @@ def match_value(path: str, value: Any, or_not: bool = False):
     return Depend(__wrapper__)
 
 
-def shortcuts(mapping: dict[str, MessageChain] | None = None, **kwargs: MessageChain):
+def shortcuts(mapping: dict[str, GraiaShortcutArgs] | None = None, **kwargs: GraiaShortcutArgs):
     def wrapper(func: T_Callable) -> T_Callable:
         kwargs.update(mapping or {})
         if hasattr(func, "__alc_shortcuts__"):
@@ -81,7 +88,7 @@ def shortcuts(mapping: dict[str, MessageChain] | None = None, **kwargs: MessageC
 
 @factory
 def alcommand(
-    alconna: Alconna | AlconnaGroup | str,
+    alconna: Alconna | str,
     guild: bool = True,
     private: bool = True,
     send_error: bool = False,

@@ -7,7 +7,7 @@ from graia.ariadne.app import Ariadne
 from graia.ariadne.dispatcher import ContextDispatcher
 from graia.ariadne.event.message import FriendMessage, GroupMessage, MessageEvent
 from graia.ariadne.message.chain import MessageChain
-from graia.ariadne.message.element import At
+from graia.ariadne.message.element import At, Plain
 from graia.ariadne.model import Friend
 from graia.ariadne.util import resolve_dispatchers_mixin
 from graia.broadcast.builtin.decorators import Depend
@@ -17,13 +17,17 @@ from graia.broadcast.utilles import run_always_await
 
 from arclet.alconna import Arparma
 
-from arclet.alconna.graia import AlconnaProperty, AlconnaSchema
-from arclet.alconna.graia.adapter import AlconnaGraiaAdapter
-from arclet.alconna.graia.analyser import MessageChainContainer
-from arclet.alconna.graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
-from arclet.alconna.graia.utils import listen
+from ..graia import AlconnaProperty, AlconnaSchema
+from ..graia.adapter import AlconnaGraiaAdapter
+from ..graia.analyser import MessageChainContainer
+from ..graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
+from ..graia.utils import listen
+
 
 class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
+    async def lookup_source(self, interface: DispatcherInterface[MessageEvent]) -> MessageChain:
+        return await interface.lookup_param("__message_chain__", MessageChain, MessageChain("Unknown"))
+
     async def send(
         self,
         dispatcher: AlconnaDispatcher,
@@ -108,3 +112,5 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
 MessageChainContainer.config(
     filter_out=["Source", "File", "Quote"]
 )
+MessageChainContainer.__message_chain_class__ = MessageChain
+MessageChainContainer.__text_element_class__ = Plain
