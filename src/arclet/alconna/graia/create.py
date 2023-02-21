@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from creart import AbstractCreator, CreateTargetInfo, it, exists_module, mixin
 
 if TYPE_CHECKING:
-    from .saya import AlconnaBehaviour
+    from arclet.alconna.graia.saya import AlconnaBehaviour
 
 
 class AlconnaBehaviorCreator(AbstractCreator):
@@ -32,11 +32,9 @@ class AlconnaBehaviorCreator(AbstractCreator):
     def create(create_type: type[AlconnaBehaviour]) -> AlconnaBehaviour:
         from graia.broadcast import Broadcast
         from graia.saya import Saya
-        from arclet.alconna import config
 
         broadcast = it(Broadcast)
         saya = it(Saya)
         behavior = create_type(broadcast)
         saya.install_behaviours(behavior)
-        config.set_loop(broadcast.loop)
         return behavior
