@@ -41,7 +41,7 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
     ) -> AlconnaProperty[AvillaMessageEvent]:
         if not isinstance(source, (MessageEdited, MessageReceived)) or (result.matched or not output_text):
             return AlconnaProperty(result, None, source)
-        id_ = id(source) if source else 0
+        id_ = source.message.id if source else '_'
         cache = self.output_cache.setdefault(id_, set())
         if dispatcher.command in cache:
             return AlconnaProperty(result, None, source)

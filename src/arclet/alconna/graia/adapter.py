@@ -32,7 +32,7 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
     __adapter_class__: ClassVar[type[AlconnaGraiaAdapter]] = None  # type: ignore
 
     def __init__(self):
-        self.output_cache: dict[int, set] = {}
+        self.output_cache: dict[str, set] = {}
         token = adapter_context.set(self)
 
         def clr(tkn):

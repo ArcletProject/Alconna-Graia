@@ -37,7 +37,7 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
     ) -> AlconnaProperty[MessageEvent]:
         if not isinstance(source, MessageEvent) or (result.matched or not output_text):
             return AlconnaProperty(result, None, source)
-        id_ = id(source) if source else 0
+        id_ = str(source.source.id) if source else '_'
         cache = self.output_cache.setdefault(id_, set())
         if dispatcher.command in cache:
             return AlconnaProperty(result, None, source)
