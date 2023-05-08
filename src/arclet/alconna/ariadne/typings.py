@@ -2,13 +2,13 @@ from nepattern import (
     URL,
     BasePattern,
     PatternModel,
-    UnionArg,
+    UnionPattern,
 )
 from nepattern.main import INTEGER
 from graia.ariadne.message.element import Image, At
 
 ImgOrUrl = (
-    UnionArg(
+    UnionPattern(
         [
             BasePattern(
                 model=PatternModel.TYPE_CONVERT,
@@ -27,7 +27,7 @@ ImgOrUrl = (
 """
 
 AtID = (
-    UnionArg(
+    UnionPattern(
         [
             BasePattern(
                 model=PatternModel.TYPE_CONVERT,

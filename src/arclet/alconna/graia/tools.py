@@ -14,18 +14,17 @@ from graia.broadcast.builtin.derive import Derive
 from graia.broadcast.exceptions import ExecutionStop
 from graia.saya.factory import BufferModifier, SchemaWrapper, buffer_modifier, factory
 from nepattern import AllParam, BasePattern, Empty, type_parser
-
+from tarina import gen_subclass
 from .adapter import AlconnaGraiaAdapter
 from .dispatcher import AlconnaDispatcher, AlconnaProperty
 from .saya import AlconnaSchema
-from .utils import T_Callable, gen_subclass
+from .utils import T_Callable
 
 
 class GraiaShortcutArgs(TypedDict):
     command: MessageChain
     args: NotRequired[list[Any]]
-    options: NotRequired[dict[str, Any]]
-
+    fuzzy: NotRequired[bool]
 
 
 def fetch_name(path: str = "name"):
@@ -113,10 +112,7 @@ def alcommand(
     if isinstance(alconna, str):
         if not alconna.strip():
             raise ValueError(alconna)
-        cmds = alconna.split(";")
-        alconna = AlconnaString(cmds[0], *cmds[1:])
-    if alconna.meta.example and "$" in alconna.meta.example and alconna.headers:
-        alconna.meta.example = alconna.meta.example.replace("$", alconna.headers[0])
+        alconna = AlconnaString(alconna).build()
     dispatcher = AlconnaDispatcher(
         alconna, send_flag="post" if post else "reply", skip_for_unmatch=not send_error  # type: ignore
     )

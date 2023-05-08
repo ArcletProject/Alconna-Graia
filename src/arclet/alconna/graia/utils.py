@@ -1,61 +1,14 @@
 from __future__ import annotations
 
-import contextlib
 import inspect
-import sys
-import types
-from typing import Any, Callable, Generator, TypeVar, Union, get_args
-
+from typing import Any, Callable, TypeVar, Union
+from tarina import gen_subclass
 
 from graia.broadcast import Decorator
 from graia.broadcast.entities.event import Dispatchable
 from graia.saya.builtins.broadcast import ListenerSchema
 from graia.saya.factory import SchemaWrapper, factory
-from typing_extensions import Annotated, ParamSpec, get_origin as typing_ext_get_origin
-
-
-Unions = (Union, types.UnionType) if sys.version_info >= (3, 10) else (Union,)
-AnnotatedType = type(Annotated[int, lambda x: x > 0])
-
-
-def get_origin(obj: Any) -> Any:
-    return typing_ext_get_origin(obj) or obj
-
-
-def generic_issubclass(cls: Any, par: Union[type, Any, tuple[type, ...]]) -> bool:
-    """检查 cls 是否是 args 中的一个子类, 支持泛型, Any, Union
-
-    Args:
-        cls (type): 要检查的类
-        par (Union[type, Any, Tuple[type, ...]]): 要检查的类的父类
-
-    Returns:
-        bool: 是否是父类
-    """
-    if par is Any:
-        return True
-    with contextlib.suppress(TypeError):
-        if isinstance(par, AnnotatedType):
-            return generic_issubclass(cls, get_args(par)[0])
-        if isinstance(par, (type, tuple)):
-            return issubclass(cls, par)
-        if get_origin(par) in Unions:
-            return any(generic_issubclass(cls, p) for p in get_args(par))
-        if isinstance(par, TypeVar):
-            if par.__constraints__:
-                return any(generic_issubclass(cls, p) for p in par.__constraints__)
-            if par.__bound__:
-                return generic_issubclass(cls, par.__bound__)
-    return False
-
-
-T = TypeVar("T")
-
-
-def gen_subclass(cls: type[T]) -> Generator[type[T], Any, Any]:
-    yield cls
-    for sub in cls.__subclasses__():
-        yield from gen_subclass(sub)
+from typing_extensions import ParamSpec
 
 
 @factory

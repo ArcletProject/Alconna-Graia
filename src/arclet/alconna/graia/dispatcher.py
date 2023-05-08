@@ -9,19 +9,19 @@ from arclet.alconna.stub import ArgsStub, OptionStub, SubcommandStub
 from arclet.alconna.core import Alconna
 from arclet.alconna.tools import AlconnaFormat, AlconnaString
 from graia.amnesia.message import MessageChain
+from graia.amnesia.message.element import Text
 from graia.broadcast.entities.dispatcher import BaseDispatcher
 from graia.broadcast.entities.event import Dispatchable
 from graia.broadcast.exceptions import ExecutionStop, PropagationCancelled
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
 from launart import Launart
-from nepattern.util import generic_isinstance
+from tarina import generic_isinstance, generic_issubclass
+from tarina.generic import get_origin
 
 from arclet.alconna import Arparma, Empty, output_manager
 
-from .analyser import MessageChainContainer
 from .model import AlconnaProperty, Header, Match, Query
 from .service import AlconnaGraiaInterface
-from .utils import generic_issubclass, get_origin
 
 success_record = deque(maxlen=10)
 
@@ -48,13 +48,14 @@ class AlconnaDispatcher(BaseDispatcher):
 
     @classmethod
     def from_command(cls, command: str, *options: str):
-        return cls(AlconnaString(command, *options), send_flag="reply")
+        factory = AlconnaString(command)
+        for option in options:
+            factory.option(option)
+        return cls(factory.build(), send_flag="reply")
 
     default_send_handler: ClassVar[
         Callable[[str], MessageChain | Coroutine[Any, Any, MessageChain]]
-    ] = lambda x: MessageChainContainer.__message_chain_class__(
-        [MessageChainContainer.__text_element_class__(x)]
-    )
+    ] = lambda x: MessageChain([Text(x)])
 
     def __init__(
         self,

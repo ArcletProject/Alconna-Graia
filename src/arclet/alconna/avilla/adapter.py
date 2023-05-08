@@ -15,14 +15,14 @@ from graia.broadcast.exceptions import ExecutionStop
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
 from graia.broadcast.utilles import run_always_await
 
-from arclet.alconna import Arparma
+from arclet.alconna import Arparma, argv_config
 
 from ..graia import AlconnaProperty, AlconnaSchema
 from ..graia.adapter import AlconnaGraiaAdapter
-from ..graia.analyser import MessageChainContainer
 from ..graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
 from ..graia.utils import listen
 
+AlconnaDispatcher.default_send_handler = lambda x: MessageChain([Text(x)])
 
 AvillaMessageEvent = Union[MessageEdited, MessageReceived]
 
@@ -112,6 +112,9 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
         return wrapper
 
 
-MessageChainContainer.config(filter_out=[])
-MessageChainContainer.__message_chain_class__ = MessageChain
-MessageChainContainer.__text_element_class__ = Text
+argv_config(
+    filter_out=[],
+    checker=lambda x: isinstance(x, MessageChain),
+    to_text=lambda x: x.text if isinstance(x, Text) else None,
+    converter=lambda x: MessageChain(x if isinstance(x, list) else [Text(x)])
+)

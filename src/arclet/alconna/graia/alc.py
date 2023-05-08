@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Callable
-
+from tarina import init_spec
 from graia.saya.factory import BufferModifier, SchemaWrapper, buffer_modifier, factory
 
 from arclet.alconna import (
@@ -14,7 +14,6 @@ from arclet.alconna import (
     Subcommand,
     config,
 )
-from arclet.alconna.util import init_spec
 
 from .dispatcher import AlconnaDispatcher
 from .saya import AlconnaSchema
@@ -31,8 +30,6 @@ def command(name: Any | None = None, headers: list[Any] | None = None) -> Schema
             meta=buffer.pop("meta", CommandMeta()),
             namespace=buffer.pop("namespace", config.default_namespace),
         )
-        if alc.meta.example and "$" in alc.meta.example and alc.headers:
-            alc.meta.example = alc.meta.example.replace("$", alc.headers[0])
         buffer.setdefault("dispatchers", []).append(AlconnaDispatcher(alc, send_flag="reply"))
         return AlconnaSchema(alc)
 

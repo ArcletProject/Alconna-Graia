@@ -5,7 +5,7 @@ from typing import Any
 
 from arclet.alconna.core import Alconna
 from arclet.alconna.manager import command_manager
-from arclet.alconna.tools import AlconnaString
+from arclet.alconna.tools import AlconnaFormat
 from graia.broadcast import Broadcast
 from graia.saya.behaviour import Behaviour
 from graia.saya.cube import Cube
@@ -19,9 +19,9 @@ class AlconnaSchema(BaseSchema):
     command: Alconna | AlconnaDispatcher
 
     @classmethod
-    def from_(cls, command: str, *options: str, flag: str = "reply") -> AlconnaSchema:
+    def from_(cls, command: str, flag: str = "reply") -> AlconnaSchema:
         return cls(
-            AlconnaDispatcher(AlconnaString(command, *options), send_flag=flag)  # type: ignore
+            AlconnaDispatcher(AlconnaFormat(command), send_flag=flag)  # type: ignore
         )
 
     def record(self, func: Any):
