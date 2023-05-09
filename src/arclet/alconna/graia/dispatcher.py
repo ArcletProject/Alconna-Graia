@@ -19,7 +19,7 @@ from graia.broadcast.entities.dispatcher import BaseDispatcher
 from graia.broadcast.entities.event import Dispatchable
 from graia.broadcast.exceptions import ExecutionStop, PropagationCancelled
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
-from graia.broadcast.interrupt import InterruptControl, Waiter
+from graia.broadcast.interrupt import InterruptControl
 from launart import Launart
 from tarina import generic_isinstance, generic_issubclass, lang
 from tarina.generic import get_origin
@@ -127,12 +127,7 @@ class AlconnaDispatcher(BaseDispatcher):
                 exclude=False
             )
             while True:
-                @Waiter.create_using_function(
-                    [dii.event.__class__], block_propagation=True, priority=self.comp_session.get('priority', 10),
-                )
-                async def waiter(m: MessageChain):
-                    return m
-
+                waiter = adapter.completion_waiter(dii, self.comp_session.get('priority', 10))
                 try:
                     ans: MessageChain = await inc.wait(waiter, timeout=30)  # type: ignore
                 except asyncio.TimeoutError:

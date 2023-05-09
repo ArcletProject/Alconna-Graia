@@ -13,6 +13,7 @@ from graia.amnesia.message.element import Text
 from graia.broadcast.builtin.decorators import Depend
 from graia.broadcast.exceptions import ExecutionStop
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
+from graia.broadcast.interrupt import Waiter
 from graia.broadcast.utilles import run_always_await
 
 from arclet.alconna import Arparma, argv_config
@@ -21,6 +22,7 @@ from ..graia import AlconnaProperty, AlconnaSchema
 from ..graia.argv import MessageChainArgv
 from ..graia.adapter import AlconnaGraiaAdapter
 from ..graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
+from ..graia.model import TSource
 from ..graia.utils import listen
 
 AlconnaDispatcher.default_send_handler = lambda x: MessageChain([Text(x)])
@@ -29,6 +31,15 @@ AvillaMessageEvent = Union[MessageEdited, MessageReceived]
 
 
 class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
+
+    def completion_waiter(self, interface: DispatcherInterface[TSource], priority: int = 15) -> Waiter:
+        @Waiter.create_using_function(
+            [MessageReceived], block_propagation=True, priority=priority,
+        )
+        async def waiter(event: MessageReceived):
+            return event.message.content
+
+        return waiter  # type: ignore
 
     async def lookup_source(self, interface: DispatcherInterface[AvillaMessageEvent]) -> MessageChain:
         return interface.event.message.content

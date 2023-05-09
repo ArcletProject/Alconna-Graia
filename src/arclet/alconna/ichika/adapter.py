@@ -3,6 +3,7 @@ from __future__ import annotations
 from contextlib import suppress
 from typing import Any, Callable, Iterable
 
+from graia.broadcast.interrupt import Waiter
 from ichika.client import Client
 from ichika.graia import IchikaClientDispatcher, CLIENT_INSTANCE
 from ichika.graia.event import GroupMessage, FriendMessage, MessageEvent
@@ -20,6 +21,7 @@ from ..graia import AlconnaProperty, AlconnaSchema
 from ..graia.argv import MessageChainArgv
 from ..graia.adapter import AlconnaGraiaAdapter
 from ..graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
+from ..graia.model import TSource
 from ..graia.utils import listen
 
 AlconnaDispatcher.default_send_handler = lambda x: MessageChain([Text(x)])
@@ -41,6 +43,15 @@ def resolve_dispatchers_mixin(dispatchers: Iterable[T_Dispatcher]) -> list[T_Dis
 
 
 class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
+    def completion_waiter(self, interface: DispatcherInterface[TSource], priority: int = 15) -> Waiter:
+        @Waiter.create_using_function(
+            [interface.event.__class__], block_propagation=True, priority=priority,
+        )
+        async def waiter(m: MessageChain):
+            return m
+
+        return waiter  # type: ignore
+
     async def lookup_source(self, interface: DispatcherInterface[MessageEvent]) -> MessageChain:
         return await interface.lookup_param("__message_chain__", MessageChain, MessageChain([Text("Unknown")]))
 

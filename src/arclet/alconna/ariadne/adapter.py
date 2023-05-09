@@ -10,9 +10,11 @@ from graia.ariadne.message.chain import MessageChain
 from graia.ariadne.message.element import At, Plain
 from graia.ariadne.model import Friend
 from graia.ariadne.util import resolve_dispatchers_mixin
+from graia.ariadne.util.interrupt import AnnotationWaiter
 from graia.broadcast.builtin.decorators import Depend
 from graia.broadcast.exceptions import ExecutionStop
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
+from graia.broadcast.interrupt import Waiter
 from graia.broadcast.utilles import run_always_await
 
 from arclet.alconna import Arparma, argv_config
@@ -21,12 +23,16 @@ from ..graia import AlconnaProperty, AlconnaSchema
 from ..graia.argv import MessageChainArgv
 from ..graia.adapter import AlconnaGraiaAdapter
 from ..graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
+from ..graia.model import TSource
 from ..graia.utils import listen
 
 AlconnaDispatcher.default_send_handler = lambda x: MessageChain([Plain(x)])
 
 
 class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
+    def completion_waiter(self, interface: DispatcherInterface[TSource], priority: int = 15) -> Waiter:
+        return AnnotationWaiter(MessageChain, [interface.event.__class__], block_propagation=True, priority=priority)
+
     async def lookup_source(self, interface: DispatcherInterface[MessageEvent]) -> MessageChain:
         return await interface.lookup_param("__message_chain__", MessageChain, MessageChain("Unknown"))
 

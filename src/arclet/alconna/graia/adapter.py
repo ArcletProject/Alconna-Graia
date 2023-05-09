@@ -11,6 +11,7 @@ from graia.amnesia.message import MessageChain
 from graia.broadcast.builtin.decorators import Depend
 from graia.broadcast.entities.dispatcher import BaseDispatcher
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
+from graia.broadcast.interrupt.waiter import Waiter
 
 from arclet.alconna import Arparma
 
@@ -50,6 +51,10 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
     @classmethod
     def instance(cls):
         return adapter_context.get()
+
+    @abstractmethod
+    def completion_waiter(self, interface: DispatcherInterface[TSource], priority: int = 15) -> Waiter:
+        ...
 
     @abstractmethod
     async def lookup_source(self, interface: DispatcherInterface[TSource]) -> MessageChain:
@@ -103,6 +108,15 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
 
 
 class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
+
+    def completion_waiter(self, interface: DispatcherInterface[TSource], priority: int = 15) -> Waiter:
+        @Waiter.create_using_function(
+            [interface.event.__class__], block_propagation=True, priority=priority,
+        )
+        async def waiter(m: MessageChain):
+            return m
+        return waiter  # type: ignore
+
     async def lookup_source(self, interface: DispatcherInterface[TSource]) -> MessageChain:
         return getattr(
             interface.event,
