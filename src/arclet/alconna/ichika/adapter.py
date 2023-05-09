@@ -1,19 +1,18 @@
 from __future__ import annotations
 
 from contextlib import suppress
-from typing import Any, Callable
+from typing import Any, Callable, Iterable
 
-from graia.ariadne.app import Ariadne
-from graia.ariadne.dispatcher import ContextDispatcher
-from graia.ariadne.event.message import FriendMessage, GroupMessage, MessageEvent
-from graia.ariadne.message.chain import MessageChain
-from graia.ariadne.message.element import At, Plain
-from graia.ariadne.model import Friend
-from graia.ariadne.util import resolve_dispatchers_mixin
+from ichika.client import Client
+from ichika.graia import IchikaClientDispatcher, CLIENT_INSTANCE
+from ichika.graia.event import GroupMessage, FriendMessage, MessageEvent
+from ichika.message.elements import At, Text
+from ichika.core import Friend
+from graia.amnesia.message import MessageChain
 from graia.broadcast.builtin.decorators import Depend
 from graia.broadcast.exceptions import ExecutionStop
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
-from graia.broadcast.utilles import run_always_await
+from graia.broadcast.utilles import run_always_await, dispatcher_mixin_handler, T_Dispatcher
 
 from arclet.alconna import Arparma, argv_config
 
@@ -23,12 +22,27 @@ from ..graia.adapter import AlconnaGraiaAdapter
 from ..graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
 from ..graia.utils import listen
 
-AlconnaDispatcher.default_send_handler = lambda x: MessageChain([Plain(x)])
+AlconnaDispatcher.default_send_handler = lambda x: MessageChain([Text(x)])
 
 
-class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
+def resolve_dispatchers_mixin(dispatchers: Iterable[T_Dispatcher]) -> list[T_Dispatcher]:
+    """解析 dispatcher list 的 mixin
+
+    Args:
+        dispatchers (Iterable[T_Dispatcher]): dispatcher 列表
+
+    Returns:
+        List[T_Dispatcher]: 解析后的 dispatcher 列表
+    """
+    result = []
+    for dispatcher in dispatchers:
+        result.extend(dispatcher_mixin_handler(dispatcher))
+    return result
+
+
+class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
     async def lookup_source(self, interface: DispatcherInterface[MessageEvent]) -> MessageChain:
-        return await interface.lookup_param("__message_chain__", MessageChain, MessageChain("Unknown"))
+        return await interface.lookup_param("__message_chain__", MessageChain, MessageChain([Text("Unknown")]))
 
     async def send(
         self,
@@ -41,7 +55,7 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
         if not isinstance(source, MessageEvent) or (result.matched or not output_text):
             return AlconnaProperty(result, None, source)
         if exclude:
-            id_ = str(source.source.id) if source else '_'
+            id_ = str(source.source.seq) if source else '_'
             cache = self.output_cache.setdefault(id_, set())
             if dispatcher.command in cache:
                 return AlconnaProperty(result, None, source)
@@ -50,16 +64,16 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
         if dispatcher.send_flag == "stay":
             return AlconnaProperty(result, output_text, source)
         if dispatcher.send_flag == "reply":
-            app: Ariadne = Ariadne.current()
+            client: Client = CLIENT_INSTANCE.get()
             help_message: MessageChain = await run_always_await(dispatcher.converter, output_text)
             if isinstance(source, GroupMessage):
-                await app.send_group_message(source.sender.group, help_message)
+                await client.send_group_message(source.group.uin, help_message)
             else:
-                await app.send_message(source.sender, help_message)  # type: ignore
+                await client.send_friend_message(source.sender.uin, help_message)  # type: ignore
         elif dispatcher.send_flag == "post":
             with suppress(LookupError):
                 interface = DispatcherInterface.ctx.get()
-                dispatchers = resolve_dispatchers_mixin([source.Dispatcher, ContextDispatcher]) + [
+                dispatchers = resolve_dispatchers_mixin([source.Dispatcher, IchikaClientDispatcher]) + [
                     self.Dispatcher(dispatcher.command, output_text, source)
                 ]
                 for listener in interface.broadcast.default_listener_generator(AlconnaOutputMessage):
@@ -68,11 +82,11 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
         return AlconnaProperty(result, None, source)
 
     def fetch_name(self, path: str) -> Depend:
-        async def __wrapper__(app: Ariadne, result: AlconnaProperty):
+        async def __wrapper__(result: AlconnaProperty):
             event = result.source
             arp = result.result
             if t := arp.all_matched_args.get(path, None):
-                return t.representation or (await app.get_user_profile(t.target)).nickname if isinstance(t, At) else t
+                return t.display or "Unknown" if isinstance(t, At) else t
             elif isinstance(event.sender, Friend):
                 return event.sender.nickname
             else:
@@ -81,15 +95,15 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
         return Depend(__wrapper__)
 
     def check_account(self, path: str) -> Depend:
-        async def __wrapper__(app: Ariadne, arp: Arparma):
+        async def __wrapper__(client: Client, arp: Arparma):
             match: At | str | bytes = arp.query(path, b"\0")
             if isinstance(match, bytes):
                 return True
             if isinstance(match, str):
-                bot_name = (await app.get_bot_profile()).nickname
+                bot_name = (await client.get_account_info()).nickname
                 if bot_name == match:
                     return True
-            if isinstance(match, At) and match.target == app.account:
+            if isinstance(match, At) and match.target == client.uin:
                 return True
             raise ExecutionStop
 
@@ -113,8 +127,8 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
 
 argv_config(
     target=MessageChainArgv,
-    filter_out=["Source", "File", "Quote"],
+    filter_out=[],
     checker=lambda x: isinstance(x, MessageChain),
-    to_text=lambda x: x.text if x.__class__ is Plain else None,
-    converter=lambda x: MessageChain(x)
+    to_text=lambda x: x.text if isinstance(x, Text) else None,
+    converter=lambda x: MessageChain(x if isinstance(x, list) else [Text(x)])
 )

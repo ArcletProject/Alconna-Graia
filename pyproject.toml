@@ -15,6 +15,7 @@ dependencies = [
     "graia-ariadne<1.0.0, >=0.7.14",
     "avilla-core>=1.0.0a5",
     "launart>=0.5.0",
+    "ichika>=0.0.5",
 ]
 requires-python = ">=3.9"
 
@@ -164,5 +165,38 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
 ]
 [tool.mina.packages.avilla.project.urls]
+homepage = "https://github.com/ArcletProject/Alconna-Graia"
+repository = "https://github.com/ArcletProject/Alconna-Graia"
+
+[tool.mina.packages.ichika]
+includes = ["src/arclet/alconna/ichika"]
+raw-dependencies = [
+  "arclet-alconna-graia<0.13.0, >= 0.13.0rc1",
+]
+
+[tool.mina.packages.ichika.project]
+name = "arclet-alconna-ichika"
+version = "0.13.0rc1"
+authors = [
+    {name = "RF-Tar-Railt", email = "rf_tar_railt@qq.com"}
+]
+dependencies = [
+    "ichika>=0.0.5",
+]
+description = "Support Alconna to BlueGlassBlock/Ichika"
+readme = "README.md"
+license = {text = "AGPL-3.0"}
+requires-python = ">=3.8"
+keywords = ["alconna", "graia", "arclet", "ichika"]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+]
+[tool.mina.packages.ichika.project.urls]
 homepage = "https://github.com/ArcletProject/Alconna-Graia"
 repository = "https://github.com/ArcletProject/Alconna-Graia"
