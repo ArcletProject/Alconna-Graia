@@ -1,0 +1,9 @@
+{
+  "default": "zh-CN",
+  "frozen": [
+    "alconna/graia"
+  ],
+  "require": [
+    "alconna/graia"
+  ]
+}

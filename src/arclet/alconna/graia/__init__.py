@@ -6,7 +6,7 @@ from arclet.alconna import Alconna
 
 from . import alc as alc
 from .adapter import AlconnaGraiaAdapter
-from .analyser import MessageChainArgv
+from .argv import MessageChainArgv
 from .dispatcher import AlconnaOutputMessage, success_record, AlconnaDispatcher
 from .model import AlconnaProperty, Match, Query, Header
 from .saya import AlconnaBehaviour, AlconnaSchema

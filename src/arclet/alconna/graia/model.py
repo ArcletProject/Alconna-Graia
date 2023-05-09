@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TypeVar, Generic 
+from typing import TypeVar, Generic, TypedDict
 
 from arclet.alconna import Arparma, Empty
+from typing_extensions import NotRequired
 
 TSource = TypeVar("TSource")
 T = TypeVar("T")
@@ -64,3 +65,10 @@ class Header:
     """
     result: dict
     available: bool
+
+
+class CompConfig(TypedDict):
+    priority: NotRequired[int]
+    tab: NotRequired[str]
+    enter: NotRequired[str]
+    exit: NotRequired[str]

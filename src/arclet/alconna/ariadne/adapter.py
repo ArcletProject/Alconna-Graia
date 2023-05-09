@@ -18,6 +18,7 @@ from graia.broadcast.utilles import run_always_await
 from arclet.alconna import Arparma, argv_config
 
 from ..graia import AlconnaProperty, AlconnaSchema
+from ..graia.argv import MessageChainArgv
 from ..graia.adapter import AlconnaGraiaAdapter
 from ..graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
 from ..graia.utils import listen
@@ -35,15 +36,17 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
         result: Arparma[MessageChain],
         output_text: str | None = None,
         source: MessageEvent | None = None,
+        exclude: bool = True,
     ) -> AlconnaProperty[MessageEvent]:
         if not isinstance(source, MessageEvent) or (result.matched or not output_text):
             return AlconnaProperty(result, None, source)
-        id_ = str(source.source.id) if source else '_'
-        cache = self.output_cache.setdefault(id_, set())
-        if dispatcher.command in cache:
-            return AlconnaProperty(result, None, source)
-        cache.clear()
-        cache.add(dispatcher.command)
+        if exclude:
+            id_ = str(source.source.id) if source else '_'
+            cache = self.output_cache.setdefault(id_, set())
+            if dispatcher.command in cache:
+                return AlconnaProperty(result, None, source)
+            cache.clear()
+            cache.add(dispatcher.command)
         if dispatcher.send_flag == "stay":
             return AlconnaProperty(result, output_text, source)
         if dispatcher.send_flag == "reply":
@@ -111,6 +114,7 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
 
 
 argv_config(
+    target=MessageChainArgv,
     filter_out=["Source", "File", "Quote"],
     checker=lambda x: isinstance(x, MessageChain),
     to_text=lambda x: x.text if x.__class__ is Plain else None,

@@ -3,9 +3,7 @@ from __future__ import annotations
 import inspect
 from functools import lru_cache
 from typing import Any, Callable, TypedDict
-from typing_extensions import NotRequired
 
-from arclet.alconna import Alconna
 from arclet.alconna.tools import AlconnaFormat, AlconnaString
 from graia.amnesia.message import Element, MessageChain, Text
 from graia.broadcast import Decorator, DecoratorInterface, DispatcherInterface
@@ -15,8 +13,13 @@ from graia.broadcast.exceptions import ExecutionStop
 from graia.saya.factory import BufferModifier, SchemaWrapper, buffer_modifier, factory
 from nepattern import AllParam, BasePattern, Empty, type_parser
 from tarina import gen_subclass
+from typing_extensions import NotRequired
+
+from arclet.alconna import Alconna
+
 from .adapter import AlconnaGraiaAdapter
 from .dispatcher import AlconnaDispatcher, AlconnaProperty
+from .model import CompConfig
 from .saya import AlconnaSchema
 from .utils import T_Callable
 
@@ -94,6 +97,7 @@ def alcommand(
     post: bool = False,
     private_name: str = "private",
     guild_name: str = "guild",
+    comp_session: CompConfig | None = None,
 ) -> SchemaWrapper:
     """
     saya-util 形式的注册一个消息事件监听器并携带 AlconnaDispatcher
@@ -101,20 +105,22 @@ def alcommand(
     请将其放置在装饰器的顶层
 
     Args:
-        alconna: 使用的 Alconna 命令
-        guild: 命令是否群聊可用
-        private: 命令是否私聊可用
-        send_error: 是否发送错误信息
-        post: 是否以事件发送输出信息
-        private_name: 私聊事件下消息场景名称
-        guild_name: 群聊事件下消息场景名称
+        alconna (Alconna | str): 使用的 Alconna 命令
+        guild (bool): 命令是否群聊可用
+        private (bool): 命令是否私聊可用
+        send_error (bool): 是否发送错误信息
+        post (bool): 是否以事件发送输出信息
+        private_name (str): 私聊事件下消息场景名称
+        guild_name (str): 群聊事件下消息场景名称
+        comp_session (CompConfig | None, optional): 是否使用补全会话
     """
     if isinstance(alconna, str):
         if not alconna.strip():
             raise ValueError(alconna)
         alconna = AlconnaString(alconna).build()
     dispatcher = AlconnaDispatcher(
-        alconna, send_flag="post" if post else "reply", skip_for_unmatch=not send_error  # type: ignore
+        alconna, send_flag="post" if post else "reply", skip_for_unmatch=not send_error,  # type: ignore
+        comp_session=comp_session,
     )
     return AlconnaGraiaAdapter.instance().alcommand(dispatcher, guild, private, private_name, guild_name)
 

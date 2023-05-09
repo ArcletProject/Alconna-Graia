@@ -4,14 +4,14 @@ import importlib
 from contextlib import suppress
 from pathlib import Path
 from typing import Generic, Literal, TypeVar
-
+from tarina import lang
 from launart import ExportInterface, Launart, Service
 from arclet.alconna import command_manager
 
 from .adapter import AlconnaGraiaAdapter
 
 TAdapter = TypeVar("TAdapter", bound=AlconnaGraiaAdapter)
-
+lang.load(Path(__file__).parent / "i18n")
 
 class AlconnaGraiaInterface(ExportInterface["AlconnaGraiaService"], Generic[TAdapter]):
 

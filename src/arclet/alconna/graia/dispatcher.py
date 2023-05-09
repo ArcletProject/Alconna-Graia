@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+import asyncio
 import sys
 from collections import deque
-from typing import Any, Callable, ClassVar, Coroutine, Literal, get_args
+from typing import Any, Callable, ClassVar, Coroutine, Literal, get_args, Optional, TYPE_CHECKING
 
+from arclet.alconna.args import AllParam, Args
+from arclet.alconna.completion import CompSession
+from arclet.alconna.core import Alconna
+from arclet.alconna.typing import CommandMeta
 from arclet.alconna.duplication import Duplication, generate_duplication
 from arclet.alconna.stub import ArgsStub, OptionStub, SubcommandStub
-from arclet.alconna.core import Alconna
+from arclet.alconna.manager import command_manager
 from arclet.alconna.tools import AlconnaFormat, AlconnaString
 from graia.amnesia.message import MessageChain
 from graia.amnesia.message.element import Text
@@ -14,14 +19,18 @@ from graia.broadcast.entities.dispatcher import BaseDispatcher
 from graia.broadcast.entities.event import Dispatchable
 from graia.broadcast.exceptions import ExecutionStop, PropagationCancelled
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
+from graia.broadcast.interrupt import InterruptControl, Waiter
 from launart import Launart
-from tarina import generic_isinstance, generic_issubclass
+from tarina import generic_isinstance, generic_issubclass, lang
 from tarina.generic import get_origin
 
 from arclet.alconna import Arparma, Empty, output_manager
 
-from .model import AlconnaProperty, Header, Match, Query
+from .model import AlconnaProperty, Header, Match, Query, CompConfig
 from .service import AlconnaGraiaInterface
+
+if TYPE_CHECKING:
+    from .adapter import AlconnaGraiaAdapter
 
 success_record = deque(maxlen=10)
 
@@ -63,6 +72,7 @@ class AlconnaDispatcher(BaseDispatcher):
         *,
         send_flag: Literal["reply", "post", "stay"] = "reply",
         skip_for_unmatch: bool = True,
+        comp_session: Optional[CompConfig] = None,
         message_converter: Callable[[str], MessageChain | Coroutine[Any, Any, MessageChain]] | None = None,
     ):
         """
@@ -71,12 +81,85 @@ class AlconnaDispatcher(BaseDispatcher):
             command (Alconna): Alconna实例
             send_flag ("reply", "post", "stay"): 输出信息的发送方式
             skip_for_unmatch (bool): 当指令匹配失败时是否跳过对应的事件监听器, 默认为 True
+            comp_session (CompConfig, optional): 补全会话配置, 不传入则不启用补全会话
         """
         super().__init__()
         self.command = command
         self.send_flag = send_flag
         self.skip_for_unmatch = skip_for_unmatch
+        self.comp_session = comp_session
         self.converter = message_converter or self.__class__.default_send_handler
+
+    async def handle(self, dii: DispatcherInterface, msg: MessageChain, adapter: 'AlconnaGraiaAdapter'):
+        inc = InterruptControl(dii.broadcast)
+        interface = CompSession(self.command)
+        if not self.comp_session:
+            return self.command.parse(msg)  # type: ignore
+        _tab = Alconna(
+            self.comp_session.get("tab", ".tab"),
+            Args["offset", int, 1], meta=CommandMeta(hide=True, compact=True)
+        )
+        _enter = Alconna(
+            self.comp_session.get("enter", ".enter"),
+            Args["content", AllParam, []], meta=CommandMeta(hide=True, compact=True)
+        )
+        _exit = Alconna(
+            self.comp_session.get("exit", ".exit"),
+            meta=CommandMeta(hide=True, compact=True)
+        )
+
+        def clear():
+            command_manager.delete(_tab)
+            command_manager.delete(_enter)
+            command_manager.delete(_exit)
+
+        with interface:
+            res = self.command.parse(msg)  # type: ignore
+        while interface.available:
+            res = Arparma(self.command.path, msg, False)
+            await adapter.send(self, res, str(interface), dii.event, exclude=False)
+            await adapter.send(
+                self, res,
+                f"{lang.require('alconna/graia', 'tab').format(cmd=_tab.command)}\n"
+                f"{lang.require('alconna/graia', 'enter').format(cmd=_enter.command)}\n"
+                f"{lang.require('alconna/graia', 'exit').format(cmd=_exit.command)}",
+                dii.event,
+                exclude=False
+            )
+            while True:
+                @Waiter.create_using_function(
+                    [dii.event.__class__], block_propagation=True, priority=self.comp_session.get('priority', 10),
+                )
+                async def waiter(m: MessageChain):
+                    return m
+
+                try:
+                    ans: MessageChain = await inc.wait(waiter, timeout=30)  # type: ignore
+                except asyncio.TimeoutError:
+                    clear()
+                    return res
+                if _exit.parse(ans).matched:
+                    clear()
+                    return res
+                if (mat := _tab.parse(ans)).matched:
+                    prompt = interface.tab(mat.offset)
+                    await adapter.send(self, res, prompt, dii.event, exclude=False)
+                    continue
+                if (mat := _enter.parse(ans)).matched:
+                    content = list(mat.content)
+                    if not content or not content[0]:
+                        content = None
+                    with interface:
+                        try:
+                            res = interface.enter(content)
+                        except ValueError as e:
+                            await adapter.send(self, res, str(e), dii.event, exclude=False)
+                            continue
+                    break
+                else:
+                    await adapter.send(self, res, interface.current(), dii.event, exclude=False)
+        clear()
+        return res
 
     async def beforeExecution(self, interface: DispatcherInterface):
         try:
@@ -89,7 +172,7 @@ class AlconnaDispatcher(BaseDispatcher):
         with output_manager.capture(self.command.name) as cap:
             output_manager.set_action(lambda x: x, self.command.name)
             try:
-                _res = self.command.parse(message)  # type: ignore
+                _res = await self.handle(interface, message, adapter)
             except Exception as e:
                 _res = Arparma(self.command.path, message, False, error_info=repr(e))
             may_help_text: str | None = cap.get("output", None)

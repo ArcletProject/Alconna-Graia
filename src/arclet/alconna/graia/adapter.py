@@ -62,6 +62,7 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
         result: Arparma[MessageChain],
         output_text: str | None = None,
         source: TSource | None = None,
+        exclude: bool = True,
     ) -> AlconnaProperty[TSource]:
         ...
 
@@ -141,6 +142,7 @@ class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
         result: Arparma[MessageChain],
         output_text: str | None = None,
         source: TSource | None = None,
+        exclude: bool = True,
     ):
         return AlconnaProperty(result, None, source)
 
