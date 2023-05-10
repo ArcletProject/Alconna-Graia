@@ -17,6 +17,7 @@ from graia.broadcast.interrupt import Waiter
 from graia.broadcast.utilles import run_always_await
 
 from arclet.alconna import Arparma, argv_config
+from arclet.alconna.exceptions import SpecialOptionTriggered
 
 from ..graia import AlconnaProperty, AlconnaSchema
 from ..graia.argv import MessageChainArgv
@@ -65,7 +66,11 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
             return AlconnaProperty(result, output_text, source)
         if dispatcher.send_flag == "reply":
             ctx: Context = source.context
-            help_message: MessageChain = await run_always_await(dispatcher.converter, output_text)
+            help_message: MessageChain = await run_always_await(
+                dispatcher.converter,
+                str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered) else "help",
+                output_text
+            )
             await ctx.scene.send_message(help_message)
         elif dispatcher.send_flag == "post":
             with suppress(LookupError):

@@ -3,6 +3,7 @@ from __future__ import annotations
 from contextlib import suppress
 from typing import Any, Callable
 
+from arclet.alconna.exceptions import SpecialOptionTriggered
 from graia.ariadne.app import Ariadne
 from graia.ariadne.dispatcher import ContextDispatcher
 from graia.ariadne.event.message import FriendMessage, GroupMessage, MessageEvent
@@ -20,8 +21,8 @@ from graia.broadcast.utilles import run_always_await
 from arclet.alconna import Arparma, argv_config
 
 from ..graia import AlconnaProperty, AlconnaSchema
-from ..graia.argv import MessageChainArgv
 from ..graia.adapter import AlconnaGraiaAdapter
+from ..graia.argv import MessageChainArgv
 from ..graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
 from ..graia.model import TSource
 from ..graia.utils import listen
@@ -57,7 +58,11 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
             return AlconnaProperty(result, output_text, source)
         if dispatcher.send_flag == "reply":
             app: Ariadne = Ariadne.current()
-            help_message: MessageChain = await run_always_await(dispatcher.converter, output_text)
+            help_message: MessageChain = await run_always_await(
+                dispatcher.converter,
+                str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered) else "help",
+                output_text
+            )
             if isinstance(source, GroupMessage):
                 await app.send_group_message(source.sender.group, help_message)
             else:

@@ -18,6 +18,13 @@ pip install arclet-alconna-graia, arclet-alconna-avilla
 pdm add arclet-alconna-graia, arclet-alconna-avilla
 ```
 
+或
+
+```shell
+pip install arclet-alconna-graia, arclet-alconna-ichika
+pdm add arclet-alconna-graia, arclet-alconna-ichika
+```
+
 ## 前提
 
 Alconna-Graia 现在依赖 `Launart` 的 `service` 功能
@@ -174,7 +181,7 @@ async def test1(result: Arpamar, sth: Match[str]):
     print("match", sth.available, sth.result)
 
 
-@alcommand("[!|.]hello <name:str>;say <word>", send_error=True)
+@alcommand("[!|.]hello <name:str>", send_error=True)
 async def test1(result: Arpamar, name: Match[str]):
     print("sign:", result)
     print("match", name.available, name.result)
@@ -220,7 +227,8 @@ class AlconnaDispatcher(BaseDispatcher, Generic[TOHandler]):
         *,
         send_flag: Literal["reply", "post", "stay"] = "stay",
         skip_for_unmatch: bool = True,
-        message_converter: Callable[[str], MessageChain | Coroutine[Any, Any, MessageChain]] | None = None,
+        comp_session: Optional[CompConfig] = None,
+        message_converter: Callable[[OutType, str], MessageChain | Coroutine[Any, Any, MessageChain]] | None = None,
     ): ...
 ```
 
@@ -232,6 +240,8 @@ class AlconnaDispatcher(BaseDispatcher, Generic[TOHandler]):
 - stay: 存入 AlconnaProperty 传递给事件处理器
 
 `skip_for_unmatch`: 解析失败时是否跳过, 否则错误信息按 send_flag 处理
+
+`comp_session`: 补全会话配置, 不传入则不启用补全会话
 
 `message_converter`: send_flag 为 reply 时 输出信息的预处理器
 

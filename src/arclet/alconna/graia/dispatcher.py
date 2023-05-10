@@ -41,6 +41,7 @@ def success_hook(event, args):
 
 
 sys.addaudithook(success_hook)
+OutType = Literal["help", "shortcut", "completion"]
 
 
 class AlconnaOutputMessage(Dispatchable):
@@ -63,8 +64,8 @@ class AlconnaDispatcher(BaseDispatcher):
         return cls(factory.build(), send_flag="reply")
 
     default_send_handler: ClassVar[
-        Callable[[str], MessageChain | Coroutine[Any, Any, MessageChain]]
-    ] = lambda x: MessageChain([Text(x)])
+        Callable[[OutType, str], MessageChain | Coroutine[Any, Any, MessageChain]]
+    ] = lambda _, x: MessageChain([Text(x)])
 
     def __init__(
         self,
@@ -73,7 +74,7 @@ class AlconnaDispatcher(BaseDispatcher):
         send_flag: Literal["reply", "post", "stay"] = "reply",
         skip_for_unmatch: bool = True,
         comp_session: Optional[CompConfig] = None,
-        message_converter: Callable[[str], MessageChain | Coroutine[Any, Any, MessageChain]] | None = None,
+        message_converter: Callable[[OutType, str], MessageChain | Coroutine[Any, Any, MessageChain]] | None = None,
     ):
         """
         构造 Alconna调度器

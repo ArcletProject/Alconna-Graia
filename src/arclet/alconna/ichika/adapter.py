@@ -3,23 +3,28 @@ from __future__ import annotations
 from contextlib import suppress
 from typing import Any, Callable, Iterable
 
-from graia.broadcast.interrupt import Waiter
-from ichika.client import Client
-from ichika.graia import IchikaClientDispatcher, CLIENT_INSTANCE
-from ichika.graia.event import GroupMessage, FriendMessage, MessageEvent
-from ichika.message.elements import At, Text
-from ichika.core import Friend
 from graia.amnesia.message import MessageChain
 from graia.broadcast.builtin.decorators import Depend
 from graia.broadcast.exceptions import ExecutionStop
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
-from graia.broadcast.utilles import run_always_await, dispatcher_mixin_handler, T_Dispatcher
+from graia.broadcast.interrupt import Waiter
+from graia.broadcast.utilles import (
+    T_Dispatcher,
+    dispatcher_mixin_handler,
+    run_always_await,
+)
+from ichika.client import Client
+from ichika.core import Friend
+from ichika.graia import CLIENT_INSTANCE, IchikaClientDispatcher
+from ichika.graia.event import FriendMessage, GroupMessage, MessageEvent
+from ichika.message.elements import At, Text
 
 from arclet.alconna import Arparma, argv_config
+from arclet.alconna.exceptions import SpecialOptionTriggered
 
 from ..graia import AlconnaProperty, AlconnaSchema
-from ..graia.argv import MessageChainArgv
 from ..graia.adapter import AlconnaGraiaAdapter
+from ..graia.argv import MessageChainArgv
 from ..graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
 from ..graia.model import TSource
 from ..graia.utils import listen
@@ -76,7 +81,11 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
             return AlconnaProperty(result, output_text, source)
         if dispatcher.send_flag == "reply":
             client: Client = CLIENT_INSTANCE.get()
-            help_message: MessageChain = await run_always_await(dispatcher.converter, output_text)
+            help_message: MessageChain = await run_always_await(
+                dispatcher.converter,
+                str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered) else "help",
+                output_text
+            )
             if isinstance(source, GroupMessage):
                 await client.send_group_message(source.group.uin, help_message)
             else:
