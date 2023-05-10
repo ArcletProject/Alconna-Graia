@@ -19,12 +19,11 @@ from ichika.graia import CLIENT_INSTANCE, IchikaClientDispatcher
 from ichika.graia.event import FriendMessage, GroupMessage, MessageEvent
 from ichika.message.elements import At, Text
 
-from arclet.alconna import Arparma, argv_config
+from arclet.alconna import Arparma
 from arclet.alconna.exceptions import SpecialOptionTriggered
 
 from ..graia import AlconnaProperty, AlconnaSchema
 from ..graia.adapter import AlconnaGraiaAdapter
-from ..graia.argv import MessageChainArgv
 from ..graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
 from ..graia.model import TSource
 from ..graia.utils import listen
@@ -143,12 +142,3 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
             return AlconnaSchema(dispatcher.command)
 
         return wrapper
-
-
-argv_config(
-    target=MessageChainArgv,
-    filter_out=[],
-    checker=lambda x: isinstance(x, MessageChain),
-    to_text=lambda x: x.text if isinstance(x, Text) else None,
-    converter=lambda x: MessageChain(x if isinstance(x, list) else [Text(x)])
-)

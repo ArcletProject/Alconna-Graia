@@ -25,6 +25,7 @@ from tarina import generic_isinstance, generic_issubclass, lang
 from tarina.generic import get_origin
 
 from arclet.alconna import Arparma, Empty, output_manager
+from arclet.alconna.exceptions import SpecialOptionTriggered
 
 from .model import AlconnaProperty, Header, Match, Query, CompConfig
 from .service import AlconnaGraiaInterface
@@ -94,7 +95,7 @@ class AlconnaDispatcher(BaseDispatcher):
     async def handle(self, dii: DispatcherInterface, msg: MessageChain, adapter: 'AlconnaGraiaAdapter'):
         inc = InterruptControl(dii.broadcast)
         interface = CompSession(self.command)
-        if not self.comp_session:
+        if self.comp_session is None:
             return self.command.parse(msg)  # type: ignore
         _tab = Alconna(
             self.comp_session.get("tab", ".tab"),
@@ -113,11 +114,12 @@ class AlconnaDispatcher(BaseDispatcher):
             command_manager.delete(_tab)
             command_manager.delete(_enter)
             command_manager.delete(_exit)
+            interface.clear()
 
         with interface:
             res = self.command.parse(msg)  # type: ignore
         while interface.available:
-            res = Arparma(self.command.path, msg, False)
+            res = Arparma(self.command.path, msg, False, error_info=SpecialOptionTriggered("completion"))
             await adapter.send(self, res, str(interface), dii.event, exclude=False)
             await adapter.send(
                 self, res,
@@ -138,8 +140,8 @@ class AlconnaDispatcher(BaseDispatcher):
                     clear()
                     return res
                 if (mat := _tab.parse(ans)).matched:
-                    prompt = interface.tab(mat.offset)
-                    await adapter.send(self, res, prompt, dii.event, exclude=False)
+                    interface.tab(mat.offset)
+                    await adapter.send(self, res, "\n".join(interface.lines()), dii.event, exclude=False)
                     continue
                 if (mat := _enter.parse(ans)).matched:
                     content = list(mat.content)

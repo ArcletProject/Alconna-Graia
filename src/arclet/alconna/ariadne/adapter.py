@@ -18,11 +18,11 @@ from graia.broadcast.interfaces.dispatcher import DispatcherInterface
 from graia.broadcast.interrupt import Waiter
 from graia.broadcast.utilles import run_always_await
 
-from arclet.alconna import Arparma, argv_config
+from arclet.alconna import Arparma, argv_config, set_default_argv_type
 
 from ..graia import AlconnaProperty, AlconnaSchema
 from ..graia.adapter import AlconnaGraiaAdapter
-from ..graia.argv import MessageChainArgv
+from ..graia.argv import BaseMessageChainArgv
 from ..graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
 from ..graia.model import TSource
 from ..graia.utils import listen
@@ -122,8 +122,13 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
         return wrapper
 
 
+class AriadneMessageChainArgv(BaseMessageChainArgv):
+    ...
+
+
+set_default_argv_type(AriadneMessageChainArgv)
 argv_config(
-    target=MessageChainArgv,
+    target=AriadneMessageChainArgv,
     filter_out=["Source", "File", "Quote"],
     checker=lambda x: isinstance(x, MessageChain),
     to_text=lambda x: x.text if x.__class__ is Plain else None,
