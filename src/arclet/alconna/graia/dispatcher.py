@@ -6,7 +6,7 @@ from typing import Any, Callable, ClassVar, Coroutine, Literal, get_args, Option
 from arclet.alconna.args import AllParam, Args
 from arclet.alconna.completion import CompSession
 from arclet.alconna.core import Alconna
-from arclet.alconna.typing import CommandMeta
+from arclet.alconna.config import namespace
 from arclet.alconna.duplication import Duplication, generate_duplication
 from arclet.alconna.stub import ArgsStub, OptionStub, SubcommandStub
 from arclet.alconna.manager import command_manager
@@ -95,18 +95,13 @@ class AlconnaDispatcher(BaseDispatcher):
         interface = CompSession(self.command)
         if self.comp_session is None:
             return self.command.parse(msg)  # type: ignore
-        _tab = Alconna(
-            self.comp_session.get("tab", ".tab"),
-            Args["offset", int, 1], meta=CommandMeta(hide=True, compact=True)
-        )
-        _enter = Alconna(
-            self.comp_session.get("enter", ".enter"),
-            Args["content", AllParam, []], meta=CommandMeta(hide=True, compact=True)
-        )
-        _exit = Alconna(
-            self.comp_session.get("exit", ".exit"),
-            meta=CommandMeta(hide=True, compact=True)
-        )
+        with namespace("#completion") as ns:
+            ns.prefixes = []
+            ns.compact = True
+            ns.hide = True
+            _tab = Alconna(self.comp_session.get("tab", "/tab"), Args["offset", int, 1])
+            _enter = Alconna(self.comp_session.get("enter", "/enter"), Args["content", AllParam, []])
+            _exit = Alconna(self.comp_session.get("exit", "/exit"))
 
         def clear():
             command_manager.delete(_tab)
@@ -121,20 +116,24 @@ class AlconnaDispatcher(BaseDispatcher):
             await adapter.send(self, res, str(interface), dii.event, exclude=False)
             await adapter.send(
                 self, res,
-                f"{lang.require('alconna/graia', 'tab').format(cmd=_tab.command)}\n"
-                f"{lang.require('alconna/graia', 'enter').format(cmd=_enter.command)}\n"
-                f"{lang.require('alconna/graia', 'exit').format(cmd=_exit.command)}",
+                f"{lang.require('comp/graia', 'tab').format(cmd=_tab.command)}\n"
+                f"{lang.require('comp/graia', 'enter').format(cmd=_enter.command)}\n"
+                f"{lang.require('comp/graia', 'exit').format(cmd=_exit.command)}",
                 dii.event,
                 exclude=False
             )
             while True:
                 waiter = adapter.completion_waiter(dii, self.comp_session.get('priority', 10))
                 try:
-                    ans: MessageChain = await inc.wait(waiter, timeout=30)  # type: ignore
+                    ans: MessageChain = await inc.wait(
+                        waiter, timeout=self.comp_session.get('timeout', 30)
+                    )
                 except asyncio.TimeoutError:
                     clear()
+                    await adapter.send(self, res, lang.require("comp/graia", "timeout"), dii.event, exclude=False)
                     return res
                 if _exit.parse(ans).matched:
+                    await adapter.send(self, res, lang.require("comp/graia", "exited"), dii.event, exclude=False)
                     clear()
                     return res
                 if (mat := _tab.parse(ans)).matched:

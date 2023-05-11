@@ -1,9 +1,9 @@
 {
   "default": "zh-CN",
   "frozen": [
-    "alconna/graia"
+    "comp/graia"
   ],
   "require": [
-    "alconna/graia"
+    "comp/graia"
   ]
 }
