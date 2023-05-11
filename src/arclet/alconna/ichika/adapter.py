@@ -25,10 +25,9 @@ from arclet.alconna.exceptions import SpecialOptionTriggered
 from ..graia import AlconnaProperty, AlconnaSchema
 from ..graia.adapter import AlconnaGraiaAdapter
 from ..graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
-from ..graia.model import TSource
 from ..graia.utils import listen
 
-AlconnaDispatcher.default_send_handler = lambda x: MessageChain([Text(x)])
+AlconnaDispatcher.default_send_handler = lambda _, x: MessageChain([Text(x)])
 
 
 def resolve_dispatchers_mixin(dispatchers: Iterable[T_Dispatcher]) -> list[T_Dispatcher]:
@@ -47,7 +46,7 @@ def resolve_dispatchers_mixin(dispatchers: Iterable[T_Dispatcher]) -> list[T_Dis
 
 
 class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
-    def completion_waiter(self, interface: DispatcherInterface[TSource], priority: int = 15) -> Waiter:
+    def completion_waiter(self, interface: DispatcherInterface[MessageEvent], priority: int = 15) -> Waiter:
         @Waiter.create_using_function(
             [interface.event.__class__], block_propagation=True, priority=priority,
         )

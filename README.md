@@ -295,7 +295,7 @@ from arclet.alconna.graia import Match, AlconnaSchema
 ...
 channel = Channel.current()
 
-@channel.use(AlconnaSchema.from_("foo <arg:str>", "bar"))
+@channel.use(AlconnaSchema.from_("foo {sth:str} bar {baz:int}"))
 @channel.use(ListenerSchema([...]))
 async def test2(sth: Match[str]):
     print("match", sth.available, sth.result)

@@ -22,17 +22,16 @@ from arclet.alconna.exceptions import SpecialOptionTriggered
 from ..graia import AlconnaProperty, AlconnaSchema
 from ..graia.adapter import AlconnaGraiaAdapter
 from ..graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
-from ..graia.model import TSource
 from ..graia.utils import listen
 
-AlconnaDispatcher.default_send_handler = lambda x: MessageChain([Text(x)])
+AlconnaDispatcher.default_send_handler = lambda _, x: MessageChain([Text(x)])
 
 AvillaMessageEvent = Union[MessageEdited, MessageReceived]
 
 
 class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
 
-    def completion_waiter(self, interface: DispatcherInterface[TSource], priority: int = 15) -> Waiter:
+    def completion_waiter(self, interface: DispatcherInterface[AvillaMessageEvent], priority: int = 15) -> Waiter:
         @Waiter.create_using_function(
             [MessageReceived], block_propagation=True, priority=priority,
         )

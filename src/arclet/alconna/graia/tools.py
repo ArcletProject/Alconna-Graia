@@ -117,7 +117,12 @@ def alcommand(
     if isinstance(alconna, str):
         if not alconna.strip():
             raise ValueError(alconna)
-        alconna = AlconnaString(alconna).build()
+        parts = alconna.split(";")
+        _factory = AlconnaString(parts[0])
+        for part in parts[1:]:
+            _head = part.split(" ", 1)[0]
+            _factory.option(_head.lstrip(" ").lstrip("-"), part.lstrip())
+        alconna = _factory.build()
     dispatcher = AlconnaDispatcher(
         alconna, send_flag="post" if post else "reply", skip_for_unmatch=not send_error,  # type: ignore
         comp_session=comp_session,

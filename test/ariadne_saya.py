@@ -1,5 +1,6 @@
-from src.arclet.alconna.graia import AlconnaBehaviour, Alconna, alcommand, startswith
+from src.arclet.alconna.graia import AlconnaBehaviour, alcommand, startswith
 from src.arclet.alconna.graia.utils import listen
+from arclet.alconna import Alconna
 from graia.saya import Saya, channel_instance
 from creart import it
 from graia.ariadne.event.message import GroupMessage

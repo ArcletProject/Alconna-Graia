@@ -2,11 +2,10 @@
 Alconna 对于 Graia 系列的支持
 
 """
-from arclet.alconna import Alconna
 
 from . import alc as alc
 from .adapter import AlconnaGraiaAdapter
-from .argv import MessageChainArgv
+from .argv import BaseMessageChainArgv
 from .dispatcher import AlconnaOutputMessage, success_record, AlconnaDispatcher
 from .model import AlconnaProperty, Match, Query, Header
 from .saya import AlconnaBehaviour, AlconnaSchema

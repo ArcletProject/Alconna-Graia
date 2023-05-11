@@ -1,10 +1,8 @@
-from __future__ import annotations
-
 import asyncio
 import sys
+import traceback
 from collections import deque
-from typing import Any, Callable, ClassVar, Coroutine, Literal, get_args, Optional, TYPE_CHECKING
-
+from typing import Any, Callable, ClassVar, Coroutine, Literal, get_args, Optional, TYPE_CHECKING, Dict, Union
 from arclet.alconna.args import AllParam, Args
 from arclet.alconna.completion import CompSession
 from arclet.alconna.core import Alconna
@@ -54,7 +52,7 @@ class AlconnaOutputMessage(Dispatchable):
 
 class AlconnaDispatcher(BaseDispatcher):
     @classmethod
-    def from_format(cls, command: str, args: dict[str, Any] | None = None):
+    def from_format(cls, command: str, args: Optional[Dict[str, Any]] = None):
         return cls(AlconnaFormat(command, args), send_flag="reply")
 
     @classmethod
@@ -65,7 +63,7 @@ class AlconnaDispatcher(BaseDispatcher):
         return cls(factory.build(), send_flag="reply")
 
     default_send_handler: ClassVar[
-        Callable[[OutType, str], MessageChain | Coroutine[Any, Any, MessageChain]]
+        Callable[[OutType, str], Optional[Union[MessageChain, Coroutine[Any, Any, MessageChain]]]]
     ] = lambda _, x: MessageChain([Text(x)])
 
     def __init__(
@@ -75,7 +73,7 @@ class AlconnaDispatcher(BaseDispatcher):
         send_flag: Literal["reply", "post", "stay"] = "reply",
         skip_for_unmatch: bool = True,
         comp_session: Optional[CompConfig] = None,
-        message_converter: Callable[[OutType, str], MessageChain | Coroutine[Any, Any, MessageChain]] | None = None,
+        message_converter: Callable[[OutType, str], Optional[Union[MessageChain, Coroutine[Any, Any, MessageChain]]]] = None,
     ):
         """
         构造 Alconna调度器
@@ -147,12 +145,13 @@ class AlconnaDispatcher(BaseDispatcher):
                     content = list(mat.content)
                     if not content or not content[0]:
                         content = None
-                    with interface:
-                        try:
+                    try:
+                        with interface:
                             res = interface.enter(content)
-                        except ValueError as e:
-                            await adapter.send(self, res, str(e), dii.event, exclude=False)
-                            continue
+                    except Exception as e:
+                        traceback.print_exc()
+                        await adapter.send(self, res, str(e), dii.event, exclude=False)
+                        continue
                     break
                 else:
                     await adapter.send(self, res, interface.current(), dii.event, exclude=False)
@@ -173,7 +172,7 @@ class AlconnaDispatcher(BaseDispatcher):
                 _res = await self.handle(interface, message, adapter)
             except Exception as e:
                 _res = Arparma(self.command.path, message, False, error_info=repr(e))
-            may_help_text: str | None = cap.get("output", None)
+            may_help_text: Optional[str] = cap.get("output", None)
         if not may_help_text and not _res.matched and ((not _res.head_matched) or self.skip_for_unmatch):
             raise ExecutionStop
         if not may_help_text and _res.error_info:

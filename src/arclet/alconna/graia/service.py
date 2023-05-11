@@ -13,6 +13,7 @@ from .adapter import AlconnaGraiaAdapter
 TAdapter = TypeVar("TAdapter", bound=AlconnaGraiaAdapter)
 lang.load(Path(__file__).parent / "i18n")
 
+
 class AlconnaGraiaInterface(ExportInterface["AlconnaGraiaService"], Generic[TAdapter]):
 
     def __init__(self, service: AlconnaGraiaService):

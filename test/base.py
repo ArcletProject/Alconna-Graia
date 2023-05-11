@@ -1,7 +1,6 @@
 from graia.ariadne.message.chain import MessageChain
 
 from src.arclet.alconna.graia import (
-    Alconna,
     AlconnaDispatcher,
     AlconnaOutputMessage,
     Match,
@@ -12,7 +11,7 @@ from src.arclet.alconna.graia import (
     MatchSuffix,
     MatchPrefix,
 )
-from arclet.alconna import Args, Arparma, Duplication, CommandMeta
+from arclet.alconna import Args, Arparma, Duplication, CommandMeta, Alconna
 from arclet.alconna import ArgsStub, command_manager
 
 from graia.broadcast import Broadcast

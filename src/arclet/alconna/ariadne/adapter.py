@@ -24,14 +24,13 @@ from ..graia import AlconnaProperty, AlconnaSchema
 from ..graia.adapter import AlconnaGraiaAdapter
 from ..graia.argv import BaseMessageChainArgv
 from ..graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
-from ..graia.model import TSource
 from ..graia.utils import listen
 
-AlconnaDispatcher.default_send_handler = lambda x: MessageChain([Plain(x)])
+AlconnaDispatcher.default_send_handler = lambda _, x: MessageChain([Plain(x)])
 
 
 class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
-    def completion_waiter(self, interface: DispatcherInterface[TSource], priority: int = 15) -> Waiter:
+    def completion_waiter(self, interface: DispatcherInterface[MessageEvent], priority: int = 15) -> Waiter:
         return AnnotationWaiter(MessageChain, [interface.event.__class__], block_propagation=True, priority=priority)
 
     async def lookup_source(self, interface: DispatcherInterface[MessageEvent]) -> MessageChain:
