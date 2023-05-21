@@ -14,7 +14,7 @@ from graia.broadcast.utilles import (
     run_always_await,
 )
 from ichika.client import Client
-from ichika.core import Friend
+from ichika.core import Friend, Member
 from ichika.graia import CLIENT_INSTANCE, IchikaClientDispatcher
 from ichika.graia.event import FriendMessage, GroupMessage, MessageEvent
 from ichika.message.elements import At, Text
@@ -52,8 +52,9 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
             block_propagation=True,
             priority=priority,
         )
-        async def waiter(m: MessageChain):
-            return m
+        async def waiter(m: MessageChain, sender: Friend | Member):
+            if source.sender.uin == sender.uid:
+                return m
 
         return waiter  # type: ignore
 

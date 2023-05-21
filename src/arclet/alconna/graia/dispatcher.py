@@ -54,7 +54,6 @@ def clear():
 register(clear)
 
 
-
 class AlconnaOutputMessage(Dispatchable):
     """
     Alconna 信息输出事件
@@ -108,6 +107,11 @@ class AlconnaDispatcher(BaseDispatcher):
         interface = CompSession(self.command)
         if self.comp_session is None or not source:
             return self.command.parse(msg)  # type: ignore
+        res = None
+        with interface:
+            res = self.command.parse(msg)  # type: ignore
+        if res:
+            return res
         _tab = Alconna(
             self.comp_session.get("tab", "/tab"), Args["offset", int, 1], [],
             meta=CommandMeta(compact=True, hide=True)
@@ -121,14 +125,12 @@ class AlconnaDispatcher(BaseDispatcher):
             meta=CommandMeta(compact=True, hide=True)
         )
 
-        def clear():
+        def _clear():
             command_manager.delete(_tab)
             command_manager.delete(_enter)
             command_manager.delete(_exit)
             interface.clear()
 
-        with interface:
-            res = self.command.parse(msg)  # type: ignore
         while interface.available:
             res = Arparma(self.command.path, msg, False, error_info=SpecialOptionTriggered("completion"))
             await adapter.send(self, res, str(interface), source)
@@ -146,16 +148,16 @@ class AlconnaDispatcher(BaseDispatcher):
                         waiter, timeout=self.comp_session.get('timeout', 30)
                     )
                 except asyncio.TimeoutError:
-                    clear()
+                    _clear()
                     await adapter.send(self, res, lang.require("comp/graia", "timeout"), source)
                     return res
                 if _exit.parse(ans).matched:
                     await adapter.send(self, res, lang.require("comp/graia", "exited"), source)
-                    clear()
+                    _clear()
                     return res
                 if (mat := _tab.parse(ans)).matched:
                     interface.tab(mat.offset)
-                    await adapter.send(self, res, "\n".join(interface.lines()), source)
+                    await adapter.send(self, res, str(interface), source)
                     continue
                 if (mat := _enter.parse(ans)).matched:
                     content = list(mat.content)
@@ -171,7 +173,7 @@ class AlconnaDispatcher(BaseDispatcher):
                     break
                 else:
                     await adapter.send(self, res, interface.current(), source)
-        clear()
+        _clear()
         return res
 
     async def beforeExecution(self, interface: DispatcherInterface):

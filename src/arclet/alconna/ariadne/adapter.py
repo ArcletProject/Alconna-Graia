@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import suppress
-from typing import Any, Callable
+from typing import Any, Callable, Union
 
 from arclet.alconna.exceptions import SpecialOptionTriggered
 from graia.ariadne.app import Ariadne
@@ -9,9 +9,9 @@ from graia.ariadne.dispatcher import ContextDispatcher
 from graia.ariadne.event.message import FriendMessage, GroupMessage, MessageEvent
 from graia.ariadne.message.chain import MessageChain
 from graia.ariadne.message.element import At, Plain, Source, File, Quote
-from graia.ariadne.model import Friend
+from graia.ariadne.model import Friend, Member, Client, Stranger
 from graia.ariadne.util import resolve_dispatchers_mixin
-from graia.ariadne.util.interrupt import AnnotationWaiter
+from graia.ariadne.util.interrupt import FunctionWaiter
 from graia.broadcast.builtin.decorators import Depend
 from graia.broadcast.exceptions import ExecutionStop
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
@@ -27,11 +27,16 @@ from ..graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
 from ..graia.utils import listen
 
 AlconnaDispatcher.default_send_handler = lambda _, x: MessageChain([Plain(x)])
+Sender = Union[Friend, Member, Stranger, Client]
 
 
 class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
     def completion_waiter(self, source: MessageEvent, priority: int = 15) -> Waiter:
-        return AnnotationWaiter(MessageChain, [source.__class__], block_propagation=True, priority=priority)
+        async def waiter(m: MessageChain, sender: Sender):
+            if sender.id == source.sender.id:
+                return m
+
+        return FunctionWaiter(waiter, [source.__class__], block_propagation=True, priority=priority)
 
     async def lookup_source(self, interface: DispatcherInterface[MessageEvent]) -> MessageChain:
         return await interface.lookup_param("__message_chain__", MessageChain, MessageChain("Unknown"))

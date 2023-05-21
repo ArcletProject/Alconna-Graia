@@ -37,7 +37,8 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
             priority=priority,
         )
         async def waiter(event: MessageReceived):
-            return event.message.content
+            if event.context.client == source.context.client:
+                return event.message.content
 
         return waiter  # type: ignore
 
