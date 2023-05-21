@@ -1,26 +1,25 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from weakref import finalize
 from contextlib import suppress
 from contextvars import ContextVar
-from typing import TYPE_CHECKING, Any, Callable, Generic, ClassVar
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generic
+from weakref import finalize
 
-from arclet.alconna.core import Alconna
 from graia.amnesia.message import MessageChain
 from graia.broadcast.builtin.decorators import Depend
 from graia.broadcast.entities.dispatcher import BaseDispatcher
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
 from graia.broadcast.interrupt.waiter import Waiter
 
-from arclet.alconna import Arparma
+from arclet.alconna import Alconna, Arparma
 
 from .model import AlconnaProperty, TSource
 from .utils import listen
 
 if TYPE_CHECKING:
-    from .saya import AlconnaSchema
     from .dispatcher import AlconnaDispatcher
+    from .saya import AlconnaSchema
 
 
 __all__ = ["adapter_context", "AlconnaGraiaAdapter"]
@@ -33,11 +32,9 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
     __adapter_class__: ClassVar[type[AlconnaGraiaAdapter]] = None  # type: ignore
 
     def __init__(self):
-        self.output_cache: dict[str, set] = {}
         token = adapter_context.set(self)
 
         def clr(tkn):
-            self.output_cache.clear()
             with suppress(Exception):
                 adapter_context.reset(tkn)
 
@@ -53,11 +50,21 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
         return adapter_context.get()
 
     @abstractmethod
-    def completion_waiter(self, interface: DispatcherInterface[TSource], priority: int = 15) -> Waiter:
+    def completion_waiter(self, source: TSource, priority: int = 15) -> Waiter:
         ...
 
     @abstractmethod
     async def lookup_source(self, interface: DispatcherInterface[TSource]) -> MessageChain:
+        ...
+
+    @abstractmethod
+    async def property(
+        self,
+        dispatcher: AlconnaDispatcher,
+        result: Arparma[MessageChain],
+        output_text: str | None = None,
+        source: TSource | None = None,
+    ) -> AlconnaProperty[TSource]:
         ...
 
     @abstractmethod
@@ -67,8 +74,11 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
         result: Arparma[MessageChain],
         output_text: str | None = None,
         source: TSource | None = None,
-        exclude: bool = True,
-    ) -> AlconnaProperty[TSource]:
+    ) -> None:
+        ...
+
+    @abstractmethod
+    def source_id(self, source: TSource | None = None) -> str:
         ...
 
     @abstractmethod
@@ -108,21 +118,19 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
 
 
 class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
-
-    def completion_waiter(self, interface: DispatcherInterface[TSource], priority: int = 15) -> Waiter:
+    def completion_waiter(self, source: TSource, priority: int = 15) -> Waiter:
         @Waiter.create_using_function(
-            [interface.event.__class__], block_propagation=True, priority=priority,
+            [source.__class__],
+            block_propagation=True,
+            priority=priority,
         )
         async def waiter(m: MessageChain):
             return m
+
         return waiter  # type: ignore
 
     async def lookup_source(self, interface: DispatcherInterface[TSource]) -> MessageChain:
-        return getattr(
-            interface.event,
-            "message_chain",
-            interface.event.message.content
-        )
+        return getattr(interface.event, "message_chain", interface.event.message.content)
 
     def alcommand(
         self,
@@ -137,8 +145,9 @@ class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
         def wrapper(func: Callable, buffer: dict[str, Any]):
             _dispatchers = buffer.setdefault("dispatchers", [])
             _dispatchers.append(dispatcher)
-            listen()(func)   # noqa
+            listen()(func)  # noqa
             return AlconnaSchema(dispatcher.command)
+
         return wrapper
 
     def fetch_name(self, path: str) -> Depend:
@@ -150,15 +159,26 @@ class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
     def check_account(self, path: str) -> Depend:
         return Depend(lambda: True)
 
+    async def property(
+        self,
+        dispatcher: AlconnaDispatcher,
+        result: Arparma[MessageChain],
+        output_text: str | None = None,
+        source: TSource | None = None,
+    ):
+        return AlconnaProperty(result, None, source)
+
     async def send(
         self,
         dispatcher: AlconnaDispatcher,
         result: Arparma[MessageChain],
         output_text: str | None = None,
         source: TSource | None = None,
-        exclude: bool = True,
-    ):
-        return AlconnaProperty(result, None, source)
+    ) -> None:
+        return
+
+    def source_id(self, source: TSource | None = None) -> str:
+        return f"{id(source)}"
 
 
 DefaultAdapter()

@@ -1,12 +1,12 @@
 import asyncio
-import sys
 import traceback
-from collections import deque
+from atexit import register
+from weakref import WeakKeyDictionary
 from typing import Any, Callable, ClassVar, Coroutine, Literal, get_args, Optional, TYPE_CHECKING, Dict, Union
+from arclet.alconna.typing import CommandMeta
 from arclet.alconna.args import AllParam, Args
 from arclet.alconna.completion import CompSession
 from arclet.alconna.core import Alconna
-from arclet.alconna.config import namespace
 from arclet.alconna.duplication import Duplication, generate_duplication
 from arclet.alconna.stub import ArgsStub, OptionStub, SubcommandStub
 from arclet.alconna.manager import command_manager
@@ -19,9 +19,9 @@ from graia.broadcast.exceptions import ExecutionStop, PropagationCancelled
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
 from graia.broadcast.interrupt import InterruptControl
 from launart import Launart
-from tarina import generic_isinstance, generic_issubclass, lang
+from tarina import generic_isinstance, generic_issubclass, lang, LRU
 from tarina.generic import get_origin
-
+from creart import it
 from arclet.alconna import Arparma, Empty, output_manager
 from arclet.alconna.exceptions import SpecialOptionTriggered
 
@@ -30,17 +30,29 @@ from .service import AlconnaGraiaInterface
 
 if TYPE_CHECKING:
     from .adapter import AlconnaGraiaAdapter
+    result_cache: WeakKeyDictionary[Alconna, LRU[str, asyncio.Future[Optional[AlconnaProperty]]]]
+else:
+    result_cache = WeakKeyDictionary()
 
-success_record = deque(maxlen=10)
-
-
-def success_hook(event, args):
-    if event in ["success_analysis"]:
-        success_record.append(args[0])
-
-
-sys.addaudithook(success_hook)
 OutType = Literal["help", "shortcut", "completion"]
+
+
+def get_future(alc: Alconna, source: str):
+    return result_cache[alc].get(source)
+
+
+def set_future(alc: Alconna, source: str):
+    return result_cache[alc].setdefault(source, asyncio.Future())
+
+
+def clear():
+    for lru in result_cache.values():
+        lru.clear()
+    result_cache.clear()
+
+
+register(clear)
+
 
 
 class AlconnaOutputMessage(Dispatchable):
@@ -89,19 +101,25 @@ class AlconnaDispatcher(BaseDispatcher):
         self.skip_for_unmatch = skip_for_unmatch
         self.comp_session = comp_session
         self.converter = message_converter or self.__class__.default_send_handler
+        result_cache.setdefault(command, LRU(10))
 
-    async def handle(self, dii: DispatcherInterface, msg: MessageChain, adapter: 'AlconnaGraiaAdapter'):
-        inc = InterruptControl(dii.broadcast)
+    async def handle(self, source: Optional[Dispatchable], msg: MessageChain, adapter: 'AlconnaGraiaAdapter'):
+        inc = it(InterruptControl)
         interface = CompSession(self.command)
-        if self.comp_session is None:
+        if self.comp_session is None or not source:
             return self.command.parse(msg)  # type: ignore
-        with namespace("#completion") as ns:
-            ns.prefixes = []
-            ns.compact = True
-            ns.hide = True
-            _tab = Alconna(self.comp_session.get("tab", "/tab"), Args["offset", int, 1])
-            _enter = Alconna(self.comp_session.get("enter", "/enter"), Args["content", AllParam, []])
-            _exit = Alconna(self.comp_session.get("exit", "/exit"))
+        _tab = Alconna(
+            self.comp_session.get("tab", "/tab"), Args["offset", int, 1], [],
+            meta=CommandMeta(compact=True, hide=True)
+        )
+        _enter = Alconna(
+            self.comp_session.get("enter", "/enter"), Args["content", AllParam, []], [],
+            meta=CommandMeta(compact=True, hide=True)
+        )
+        _exit = Alconna(
+            self.comp_session.get("exit", "/exit"), [],
+            meta=CommandMeta(compact=True, hide=True)
+        )
 
         def clear():
             command_manager.delete(_tab)
@@ -113,32 +131,31 @@ class AlconnaDispatcher(BaseDispatcher):
             res = self.command.parse(msg)  # type: ignore
         while interface.available:
             res = Arparma(self.command.path, msg, False, error_info=SpecialOptionTriggered("completion"))
-            await adapter.send(self, res, str(interface), dii.event, exclude=False)
+            await adapter.send(self, res, str(interface), source)
             await adapter.send(
                 self, res,
                 f"{lang.require('comp/graia', 'tab').format(cmd=_tab.command)}\n"
                 f"{lang.require('comp/graia', 'enter').format(cmd=_enter.command)}\n"
                 f"{lang.require('comp/graia', 'exit').format(cmd=_exit.command)}",
-                dii.event,
-                exclude=False
+                source,
             )
             while True:
-                waiter = adapter.completion_waiter(dii, self.comp_session.get('priority', 10))
+                waiter = adapter.completion_waiter(source, self.comp_session.get('priority', 10))
                 try:
                     ans: MessageChain = await inc.wait(
                         waiter, timeout=self.comp_session.get('timeout', 30)
                     )
                 except asyncio.TimeoutError:
                     clear()
-                    await adapter.send(self, res, lang.require("comp/graia", "timeout"), dii.event, exclude=False)
+                    await adapter.send(self, res, lang.require("comp/graia", "timeout"), source)
                     return res
                 if _exit.parse(ans).matched:
-                    await adapter.send(self, res, lang.require("comp/graia", "exited"), dii.event, exclude=False)
+                    await adapter.send(self, res, lang.require("comp/graia", "exited"), source)
                     clear()
                     return res
                 if (mat := _tab.parse(ans)).matched:
                     interface.tab(mat.offset)
-                    await adapter.send(self, res, "\n".join(interface.lines()), dii.event, exclude=False)
+                    await adapter.send(self, res, "\n".join(interface.lines()), source)
                     continue
                 if (mat := _enter.parse(ans)).matched:
                     content = list(mat.content)
@@ -149,11 +166,11 @@ class AlconnaDispatcher(BaseDispatcher):
                             res = interface.enter(content)
                     except Exception as e:
                         traceback.print_exc()
-                        await adapter.send(self, res, str(e), dii.event, exclude=False)
+                        await adapter.send(self, res, str(e), source)
                         continue
                     break
                 else:
-                    await adapter.send(self, res, interface.current(), dii.event, exclude=False)
+                    await adapter.send(self, res, interface.current(), source)
         clear()
         return res
 
@@ -164,26 +181,34 @@ class AlconnaDispatcher(BaseDispatcher):
             from .adapter import AlconnaGraiaAdapter
             adapter = AlconnaGraiaAdapter.instance()
         message: MessageChain = await adapter.lookup_source(interface)
-
-        with output_manager.capture(self.command.name) as cap:
-            output_manager.set_action(lambda x: x, self.command.name)
-            try:
-                _res = await self.handle(interface, message, adapter)
-            except Exception as e:
-                _res = Arparma(self.command.path, message, False, error_info=repr(e))
-            may_help_text: Optional[str] = cap.get("output", None)
-        if not may_help_text and not _res.matched and ((not _res.head_matched) or self.skip_for_unmatch):
-            raise ExecutionStop
-        if not may_help_text and _res.error_info:
-            may_help_text = _res.error_info.strip("'").strip("\\n").split("\\n")[-1]
-        if not may_help_text and _res.matched:
-            adapter.output_cache.clear()
-            sys.audit("success_analysis", self.command)
         try:
-            _property = await adapter.send(self, _res, may_help_text, interface.event)
+            source = interface.event
         except LookupError:
-            _property = await adapter.send(self, _res, may_help_text, None)
-        if not _res.matched and not _property.output:
+            source = None
+        if future := get_future(self.command, adapter.source_id(source)):
+            await future
+            if not (_property := future.result()):
+                raise ExecutionStop
+        else:
+            fut = set_future(self.command, adapter.source_id(source))
+            with output_manager.capture(self.command.name) as cap:
+                output_manager.set_action(lambda x: x, self.command.name)
+                try:
+                    _res = await self.handle(source, message, adapter)
+                except Exception as e:
+                    _res = Arparma(self.command.path, message, False, error_info=repr(e))
+                may_help_text: Optional[str] = cap.get("output", None)
+            if not may_help_text and not _res.matched and ((not _res.head_matched) or self.skip_for_unmatch):
+                fut.set_result(None)
+                raise ExecutionStop
+            if not may_help_text and _res.error_info:
+                if isinstance(_res.error_info, (Exception, type)):
+                    may_help_text = repr(_res.error_info)
+                else:
+                    may_help_text = _res.error_info.strip("'").strip("\\n").split("\\n")[-1]
+            _property = await adapter.property(self, _res, may_help_text, source)
+            fut.set_result(_property)
+        if not _property.result.matched and not _property.output:
             raise PropagationCancelled
         interface.local_storage["alconna_result"] = _property
         return

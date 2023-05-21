@@ -1,8 +1,8 @@
 from avilla.console.message import Emoji, Markdown
-from avilla.core import Context, MessageChain, MessageReceived
+from avilla.core import Context, MessageChain, MessageReceived, Text
 from tarina import lang
-from arclet.alconna import Alconna, Args, Option, Subcommand, Arparma
-from src.arclet.alconna.graia import Match, alcommand, startswith
+from arclet.alconna import Alconna, Args, Option, Subcommand, Arparma, MultiVar, Field, CommandMeta
+from src.arclet.alconna.graia import Match, alcommand, startswith, assign
 from src.arclet.alconna.graia.utils import listen
 
 
@@ -102,6 +102,45 @@ tt = Alconna(
 
 
 @alcommand(tt, comp_session={"tab": "next"})
+@assign("$main")
 async def on_message_received5(ctx: Context, arp: Arparma):
-    await ctx.scene.send_message("Hello, Completion!")
+    await ctx.scene.send_message("Hello, Completion Main!")
     await ctx.scene.send_message(str(arp.all_matched_args))
+
+
+@alcommand(tt, comp_session={"tab": "next"})
+@assign("install")
+async def on_message_received6(ctx: Context, arp: Arparma):
+    await ctx.scene.send_message("Hello, Completion Install!")
+    await ctx.scene.send_message(str(arp.all_matched_args))
+
+
+code = Alconna(
+    "执行",
+    Args["code", MultiVar(str), Field(completion=lambda: "试试 print(1+1)")] / "\n",
+    Option("--pure-text"),
+    Option("--out", Args["name", str, "res"]),
+    meta=CommandMeta(description="执行简易代码", example="$执行 print(1+1)", hide=True),
+)
+code.shortcut(
+    "命令概览",
+    {
+        "command": MessageChain(
+            [Text("执行\nfrom arclet.alconna import command_manager\nprint(command_manager)")]
+        )
+    }
+)
+code.shortcut(
+    "echo",
+    {
+        "command": MessageChain(
+            [Text("执行 --pure-text\nprint(\\'{*}\\')")])
+    }
+)
+
+
+@alcommand(code)
+async def on_message_received7(ctx: Context, arp: Arparma):
+    await ctx.scene.send_message("Hello, Shortcut!")
+    await ctx.scene.send_message(str(arp.all_matched_args))
+    await ctx.scene.send_message(str(list(arp.code)))

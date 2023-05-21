@@ -30,10 +30,11 @@ AvillaMessageEvent = Union[MessageEdited, MessageReceived]
 
 
 class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
-
-    def completion_waiter(self, interface: DispatcherInterface[AvillaMessageEvent], priority: int = 15) -> Waiter:
+    def completion_waiter(self, source: AvillaMessageEvent, priority: int = 15) -> Waiter:
         @Waiter.create_using_function(
-            [MessageReceived], block_propagation=True, priority=priority,
+            [MessageReceived],
+            block_propagation=True,
+            priority=priority,
         )
         async def waiter(event: MessageReceived):
             return event.message.content
@@ -43,33 +44,37 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
     async def lookup_source(self, interface: DispatcherInterface[AvillaMessageEvent]) -> MessageChain:
         return interface.event.message.content
 
+    def source_id(self, source: AvillaMessageEvent | None = None) -> str:
+        return source.message.id if source else "_"
+
     async def send(
         self,
         dispatcher: AlconnaDispatcher,
         result: Arparma[MessageChain],
         output_text: str | None = None,
         source: AvillaMessageEvent | None = None,
-        exclude: bool = True,
+    ) -> None:
+        ctx: Context = source.context
+        help_message: MessageChain = await run_always_await(
+            dispatcher.converter,
+            str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered) else "help",
+            output_text,
+        )
+        await ctx.scene.send_message(help_message)
+
+    async def property(
+        self,
+        dispatcher: AlconnaDispatcher,
+        result: Arparma[MessageChain],
+        output_text: str | None = None,
+        source: AvillaMessageEvent | None = None,
     ) -> AlconnaProperty[AvillaMessageEvent]:
         if not isinstance(source, (MessageEdited, MessageReceived)) or (result.matched or not output_text):
             return AlconnaProperty(result, None, source)
-        if exclude:
-            id_ = source.message.id if source else '_'
-            cache = self.output_cache.setdefault(id_, set())
-            if dispatcher.command in cache:
-                return AlconnaProperty(result, None, source)
-            cache.clear()
-            cache.add(dispatcher.command)
         if dispatcher.send_flag == "stay":
             return AlconnaProperty(result, output_text, source)
         if dispatcher.send_flag == "reply":
-            ctx: Context = source.context
-            help_message: MessageChain = await run_always_await(
-                dispatcher.converter,
-                str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered) else "help",
-                output_text
-            )
-            await ctx.scene.send_message(help_message)
+            await self.send(dispatcher, result, output_text, source)
         elif dispatcher.send_flag == "post":
             with suppress(LookupError):
                 interface = DispatcherInterface.ctx.get()

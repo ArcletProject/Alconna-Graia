@@ -8,7 +8,7 @@ from graia.ariadne.app import Ariadne
 from graia.ariadne.dispatcher import ContextDispatcher
 from graia.ariadne.event.message import FriendMessage, GroupMessage, MessageEvent
 from graia.ariadne.message.chain import MessageChain
-from graia.ariadne.message.element import At, Plain
+from graia.ariadne.message.element import At, Plain, Source, File, Quote
 from graia.ariadne.model import Friend
 from graia.ariadne.util import resolve_dispatchers_mixin
 from graia.ariadne.util.interrupt import AnnotationWaiter
@@ -30,11 +30,14 @@ AlconnaDispatcher.default_send_handler = lambda _, x: MessageChain([Plain(x)])
 
 
 class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
-    def completion_waiter(self, interface: DispatcherInterface[MessageEvent], priority: int = 15) -> Waiter:
-        return AnnotationWaiter(MessageChain, [interface.event.__class__], block_propagation=True, priority=priority)
+    def completion_waiter(self, source: MessageEvent, priority: int = 15) -> Waiter:
+        return AnnotationWaiter(MessageChain, [source.__class__], block_propagation=True, priority=priority)
 
     async def lookup_source(self, interface: DispatcherInterface[MessageEvent]) -> MessageChain:
         return await interface.lookup_param("__message_chain__", MessageChain, MessageChain("Unknown"))
+
+    def source_id(self, source: MessageEvent | None = None) -> str:
+        return str(source.source.id) if source else "_"
 
     async def send(
         self,
@@ -42,30 +45,31 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
         result: Arparma[MessageChain],
         output_text: str | None = None,
         source: MessageEvent | None = None,
-        exclude: bool = True,
+    ) -> None:
+        app: Ariadne = Ariadne.current()
+        help_message: MessageChain = await run_always_await(
+            dispatcher.converter,
+            str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered) else "help",
+            output_text,
+        )
+        if isinstance(source, GroupMessage):
+            await app.send_group_message(source.sender.group, help_message)
+        else:
+            await app.send_message(source.sender, help_message)  # type: ignore
+
+    async def property(
+        self,
+        dispatcher: AlconnaDispatcher,
+        result: Arparma[MessageChain],
+        output_text: str | None = None,
+        source: MessageEvent | None = None,
     ) -> AlconnaProperty[MessageEvent]:
         if not isinstance(source, MessageEvent) or (result.matched or not output_text):
             return AlconnaProperty(result, None, source)
-        if exclude:
-            id_ = str(source.source.id) if source else '_'
-            cache = self.output_cache.setdefault(id_, set())
-            if dispatcher.command in cache:
-                return AlconnaProperty(result, None, source)
-            cache.clear()
-            cache.add(dispatcher.command)
         if dispatcher.send_flag == "stay":
             return AlconnaProperty(result, output_text, source)
         if dispatcher.send_flag == "reply":
-            app: Ariadne = Ariadne.current()
-            help_message: MessageChain = await run_always_await(
-                dispatcher.converter,
-                str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered) else "help",
-                output_text
-            )
-            if isinstance(source, GroupMessage):
-                await app.send_group_message(source.sender.group, help_message)
-            else:
-                await app.send_message(source.sender, help_message)  # type: ignore
+            await self.send(dispatcher, result, output_text, source)
         elif dispatcher.send_flag == "post":
             with suppress(LookupError):
                 interface = DispatcherInterface.ctx.get()
@@ -128,8 +132,8 @@ class AriadneMessageChainArgv(BaseMessageChainArgv):
 set_default_argv_type(AriadneMessageChainArgv)
 argv_config(
     target=AriadneMessageChainArgv,
-    filter_out=["Source", "File", "Quote"],
+    filter_out=[Source, File, Quote],
     checker=lambda x: isinstance(x, MessageChain),
     to_text=lambda x: x.text if x.__class__ is Plain else None,
-    converter=lambda x: MessageChain(x)
+    converter=lambda x: MessageChain(x),
 )

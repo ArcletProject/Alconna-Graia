@@ -46,9 +46,11 @@ def resolve_dispatchers_mixin(dispatchers: Iterable[T_Dispatcher]) -> list[T_Dis
 
 
 class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
-    def completion_waiter(self, interface: DispatcherInterface[MessageEvent], priority: int = 15) -> Waiter:
+    def completion_waiter(self, source: MessageEvent, priority: int = 15) -> Waiter:
         @Waiter.create_using_function(
-            [interface.event.__class__], block_propagation=True, priority=priority,
+            [source.__class__],
+            block_propagation=True,
+            priority=priority,
         )
         async def waiter(m: MessageChain):
             return m
@@ -58,36 +60,22 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
     async def lookup_source(self, interface: DispatcherInterface[MessageEvent]) -> MessageChain:
         return await interface.lookup_param("__message_chain__", MessageChain, MessageChain([Text("Unknown")]))
 
-    async def send(
+    def source_id(self, source: MessageEvent | None = None) -> str:
+        return str(source.source.id) if source else "_"
+
+    async def property(
         self,
         dispatcher: AlconnaDispatcher,
         result: Arparma[MessageChain],
         output_text: str | None = None,
         source: MessageEvent | None = None,
-        exclude: bool = True,
     ) -> AlconnaProperty[MessageEvent]:
         if not isinstance(source, MessageEvent) or (result.matched or not output_text):
             return AlconnaProperty(result, None, source)
-        if exclude:
-            id_ = str(source.source.seq) if source else '_'
-            cache = self.output_cache.setdefault(id_, set())
-            if dispatcher.command in cache:
-                return AlconnaProperty(result, None, source)
-            cache.clear()
-            cache.add(dispatcher.command)
         if dispatcher.send_flag == "stay":
             return AlconnaProperty(result, output_text, source)
         if dispatcher.send_flag == "reply":
-            client: Client = CLIENT_INSTANCE.get()
-            help_message: MessageChain = await run_always_await(
-                dispatcher.converter,
-                str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered) else "help",
-                output_text
-            )
-            if isinstance(source, GroupMessage):
-                await client.send_group_message(source.group.uin, help_message)
-            else:
-                await client.send_friend_message(source.sender.uin, help_message)  # type: ignore
+            await self.send(dispatcher, result, output_text, source)
         elif dispatcher.send_flag == "post":
             with suppress(LookupError):
                 interface = DispatcherInterface.ctx.get()
@@ -98,6 +86,25 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
                     await interface.broadcast.Executor(listener, dispatchers)
                     listener.oplog.clear()
         return AlconnaProperty(result, None, source)
+
+    async def send(
+        self,
+        dispatcher: AlconnaDispatcher,
+        result: Arparma[MessageChain],
+        output_text: str | None = None,
+        source: MessageEvent | None = None,
+    ) -> None:
+        client: Client = CLIENT_INSTANCE.get()
+        help_message: MessageChain = await run_always_await(
+            dispatcher.converter,
+            str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered) else "help",
+            output_text,
+        )
+        if isinstance(source, GroupMessage):
+            source: GroupMessage
+            await client.send_group_message(source.group.uin, help_message)
+        else:
+            await client.send_friend_message(source.sender.uin, help_message)  # type: ignore
 
     def fetch_name(self, path: str) -> Depend:
         async def __wrapper__(result: AlconnaProperty):
