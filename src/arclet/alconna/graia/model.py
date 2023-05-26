@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TypeVar, Generic, TypedDict
+from typing import TypeVar, Generic, TypedDict, Literal, Callable, Awaitable, Union
 
 from arclet.alconna import Arparma, Empty
-from typing_extensions import NotRequired
+from typing_extensions import NotRequired, TypeAlias
+from graia.amnesia.message import MessageChain
 
 TSource = TypeVar("TSource")
 T = TypeVar("T")
+OutType = Literal["help", "shortcut", "completion"]
+TConvert: TypeAlias = Callable[[OutType, str], Union[MessageChain, Awaitable[MessageChain]]]
 
 
 class Query(Generic[T]):
@@ -47,7 +50,7 @@ class Match(Generic[T]):
 
 
 @dataclass
-class AlconnaProperty(Generic[TSource]):
+class CommandResult(Generic[TSource]):
     """对解析结果的封装"""
     result: Arparma
     output: str | None = field(default=None)
@@ -73,4 +76,3 @@ class CompConfig(TypedDict):
     enter: NotRequired[str]
     exit: NotRequired[str]
     timeout: NotRequired[int]
-

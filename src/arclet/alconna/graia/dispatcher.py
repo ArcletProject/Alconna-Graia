@@ -2,12 +2,13 @@ import asyncio
 import traceback
 from atexit import register
 from weakref import WeakKeyDictionary
-from typing import Any, Callable, ClassVar, Coroutine, Literal, get_args, Optional, TYPE_CHECKING, Dict, Union
+from typing import Any, ClassVar, Literal, get_args, Optional, TYPE_CHECKING, Dict
 from arclet.alconna.typing import CommandMeta
 from arclet.alconna.args import AllParam, Args
 from arclet.alconna.completion import CompSession
 from arclet.alconna.core import Alconna
-from arclet.alconna.duplication import Duplication, generate_duplication
+from arclet.alconna.builtin import generate_duplication
+from arclet.alconna.duplication import Duplication
 from arclet.alconna.stub import ArgsStub, OptionStub, SubcommandStub
 from arclet.alconna.manager import command_manager
 from arclet.alconna.tools import AlconnaFormat, AlconnaString
@@ -25,16 +26,14 @@ from creart import it
 from arclet.alconna import Arparma, Empty, output_manager
 from arclet.alconna.exceptions import SpecialOptionTriggered
 
-from .model import AlconnaProperty, Header, Match, Query, CompConfig
+from .model import CommandResult, Header, Match, Query, CompConfig, TConvert
 from .service import AlconnaGraiaInterface
+from .adapter import AlconnaGraiaAdapter
 
 if TYPE_CHECKING:
-    from .adapter import AlconnaGraiaAdapter
-    result_cache: WeakKeyDictionary[Alconna, LRU[str, asyncio.Future[Optional[AlconnaProperty]]]]
+    result_cache: WeakKeyDictionary[Alconna, LRU[str, asyncio.Future[Optional[CommandResult]]]]
 else:
     result_cache = WeakKeyDictionary()
-
-OutType = Literal["help", "shortcut", "completion"]
 
 
 def get_future(alc: Alconna, source: str):
@@ -60,6 +59,23 @@ class AlconnaOutputMessage(Dispatchable):
     如果触发的某个命令的可能输出 (帮助信息、模糊匹配、报错等), AlconnaDisptcher的send_flag为post时, 会发送该事件
     """
 
+    def __init__(self, command: Alconna, text: str, source: Dispatchable):
+        self.command = command
+        self.output = text
+        self.source_event = source
+
+    class Dispatcher(BaseDispatcher):
+        @classmethod
+        async def catch(cls, interface: "DispatcherInterface[AlconnaOutputMessage]"):
+            if interface.name == "output" and interface.annotation == str:
+                return interface.event.output
+            if isinstance(interface.annotation, Alconna):
+                return interface.event.command
+            if issubclass(interface.annotation, type(interface.event.source_event)) or isinstance(
+                interface.event.source_event, interface.annotation
+            ):
+                return interface.event.source_event
+
 
 class AlconnaDispatcher(BaseDispatcher):
     @classmethod
@@ -73,9 +89,7 @@ class AlconnaDispatcher(BaseDispatcher):
             factory.option(option)
         return cls(factory.build(), send_flag="reply")
 
-    default_send_handler: ClassVar[
-        Callable[[OutType, str], Optional[Union[MessageChain, Coroutine[Any, Any, MessageChain]]]]
-    ] = lambda _, x: MessageChain([Text(x)])
+    default_send_handler: ClassVar[TConvert] = lambda _, x: MessageChain([Text(x)])
 
     def __init__(
         self,
@@ -84,7 +98,7 @@ class AlconnaDispatcher(BaseDispatcher):
         send_flag: Literal["reply", "post", "stay"] = "reply",
         skip_for_unmatch: bool = True,
         comp_session: Optional[CompConfig] = None,
-        message_converter: Callable[[OutType, str], Optional[Union[MessageChain, Coroutine[Any, Any, MessageChain]]]] = None,
+        message_converter: Optional[TConvert] = None,
     ):
         """
         构造 Alconna调度器
@@ -102,7 +116,7 @@ class AlconnaDispatcher(BaseDispatcher):
         self.converter = message_converter or self.__class__.default_send_handler
         result_cache.setdefault(command, LRU(10))
 
-    async def handle(self, source: Optional[Dispatchable], msg: MessageChain, adapter: 'AlconnaGraiaAdapter'):
+    async def handle(self, source: Optional[Dispatchable], msg: MessageChain, adapter: AlconnaGraiaAdapter):
         inc = it(InterruptControl)
         interface = CompSession(self.command)
         if self.comp_session is None or not source:
@@ -113,15 +127,15 @@ class AlconnaDispatcher(BaseDispatcher):
         if res:
             return res
         _tab = Alconna(
-            self.comp_session.get("tab", "/tab"), Args["offset", int, 1], [],
+            self.comp_session.get("tab", ".tab"), Args["offset", int, 1], [],
             meta=CommandMeta(compact=True, hide=True)
         )
         _enter = Alconna(
-            self.comp_session.get("enter", "/enter"), Args["content", AllParam, []], [],
+            self.comp_session.get("enter", ".enter"), Args["content", AllParam, []], [],
             meta=CommandMeta(compact=True, hide=True)
         )
         _exit = Alconna(
-            self.comp_session.get("exit", "/exit"), [],
+            self.comp_session.get("exit", ".exit"), [],
             meta=CommandMeta(compact=True, hide=True)
         )
 
@@ -133,9 +147,9 @@ class AlconnaDispatcher(BaseDispatcher):
 
         while interface.available:
             res = Arparma(self.command.path, msg, False, error_info=SpecialOptionTriggered("completion"))
-            await adapter.send(self, res, str(interface), source)
+            await adapter.send(self.converter, res, str(interface), source)
             await adapter.send(
-                self, res,
+                self.converter, res,
                 f"{lang.require('comp/graia', 'tab').format(cmd=_tab.command)}\n"
                 f"{lang.require('comp/graia', 'enter').format(cmd=_enter.command)}\n"
                 f"{lang.require('comp/graia', 'exit').format(cmd=_exit.command)}",
@@ -149,15 +163,15 @@ class AlconnaDispatcher(BaseDispatcher):
                     )
                 except asyncio.TimeoutError:
                     _clear()
-                    await adapter.send(self, res, lang.require("comp/graia", "timeout"), source)
+                    await adapter.send(self.converter, res, lang.require("comp/graia", "timeout"), source)
                     return res
                 if _exit.parse(ans).matched:
-                    await adapter.send(self, res, lang.require("comp/graia", "exited"), source)
+                    await adapter.send(self.converter, res, lang.require("comp/graia", "exited"), source)
                     _clear()
                     return res
                 if (mat := _tab.parse(ans)).matched:
                     interface.tab(mat.offset)
-                    await adapter.send(self, res, str(interface), source)
+                    await adapter.send(self.converter, res, str(interface), source)
                     continue
                 if (mat := _enter.parse(ans)).matched:
                     content = list(mat.content)
@@ -168,19 +182,36 @@ class AlconnaDispatcher(BaseDispatcher):
                             res = interface.enter(content)
                     except Exception as e:
                         traceback.print_exc()
-                        await adapter.send(self, res, str(e), source)
+                        await adapter.send(self.converter, res, str(e), source)
                         continue
                     break
                 else:
-                    await adapter.send(self, res, interface.current(), source)
+                    await adapter.send(self.converter, res, interface.current(), source)
         _clear()
         return res
+
+    async def output(
+        self,
+        dii: DispatcherInterface,
+        adapter: AlconnaGraiaAdapter,
+        result: Arparma[MessageChain],
+        output_text: Optional[str] = None,
+        source: Optional[Dispatchable] = None,
+    ):
+        if not source or (result.matched or not output_text):
+            return CommandResult(result, None, source)
+        if self.send_flag == "stay":
+            return CommandResult(result, output_text, source)
+        if self.send_flag == "reply":
+            await adapter.send(self.converter, result, output_text, source)
+        elif self.send_flag == "post":
+            dii.broadcast.postEvent(AlconnaOutputMessage(self.command, output_text, source), source)
+        return CommandResult(result, None, source)
 
     async def beforeExecution(self, interface: DispatcherInterface):
         try:
             adapter = Launart.current().get_interface(AlconnaGraiaInterface).adapter
         except (ValueError, LookupError, AttributeError):
-            from .adapter import AlconnaGraiaAdapter
             adapter = AlconnaGraiaAdapter.instance()
         message: MessageChain = await adapter.lookup_source(interface)
         try:
@@ -198,17 +229,14 @@ class AlconnaDispatcher(BaseDispatcher):
                 try:
                     _res = await self.handle(source, message, adapter)
                 except Exception as e:
-                    _res = Arparma(self.command.path, message, False, error_info=repr(e))
+                    _res = Arparma(self.command.path, message, False, error_info=e)
                 may_help_text: Optional[str] = cap.get("output", None)
             if not may_help_text and not _res.matched and ((not _res.head_matched) or self.skip_for_unmatch):
                 fut.set_result(None)
                 raise ExecutionStop
             if not may_help_text and _res.error_info:
-                if isinstance(_res.error_info, (Exception, type)):
-                    may_help_text = repr(_res.error_info)
-                else:
-                    may_help_text = _res.error_info.strip("'").strip("\\n").split("\\n")[-1]
-            _property = await adapter.property(self, _res, may_help_text, source)
+                may_help_text = repr(_res.error_info)
+            _property = await self.output(interface, adapter, _res, may_help_text, source)
             fut.set_result(_property)
         if not _property.result.matched and not _property.output:
             raise PropagationCancelled
@@ -216,17 +244,17 @@ class AlconnaDispatcher(BaseDispatcher):
         return
 
     async def catch(self, interface: DispatcherInterface):
-        res: AlconnaProperty = interface.local_storage["alconna_result"]
-        default_duplication = generate_duplication(res.result)
+        res: CommandResult = interface.local_storage["alconna_result"]
+        default_duplication = generate_duplication(self.command)(res.result)
         if interface.annotation is Duplication:
             return default_duplication
         if generic_issubclass(Duplication, interface.annotation):
             return interface.annotation(res.result)
-        if generic_issubclass(get_origin(interface.annotation), AlconnaProperty):
+        if generic_issubclass(get_origin(interface.annotation), CommandResult):
             return res
         if interface.annotation is ArgsStub:
             arg = ArgsStub(self.command.args)
-            arg.set_result(res.result.main_args)
+            arg.set_result(res.result.all_matched_args)
             return arg
         if interface.annotation is OptionStub:
             return default_duplication.option(interface.name)

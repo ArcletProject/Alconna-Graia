@@ -75,7 +75,7 @@ ariadne:
 
 ```python
 from arclet.alconna import Args
-from arclet.alconna.graia import Alconna, AlconnaDispatcher, Match, AlconnaProperty
+from arclet.alconna.graia import Alconna, AlconnaDispatcher, Match, CommandResult
 from arclet.alconna.graia.service import AlconnaGraiaService
 import arclet.alconna.ariadne
 ...
@@ -92,7 +92,7 @@ alc = Alconna("!jrrp", Args["sth", str, 1123])
 )
 async def test2(
     group: Group,
-    result: AlconnaProperty[GroupMessage],
+    result: CommandResult[GroupMessage],
     sth: Match[str]
 ):
     print("sign:", result.result)
@@ -104,7 +104,7 @@ avilla:
 
 ```python
 from arclet.alconna import Args
-from arclet.alconna.graia import Alconna, AlconnaDispatcher, Match, AlconnaProperty
+from arclet.alconna.graia import Alconna, AlconnaDispatcher, Match, CommandResult
 from arclet.alconna.graia.service import AlconnaGraiaService
 import arclet.alconna.avilla
 ...
@@ -122,7 +122,7 @@ alc = Alconna("!jrrp", Args["sth", str, 1123])
 )
 async def test2(
     context: Context,
-    result: AlconnaProperty[MessageReceived],
+    result: CommandResult[MessageReceived],
     sth: Match[str]
 ):
     print("sign:", result.result)
@@ -134,7 +134,7 @@ async def test2(
 
 in module.py:
 ```python
-from arclet.alconna.graia import Alconna, AlconnaDispatcher, Match, AlconnaProperty, AlconnaSchema
+from arclet.alconna.graia import Alconna, AlconnaDispatcher, Match, CommandResult, AlconnaSchema
 from arclet.alconna import Args
 ...
 channel = Channel.current()
@@ -143,7 +143,7 @@ alc = Alconna("!jrrp", Args["sth", str, 1123])
 
 @channel.use(AlconnaSchema(AlconnaDispatcher(alc)))
 @channel.use(ListenerSchema([...]))
-async def test2(result: AlconnaProperty[...], sth: Match[str]):
+async def test2(result: CommandResult[...], sth: Match[str]):
     print("sign:", result.result)
     print("match", sth.available, sth.result)
 
@@ -237,7 +237,7 @@ class AlconnaDispatcher(BaseDispatcher, Generic[TOHandler]):
 `send_flag`: 解析期间输出信息的发送方式
 - reply: 直接发送给指令发送者
 - post: 以事件通过 Broadcast 广播
-- stay: 存入 AlconnaProperty 传递给事件处理器
+- stay: 存入 CommandResult 传递给事件处理器
 
 `skip_for_unmatch`: 解析失败时是否跳过, 否则错误信息按 send_flag 处理
 

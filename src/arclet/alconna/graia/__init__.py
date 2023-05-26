@@ -7,7 +7,7 @@ from . import alc as alc
 from .adapter import AlconnaGraiaAdapter
 from .argv import BaseMessageChainArgv
 from .dispatcher import AlconnaOutputMessage, AlconnaDispatcher
-from .model import AlconnaProperty, Match, Query, Header
+from .model import CommandResult, Match, Query, Header
 from .saya import AlconnaBehaviour, AlconnaSchema
 from .service import AlconnaGraiaService
 from .tools import (
@@ -27,3 +27,4 @@ from .tools import (
 )
 
 Alc = AlconnaDispatcher
+AlconnaProperty = CommandResult

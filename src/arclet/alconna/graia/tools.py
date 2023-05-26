@@ -18,7 +18,7 @@ from typing_extensions import NotRequired
 from arclet.alconna import Alconna
 
 from .adapter import AlconnaGraiaAdapter
-from .dispatcher import AlconnaDispatcher, AlconnaProperty
+from .dispatcher import AlconnaDispatcher, CommandResult
 from .model import CompConfig
 from .saya import AlconnaSchema
 from .utils import T_Callable
@@ -46,7 +46,7 @@ def match_path(path: str):
     当 path 为 ‘$main’ 时表示认定当且仅当主命令匹配
     """
 
-    def __wrapper__(result: AlconnaProperty):
+    def __wrapper__(result: CommandResult):
         if path == "$main":
             if not result.result.components:
                 return True
@@ -66,7 +66,7 @@ def match_value(path: str, value: Any, or_not: bool = False):
     当 or_not 为真时允许查询 path 失败时继续执行事件处理
     """
 
-    def __wrapper__(result: AlconnaProperty):
+    def __wrapper__(result: CommandResult):
         if result.result.query(path) == value:
             return True
         if or_not and result.result.query(path, Empty) == Empty:
@@ -127,7 +127,13 @@ def alcommand(
         alconna, send_flag="post" if post else "reply", skip_for_unmatch=not send_error,  # type: ignore
         comp_session=comp_session,
     )
-    return AlconnaGraiaAdapter.instance().alcommand(dispatcher, guild, private, private_name, guild_name)
+
+    def wrapper(func: Callable, buffer: dict[str, Any]) -> AlconnaSchema:
+        AlconnaGraiaAdapter.instance().handle_listen(
+            func, buffer, dispatcher, guild, private, private_name, guild_name
+        )
+        return AlconnaSchema(dispatcher.command)
+    return wrapper
 
 
 @factory
@@ -224,7 +230,7 @@ class MatchPrefix(Decorator, Derive[MessageChain]):
         if isinstance(elem, Text) and (res := self.pattern.validate(elem.text)).success:
             if self.extract:
                 return MessageChain([Text(str(res.value))])
-            elem.text = elem.text[len(str(res.value)) :].lstrip()
+            elem.text = elem.text[len(str(res.value)):].lstrip()
             return header + rest
         elif self.pattern.validate(elem).success:
             if self.extract:

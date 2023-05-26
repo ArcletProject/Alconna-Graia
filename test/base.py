@@ -5,12 +5,12 @@ from src.arclet.alconna.graia import (
     AlconnaOutputMessage,
     Match,
     Query,
-    success_record,
-    AlconnaProperty,
+    CommandResult,
     match_path,
     MatchSuffix,
     MatchPrefix,
 )
+from src.arclet.alconna.graia.dispatcher import result_cache
 from arclet.alconna import Args, Arparma, Duplication, CommandMeta, Alconna
 from arclet.alconna import ArgsStub, command_manager
 
@@ -234,4 +234,4 @@ async def main():
 
 
 loop.run_until_complete(main())
-print(success_record)
+print(list(result_cache.items()))

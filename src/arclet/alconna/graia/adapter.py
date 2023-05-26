@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from contextlib import suppress
 from contextvars import ContextVar
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generic
+from typing import Any, ClassVar, Generic, Callable
 from weakref import finalize
 
 from graia.amnesia.message import MessageChain
@@ -12,14 +12,9 @@ from graia.broadcast.entities.dispatcher import BaseDispatcher
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
 from graia.broadcast.interrupt.waiter import Waiter
 
-from arclet.alconna import Alconna, Arparma
+from arclet.alconna import Arparma
 
-from .model import AlconnaProperty, TSource
-from .utils import listen
-
-if TYPE_CHECKING:
-    from .dispatcher import AlconnaDispatcher
-    from .saya import AlconnaSchema
+from .model import CommandResult, TConvert, TSource
 
 
 __all__ = ["adapter_context", "AlconnaGraiaAdapter"]
@@ -58,19 +53,9 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    async def property(
-        self,
-        dispatcher: AlconnaDispatcher,
-        result: Arparma[MessageChain],
-        output_text: str | None = None,
-        source: TSource | None = None,
-    ) -> AlconnaProperty[TSource]:
-        ...
-
-    @abstractmethod
     async def send(
         self,
-        dispatcher: AlconnaDispatcher,
+        converter: TConvert,
         result: Arparma[MessageChain],
         output_text: str | None = None,
         source: TSource | None = None,
@@ -90,31 +75,17 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def alcommand(
+    def handle_listen(
         self,
-        dispatcher: AlconnaDispatcher,
+        func: Callable,
+        buffer: dict[str, Any],
+        dispatcher: BaseDispatcher,
         guild: bool,
         private: bool,
         private_name: str,
         guild_name: str,
-    ) -> Callable[[Callable, dict[str, Any]], AlconnaSchema]:
+    ) -> None:
         ...
-
-    class Dispatcher(BaseDispatcher):
-        def __init__(self, command: Alconna, text: str, source: TSource):
-            self.command = command
-            self.output = text
-            self.source_event = source
-
-        async def catch(self, interface: DispatcherInterface[TSource]):
-            if interface.name == "output" and interface.annotation == str:
-                return self.output
-            if isinstance(interface.annotation, Alconna):
-                return self.command
-            if issubclass(interface.annotation, type(self.source_event)) or isinstance(
-                self.source_event, interface.annotation
-            ):
-                return self.source_event
 
 
 class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
@@ -130,28 +101,23 @@ class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
         return waiter  # type: ignore
 
     async def lookup_source(self, interface: DispatcherInterface[TSource]) -> MessageChain:
-        return getattr(interface.event, "message_chain", interface.event.message.content)
+        return await interface.lookup_param("__message_chain__", MessageChain, None)
 
-    def alcommand(
+    def handle_listen(
         self,
-        dispatcher: AlconnaDispatcher,
+        func: Callable,
+        buffer: dict[str, Any],
+        dispatcher: BaseDispatcher,
         guild: bool = True,
         private: bool = True,
         private_name: str = "private",
         guild_name: str = "guild",
-    ) -> Callable[[Callable, dict[str, Any]], AlconnaSchema]:
-        from .saya import AlconnaSchema
-
-        def wrapper(func: Callable, buffer: dict[str, Any]):
-            _dispatchers = buffer.setdefault("dispatchers", [])
-            _dispatchers.append(dispatcher)
-            listen()(func)  # noqa
-            return AlconnaSchema(dispatcher.command)
-
-        return wrapper
+    ) -> None:
+        _dispatchers = buffer.setdefault("dispatchers", [])
+        _dispatchers.append(dispatcher)
 
     def fetch_name(self, path: str) -> Depend:
-        async def wrapper(result: AlconnaProperty):
+        async def wrapper(result: CommandResult):
             return result.result.all_matched_args.get(path)
 
         return Depend(wrapper)
@@ -159,22 +125,14 @@ class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
     def check_account(self, path: str) -> Depend:
         return Depend(lambda: True)
 
-    async def property(
-        self,
-        dispatcher: AlconnaDispatcher,
-        result: Arparma[MessageChain],
-        output_text: str | None = None,
-        source: TSource | None = None,
-    ):
-        return AlconnaProperty(result, None, source)
-
     async def send(
         self,
-        dispatcher: AlconnaDispatcher,
+        converter: TConvert,
         result: Arparma[MessageChain],
         output_text: str | None = None,
         source: TSource | None = None,
     ) -> None:
+        print(output_text)
         return
 
     def source_id(self, source: TSource | None = None) -> str:

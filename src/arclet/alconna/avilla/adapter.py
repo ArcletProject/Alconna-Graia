@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from contextlib import suppress
 from typing import Any, Callable, Union
 
 from avilla.core.context import Context
@@ -10,6 +9,7 @@ from avilla.spec.core.message import MessageEdited, MessageReceived
 from avilla.spec.core.profile import Summary
 from graia.amnesia.message import MessageChain
 from graia.amnesia.message.element import Text
+from graia.broadcast import BaseDispatcher
 from graia.broadcast.builtin.decorators import Depend
 from graia.broadcast.exceptions import ExecutionStop
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
@@ -19,9 +19,9 @@ from graia.broadcast.utilles import run_always_await
 from arclet.alconna import Arparma
 from arclet.alconna.exceptions import SpecialOptionTriggered
 
-from ..graia import AlconnaProperty, AlconnaSchema
+from ..graia.model import CommandResult, TConvert
 from ..graia.adapter import AlconnaGraiaAdapter
-from ..graia.dispatcher import AlconnaDispatcher, AlconnaOutputMessage
+from ..graia.dispatcher import AlconnaDispatcher
 from ..graia.utils import listen
 
 AlconnaDispatcher.default_send_handler = lambda _, x: MessageChain([Text(x)])
@@ -50,43 +50,21 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
 
     async def send(
         self,
-        dispatcher: AlconnaDispatcher,
+        converter: TConvert,
         result: Arparma[MessageChain],
         output_text: str | None = None,
         source: AvillaMessageEvent | None = None,
     ) -> None:
         ctx: Context = source.context
         help_message: MessageChain = await run_always_await(
-            dispatcher.converter,
+            converter,
             str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered) else "help",
             output_text,
         )
         await ctx.scene.send_message(help_message)
 
-    async def property(
-        self,
-        dispatcher: AlconnaDispatcher,
-        result: Arparma[MessageChain],
-        output_text: str | None = None,
-        source: AvillaMessageEvent | None = None,
-    ) -> AlconnaProperty[AvillaMessageEvent]:
-        if not isinstance(source, (MessageEdited, MessageReceived)) or (result.matched or not output_text):
-            return AlconnaProperty(result, None, source)
-        if dispatcher.send_flag == "stay":
-            return AlconnaProperty(result, output_text, source)
-        if dispatcher.send_flag == "reply":
-            await self.send(dispatcher, result, output_text, source)
-        elif dispatcher.send_flag == "post":
-            with suppress(LookupError):
-                interface = DispatcherInterface.ctx.get()
-                dispatchers = [self.Dispatcher(dispatcher.command, output_text, source), source.Dispatcher]
-                for listener in interface.broadcast.default_listener_generator(AlconnaOutputMessage):
-                    await interface.broadcast.Executor(listener, dispatchers)
-                    listener.oplog.clear()
-        return AlconnaProperty(result, None, source)
-
     def fetch_name(self, path: str) -> Depend:
-        async def __wrapper__(ctx: Context, result: AlconnaProperty[MessageReceived]):
+        async def __wrapper__(ctx: Context, result: CommandResult[MessageReceived]):
             arp = result.result
             if t := arp.all_matched_args.get(path, None):
                 return (
@@ -115,21 +93,24 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
 
         return Depend(__wrapper__)
 
-    def alcommand(
-        self, dispatcher: AlconnaDispatcher, guild: bool, private: bool, private_name: str, guild_name: str
-    ) -> Callable[[Callable, dict[str, Any]], AlconnaSchema]:
-        private_name = "friend" if private_name == "private" else private_name
-        guild_name = "group" if guild_name == "guild" else guild_name
+    def handle_listen(
+        self,
+        func: Callable,
+        buffer: dict[str, Any],
+        dispatcher: BaseDispatcher,
+        guild: bool,
+        private: bool,
+        private_name: str,
+        guild_name: str
+    ) -> None:
+        _filter = Filter().scene
+        _dispatchers = buffer.setdefault("dispatchers", [])
+        if not guild:
+            private_name = "friend" if private_name == "private" else private_name
+            _dispatchers.append(_filter.follows(private_name))
+        if not private:
+            guild_name = "group" if guild_name == "guild" else guild_name
 
-        def wrapper(func: Callable, buffer: dict[str, Any]):
-            _filter = Filter().scene
-            _dispatchers = buffer.setdefault("dispatchers", [])
-            if not guild:
-                _dispatchers.append(_filter.follows(private_name))
-            if not private:
-                _dispatchers.append(_filter.follows(guild_name))
-            _dispatchers.append(dispatcher)
-            listen(MessageReceived, MessageEdited)(func)  # noqa
-            return AlconnaSchema(dispatcher.command)
-
-        return wrapper
+            _dispatchers.append(_filter.follows(guild_name))
+        _dispatchers.append(dispatcher)
+        listen(MessageReceived, MessageEdited)(func)

@@ -27,11 +27,11 @@ dependencies = [
 
 [[package]]
 name = "arclet-alconna"
-version = "1.7.6"
+version = "1.7.7"
 requires_python = ">=3.8"
 summary = "A High-performance, Generality, Humane Command Line Arguments Parser Library."
 dependencies = [
-    "nepattern<0.6.0,>=0.5.6",
+    "nepattern<0.6.0,>=0.5.8",
     "tarina>=0.3.3",
     "typing-extensions>=4.5.0",
 ]
@@ -197,7 +197,7 @@ dependencies = [
 
 [[package]]
 name = "ichika"
-version = "0.0.6"
+version = "0.0.8"
 requires_python = ">=3.8"
 summary = "基于 RICQ 的轻量级 Python QQ 自动化框架。"
 dependencies = [
@@ -362,7 +362,7 @@ summary = "multidict implementation"
 
 [[package]]
 name = "nepattern"
-version = "0.5.7"
+version = "0.5.8"
 requires_python = ">=3.8"
 summary = "a complex pattern, support typing"
 dependencies = [
@@ -520,7 +520,7 @@ summary = "Backport of pathlib-compatible object wrapper for zip files"
 [metadata]
 lock_version = "4.2"
 groups = ["default", "dev"]
-content_hash = "sha256:97194fc0a2e08c6a029541190975825db96ea9a72685f73a312ed302550b05ac"
+content_hash = "sha256:6e4895765422e564b7b804bc9a0e002f744f7df986518ed7e7966e5536108b00"
 
 [metadata.files]
 "aiohttp 3.8.4" = [
@@ -616,9 +616,9 @@ content_hash = "sha256:97194fc0a2e08c6a029541190975825db96ea9a72685f73a312ed3025
     {url = "https://files.pythonhosted.org/packages/27/6b/a89fbcfae70cf53f066ec22591938296889d3cc58fec1e1c393b10e8d71d/aiosignal-1.2.0.tar.gz", hash = "sha256:78ed67db6c7b7ced4f98e495e572106d5c432a93e1ddd1bf475e1dc05f5b7df2"},
     {url = "https://files.pythonhosted.org/packages/3b/87/fe94898f2d44a93a35d5aa74671ed28094d80753a1113d68b799fab6dc22/aiosignal-1.2.0-py3-none-any.whl", hash = "sha256:26e62109036cd181df6e6ad646f91f0dcfd05fe16d0cb924138ff2ab75d64e3a"},
 ]
-"arclet-alconna 1.7.6" = [
-    {url = "https://files.pythonhosted.org/packages/52/97/49bf28bf730a6f19718ef38535b10bd0b18a78d1a91788e8e3a6371e5656/arclet-alconna-1.7.6.tar.gz", hash = "sha256:800dd1f0a17f6e81f3a196c9a84170f37ad7b3891c9a448363ac4ffd662dd767"},
-    {url = "https://files.pythonhosted.org/packages/e3/cd/4623fa41e939ec947e41eba1d38ee1cc2d2df1920565662085107406f9b3/arclet_alconna-1.7.6-py3-none-any.whl", hash = "sha256:e76990f24eb78ec074611cf093d861f3a6433129cb343796e9319efeb3e66f3f"},
+"arclet-alconna 1.7.7" = [
+    {url = "https://files.pythonhosted.org/packages/87/f3/ee4aa593a5e12ade6ebe033ca67a66ffa35a57f93e4efd6d460e29129770/arclet_alconna-1.7.7-py3-none-any.whl", hash = "sha256:46f39cacdf85993ca86e88842b697880a6e4662d40b2c05ccb2909ac39cb0320"},
+    {url = "https://files.pythonhosted.org/packages/e0/ee/4d384f1111db814cd91084969f5761e98a6971d33cb6bb6b89995d1bea40/arclet-alconna-1.7.7.tar.gz", hash = "sha256:86c4a6297b005f2ca817e03c02430c2b7da241c856645db56b61a91baa8b14ff"},
 ]
 "arclet-alconna-tools 0.6.0" = [
     {url = "https://files.pythonhosted.org/packages/b0/ed/ad6307e2fc0d136f84764cdb490a3fd6148f0221d4465308ea0db6338d23/arclet_alconna_tools-0.6.0-py3-none-any.whl", hash = "sha256:bedbe7c35d41d0e9daba37cf5fbff01e8ac16625a6d48566aacd9f64a07eb5dc"},
@@ -748,25 +748,25 @@ content_hash = "sha256:97194fc0a2e08c6a029541190975825db96ea9a72685f73a312ed3025
     {url = "https://files.pythonhosted.org/packages/99/c5/6f1c66f487d2bb798ba6171edfb333fc53b8868fbc415c2afc9eaa0c3def/graia_saya-0.0.17.tar.gz", hash = "sha256:3d093b9a63733483b57ae677e9e70dfd2b7a12931ca554625cdaf04a34e4f3b2"},
     {url = "https://files.pythonhosted.org/packages/d6/13/1584c130ba77f499ba138bb86f3d1630a1f5505dcdca313b7f636151c527/graia_saya-0.0.17-py3-none-any.whl", hash = "sha256:d286edd2cc5955c588bb515bdaeadda5fbbf6a60341e0db79772a3181b393e8a"},
 ]
-"ichika 0.0.6" = [
-    {url = "https://files.pythonhosted.org/packages/26/02/5537971a8e0bde384b4cfdc810f9cf11021bea3b2873f6d0129101d30f16/ichika-0.0.6-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5315de15b1f25daafc2e30dd178e34fa41c705c14bcb55e9cfbc067a5f6e72fb"},
-    {url = "https://files.pythonhosted.org/packages/28/15/2333b85730082bf6725edc03df7f3eef900d212915887b6c5fc38ec87631/ichika-0.0.6-cp38-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:746e1669c68571c3ccd7172705cddb6aa540835847a084f4a125300276d25f1c"},
-    {url = "https://files.pythonhosted.org/packages/3f/a0/c0c57f37f8bc33f3eeb3e2f91d46dfc402aac1fd8aa5839d786c3d6b05fa/ichika-0.0.6-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:40a289309546918e894acdbf361f2eb42be37e4c2e12a6bfdbe3eacd9be22da2"},
-    {url = "https://files.pythonhosted.org/packages/49/cc/962bebc28aeb44d1e7cc7750fb816a50cfe57af068e78a55c37b80d4ca51/ichika-0.0.6-cp38-abi3-musllinux_1_2_armv7l.whl", hash = "sha256:aff5559f2187cedc13339d447870ead98c80c79d470e390d7c0bc449840a1cb2"},
-    {url = "https://files.pythonhosted.org/packages/63/74/a91eba42cc38b6a2bb9768138a09e0ea3ff45143abb2c2c997a069526038/ichika-0.0.6.tar.gz", hash = "sha256:7d5cb909f264ba2bd00f30b5bb550c7d4c333bce7dea0efd92be7f3489ebdf06"},
-    {url = "https://files.pythonhosted.org/packages/65/1e/92bb50a39b9ed171be563334d82cf8e8714734fda09e44278958226f91ff/ichika-0.0.6-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9216fdaaa36e26baa033789ec38768fcf5571756002c337a814225b0ebc0f8e6"},
-    {url = "https://files.pythonhosted.org/packages/7c/ea/63015bfe7e41d514b1fd0b051b1ff63900cfca78717387bf9cdedb192646/ichika-0.0.6-cp38-abi3-win32.whl", hash = "sha256:9abac7bc713d1221aebfd00fd6ced5712bd6f6e8e3895ada149efe990fcf9298"},
-    {url = "https://files.pythonhosted.org/packages/97/46/92df768666f5ab15034e6b8f046040c5fb70e7ea2f5588988ee324fa06d7/ichika-0.0.6-cp38-abi3-musllinux_1_2_i686.whl", hash = "sha256:e099f231583aedca1c089bbaa8fc9b9f9427a3d0d22b360759fa920930fb4b7f"},
-    {url = "https://files.pythonhosted.org/packages/a3/82/b801dfac08c71b50ab0b65f6f3338bae0c87bcf0dc80710834557d6cab82/ichika-0.0.6-cp38-abi3-manylinux_2_17_ppc64.manylinux2014_ppc64.whl", hash = "sha256:dca2e428632770d01aa46a341a95c4898ca0b4e5db6b1b4adc5aeef57211a381"},
-    {url = "https://files.pythonhosted.org/packages/a5/6c/04734bab81ac514aa48cf88e8f5ea8f8219a866a9a09249dd5653e5681d5/ichika-0.0.6-cp38-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:b6198a83fb2397d3663e9e203c07d01b43c1fa98db87b48391ce7a2838494170"},
-    {url = "https://files.pythonhosted.org/packages/af/72/f184a485e05363d92c883ff72d406c3b45d18fb0c3a5b702c7c4335ba8f6/ichika-0.0.6-cp38-abi3-macosx_10_9_x86_64.macosx_11_0_arm64.macosx_10_9_universal2.whl", hash = "sha256:14aaf7f511abaf2ae56d995afc951e36b43d26c76f32e1d406765f86b233638b"},
-    {url = "https://files.pythonhosted.org/packages/ba/e9/ca5e898613b07c9db090484a328ed78161a6a4abed3001ecd47cd157b671/ichika-0.0.6-cp38-abi3-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:a3c80dbd9fd520ebc0ff5920bac93c998cb3d97eea787898d8306e8041ead354"},
-    {url = "https://files.pythonhosted.org/packages/c9/7f/8a7dce7ba9ab89711ea32d7e21b5c233e372c99c110abb5e17c84aaa0770/ichika-0.0.6-cp38-abi3-win_arm64.whl", hash = "sha256:735675d0247b230c04a8759dc5f87451adc86825d8ca2795a1ed5a89c7b7ca12"},
-    {url = "https://files.pythonhosted.org/packages/d5/ac/e7cd5959ee63235fac3ef1b0538e8eaea276b85c901f3738c9c0c980bdee/ichika-0.0.6-cp38-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:a5d32c58eb2583f0a3b3dfa1188bfbb33d0e0c5386ee0bba7e894a8829ea1cb1"},
-    {url = "https://files.pythonhosted.org/packages/ed/00/641c2596640ff3ed09d790ce91eb19df81411c799f1d9e2a01f35a3666da/ichika-0.0.6-cp38-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:ad1b45fd39d5793469c8237e3e137371d6e7485303abb1f58a4776d58a291737"},
-    {url = "https://files.pythonhosted.org/packages/ed/3c/d3c48cc7ec73d1b8c5b837f5e3d7d08b30cdd0f804465651e997b48c1555/ichika-0.0.6-cp38-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:adefc85fc4a96233f806400217fe801cafa20b07b9d59f922b4578fd557ff59f"},
-    {url = "https://files.pythonhosted.org/packages/f3/9d/ae23c04fce65da33f5d8df0bac3fe0a0381f57ad79512bd8f7f8e7763326/ichika-0.0.6-cp38-abi3-macosx_10_7_x86_64.whl", hash = "sha256:a34c99d4759d54095afc4c149c671c0fad5561d9ef2402b022cee1191a2e8971"},
-    {url = "https://files.pythonhosted.org/packages/f4/02/d593c3690dc9269d8afc6af3347ebad80e4456538b1b726059696896e19f/ichika-0.0.6-cp38-abi3-win_amd64.whl", hash = "sha256:12467fc6425c8eefa281ddd5c780738a0d677c6595f8eef47cc960b940e6fcbf"},
+"ichika 0.0.8" = [
+    {url = "https://files.pythonhosted.org/packages/14/4f/4b7345c4c35d457d4a6bc471490eb8f301f94e6a4f26a4ab99b3fa730ddc/ichika-0.0.8-cp38-abi3-macosx_10_7_x86_64.whl", hash = "sha256:336b33a335ded7e2bb9cc21d45f5f04b0a1b979c6aec86459e30f1a6cafc3183"},
+    {url = "https://files.pythonhosted.org/packages/21/aa/bb9c5e074c8ab002e3cd5910b937317742a79c9f1ec90395223997c03aa6/ichika-0.0.8-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:c31521311e49a6a778500b194922eb0a3b3f19500f039cfba257b399cf89a31b"},
+    {url = "https://files.pythonhosted.org/packages/65/90/fbd60bc227596a164040c3b0b4be4de24a5a8f137c62db52bf8042acfb1d/ichika-0.0.8-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:37470f3f06e87559181d8159d30185c17fd8257ac310c5d77c4008ba564c026a"},
+    {url = "https://files.pythonhosted.org/packages/70/6d/5bd1763ea358038fe73e036b3a93286844cb5923975aec25bd20c1b5e961/ichika-0.0.8-cp38-abi3-win_amd64.whl", hash = "sha256:95ad5514f9fe17cbe294151e6b6f66734a64b3c421983fb3f6dd04025c0f1145"},
+    {url = "https://files.pythonhosted.org/packages/70/b9/2c850ff5da0d8d496c19c22d0f7806f45960f8dbc583bda59cebe0539b6d/ichika-0.0.8-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cef96d8a3538a434768af812972828f4e8b5f6196ea8a560a5e7ae7a5dac4400"},
+    {url = "https://files.pythonhosted.org/packages/70/e6/e0391dc0602b4c2f762a7a3925ecddcec721fab57c1b2973130cc1ff6f56/ichika-0.0.8.tar.gz", hash = "sha256:54767fce2ed9d839d8db2c5a08f4c2955887e5665b75e17616f2ab36d554c5eb"},
+    {url = "https://files.pythonhosted.org/packages/79/64/9d9e38b4e1c8568d291d4ac83fbb98da7429bd9d6314ad04186ad3d9f488/ichika-0.0.8-cp38-abi3-win_arm64.whl", hash = "sha256:ea916560ef2ba5b4558a53e20d575e583ad6f2302befd3e803d72f55225f90d7"},
+    {url = "https://files.pythonhosted.org/packages/7c/74/575693f725709eac74c2b2756b550aa007d8af08005a552154ef1c70553d/ichika-0.0.8-cp38-abi3-macosx_10_9_x86_64.macosx_11_0_arm64.macosx_10_9_universal2.whl", hash = "sha256:c0c6d7cc944992067b9a3e60b38dc3a1a3b333581f2e31dbbf1a26453366ca41"},
+    {url = "https://files.pythonhosted.org/packages/80/8f/bb14e8763b98da95a1916eb65b7ac1ef94d8730c29a4cc20246579812c37/ichika-0.0.8-cp38-abi3-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:8f2746716f85e113043f93f115ce7706d815eaaf0cd53a7aed128c523a4ac401"},
+    {url = "https://files.pythonhosted.org/packages/89/e2/c98b4e57e2387417342300939f2a221ab2345e53076c3e68adc2f751e8b0/ichika-0.0.8-cp38-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:f78a72ffe0e6607725b52f0c855d9ba37d033029e1131010afb21255992835a9"},
+    {url = "https://files.pythonhosted.org/packages/9a/dc/d5684194cf4145c78a665649e169a39572a6313e71b0285759cfb98803c3/ichika-0.0.8-cp38-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:827fe081c50be83f33d4b901711764852f1da50fb79ebad3ea8cb2ec97c8fda2"},
+    {url = "https://files.pythonhosted.org/packages/9d/e0/3d2b9ba7bd908bc9fa96cd3b46d6093427c627928a6eaf84df7380053023/ichika-0.0.8-cp38-abi3-manylinux_2_17_ppc64.manylinux2014_ppc64.whl", hash = "sha256:22aeb05b689d4c32dd8bac52150d2bcd1e176cf34ef1808344423db779bb0a1e"},
+    {url = "https://files.pythonhosted.org/packages/a0/17/73b473f287c63796d6857d9cd45681017da4dcdcf63f921278a847bb0113/ichika-0.0.8-cp38-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:37afc668209bc6a4957be158142d749c2664ade0357dff52e692575427691b58"},
+    {url = "https://files.pythonhosted.org/packages/a1/03/ac26a660c4a46edbb830d0ede354290a70d1e363b43c4139f4d8264ad108/ichika-0.0.8-cp38-abi3-musllinux_1_2_armv7l.whl", hash = "sha256:ab76d13abc44ad23b7ec954fdc0aeaad78b4dc419575a6fa573e01f138d0bd5c"},
+    {url = "https://files.pythonhosted.org/packages/b5/27/3c1fd89ea0ce12cd0e025cde9f5dd7b779710acbc806090841582a05d9cb/ichika-0.0.8-cp38-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:43e3345d3c5f504423517ae2b6d31518ea5076736c0b882a1ad6b23062f06b6b"},
+    {url = "https://files.pythonhosted.org/packages/bb/cc/bdab92ce9c09ede8508f023c227ff4e31b0bab03222978719b7c0893f196/ichika-0.0.8-cp38-abi3-win32.whl", hash = "sha256:a58c9548a92221762e6e67d16c2e2fcf3470c247f603aefc4cb9cb5a8d764ca0"},
+    {url = "https://files.pythonhosted.org/packages/e1/34/81a740c9906eaa715419ff0ac7da1a1105f9ad2ec3a2489448da1ef78bfd/ichika-0.0.8-cp38-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:acf3d9d808e695053528a3b97d54b440d1b4163cc68ef40271d3ceb1790a5f52"},
+    {url = "https://files.pythonhosted.org/packages/ee/5d/1988e7e94dc25adc8d638f584c012af20cbb4ffa1904b23d29310e846a73/ichika-0.0.8-cp38-abi3-musllinux_1_2_i686.whl", hash = "sha256:7867450628ee31678259fab0429d653f0800d26d8733afdbc26188263b7a707b"},
 ]
 "idna 3.3" = [
     {url = "https://files.pythonhosted.org/packages/04/a2/d918dcd22354d8958fe113e1a3630137e0fc8b44859ade3063982eacd2a4/idna-3.3-py3-none-any.whl", hash = "sha256:84d9dd047ffa80596e0f246e2eab0b391788b0503584e8945f2368256d2735ff"},
@@ -936,9 +936,9 @@ content_hash = "sha256:97194fc0a2e08c6a029541190975825db96ea9a72685f73a312ed3025
     {url = "https://files.pythonhosted.org/packages/f6/2c/2f48aa1fd3b89fb632de50c0567f8168e2b75d0b92326ca6ac991aecb0ee/multidict-6.0.2-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:05f6949d6169878a03e607a21e3b862eaf8e356590e8bdae4227eedadacf6e51"},
     {url = "https://files.pythonhosted.org/packages/fa/a7/71c253cdb8a1528802bac7503bf82fe674367e4055b09c28846fdfa4ab90/multidict-6.0.2.tar.gz", hash = "sha256:5ff3bd75f38e4c43f1f470f2df7a4d430b821c4ce22be384e1459cb57d6bb013"},
 ]
-"nepattern 0.5.7" = [
-    {url = "https://files.pythonhosted.org/packages/25/65/9fd146bb003dae642512ebb70e4aa39fa0083ea87d252a36a45177f4116d/nepattern-0.5.7.tar.gz", hash = "sha256:ca766585eb15a63211ddad5a72b6ec5b642a804f03a1ff49b0e3a9df28f42c2e"},
-    {url = "https://files.pythonhosted.org/packages/fc/d6/c2c160c81b611f95ab36a1a6bc9c0162f422fa87c700473d88c956a58aaf/nepattern-0.5.7-py3-none-any.whl", hash = "sha256:25b026833b4159304e3c134cd124942867bdb37a2d0b5c657fef55be5a23bdd0"},
+"nepattern 0.5.8" = [
+    {url = "https://files.pythonhosted.org/packages/32/5a/2fccd28dcb5dd59a147f4be0e0294b1a25783868d9ac4aa98e7f405c0e5b/nepattern-0.5.8.tar.gz", hash = "sha256:ff1d2579a8d44b83933463c84df4df5c9bf009e0804c5c0d6d325b8e0a29d53e"},
+    {url = "https://files.pythonhosted.org/packages/6d/b2/55fb438a5e0ac67d00a134686c6a16cfa2538dcf09314e9b26269d0e4589/nepattern-0.5.8-py3-none-any.whl", hash = "sha256:f4e666f58642536d493303760776944c76ca1396fc5c22187d623d4c12420c89"},
 ]
 "packaging 23.0" = [
     {url = "https://files.pythonhosted.org/packages/47/d5/aca8ff6f49aa5565df1c826e7bf5e85a6df852ee063600c1efa5b932968c/packaging-23.0.tar.gz", hash = "sha256:b6ad297f8907de0fa2fe1ccbd26fdaf387f5f47c7275fedf8cce89f99446cf97"},
