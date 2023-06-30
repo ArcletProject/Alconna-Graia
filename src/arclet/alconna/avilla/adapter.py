@@ -18,6 +18,8 @@ from graia.broadcast.utilles import run_always_await
 
 from arclet.alconna import Arparma
 from arclet.alconna.exceptions import SpecialOptionTriggered
+from arclet.alconna.tools.construct import FuncMounter
+from tarina import is_awaitable
 
 from ..graia.model import CommandResult, TConvert
 from ..graia.adapter import AlconnaGraiaAdapter
@@ -97,7 +99,7 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
         self,
         func: Callable,
         buffer: dict[str, Any],
-        dispatcher: BaseDispatcher,
+        dispatcher: BaseDispatcher | None,
         guild: bool,
         private: bool,
         private_name: str,
@@ -112,5 +114,21 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
             guild_name = "group" if guild_name == "guild" else guild_name
 
             _dispatchers.append(_filter.follows(guild_name))
-        _dispatchers.append(dispatcher)
+        if dispatcher:
+            _dispatchers.append(dispatcher)
         listen(MessageReceived, MessageEdited)(func)
+
+
+    def handle_command(self, alc: FuncMounter[Any, MessageChain]) -> Callable:
+        async def wrapper(ctx: Context, message: MessageChain):
+            try:
+                arp, res = alc.exec(message)
+            except Exception as e:
+                await ctx.scene.send_message(str(e))
+                return
+            if arp.matched:
+                if is_awaitable(res):
+                    res = await res
+                if isinstance(res, (str, MessageChain)):
+                    await ctx.scene.send_message(res)
+        return wrapper

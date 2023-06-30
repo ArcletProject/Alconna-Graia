@@ -1,6 +1,6 @@
 [project]
 name = "arclet-alconna-graia-workspace"
-version = "0"
+version = "0.0.1"
 
 dependencies = [
     "arclet-alconna<2.0.0, >=1.7.7",
@@ -24,7 +24,6 @@ requires-python = ">=3.9"
 [tool.pdm.dev-dependencies]
 dev = [
     "fix-future-annotations>=0.5.0",
-    "mina-build>=0.2.6",
     "textual~=0.11.1",
     "avilla-console @ file:///${PROJECT_ROOT}/avilla_console-0.1.1-py3-none-any.whl",
 ]

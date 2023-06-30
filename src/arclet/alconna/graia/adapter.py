@@ -12,7 +12,8 @@ from graia.broadcast.entities.dispatcher import BaseDispatcher
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
 from graia.broadcast.interrupt.waiter import Waiter
 
-from arclet.alconna import Arparma
+from arclet.alconna import Arparma, Alconna
+from arclet.alconna.tools.construct import FuncMounter
 
 from .model import CommandResult, TConvert, TSource
 
@@ -79,12 +80,16 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
         self,
         func: Callable,
         buffer: dict[str, Any],
-        dispatcher: BaseDispatcher,
+        dispatcher: BaseDispatcher | None,
         guild: bool,
         private: bool,
         private_name: str,
         guild_name: str,
     ) -> None:
+        ...
+
+    @abstractmethod
+    def handle_command(self, alc: FuncMounter[Any, TSource]) -> Callable:
         ...
 
 
@@ -107,14 +112,15 @@ class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
         self,
         func: Callable,
         buffer: dict[str, Any],
-        dispatcher: BaseDispatcher,
+        dispatcher: BaseDispatcher | None,
         guild: bool = True,
         private: bool = True,
         private_name: str = "private",
         guild_name: str = "guild",
     ) -> None:
         _dispatchers = buffer.setdefault("dispatchers", [])
-        _dispatchers.append(dispatcher)
+        if dispatcher:
+            _dispatchers.append(dispatcher)
 
     def fetch_name(self, path: str) -> Depend:
         async def wrapper(result: CommandResult):
@@ -138,5 +144,16 @@ class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
     def source_id(self, source: TSource | None = None) -> str:
         return f"{id(source)}"
 
+    def handle_command(self, alc: FuncMounter[Any, TSource]) -> Callable:
+        async def wrapper(interface: DispatcherInterface):
+            msg = await self.lookup_source(interface)
+            try:
+                arp, res = alc.exec(msg)
+            except Exception as e:
+                print(e)
+                return
+            if arp.matched:
+                print(res)
+        return wrapper
 
 DefaultAdapter()

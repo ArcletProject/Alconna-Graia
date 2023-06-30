@@ -2,7 +2,7 @@ from avilla.console.message import Emoji, Markdown
 from avilla.core import Context, MessageChain, MessageReceived, Text
 from tarina import lang
 from arclet.alconna import Alconna, Args, Option, Subcommand, Arparma, MultiVar, Field, CommandMeta
-from src.arclet.alconna.graia import Match, alcommand, startswith, assign
+from src.arclet.alconna.graia import Match, alcommand, startswith, assign, funcommand
 from src.arclet.alconna.graia.utils import listen
 
 
@@ -144,3 +144,8 @@ async def on_message_received7(ctx: Context, arp: Arparma):
     await ctx.scene.send_message("Hello, Shortcut!")
     await ctx.scene.send_message(str(arp.all_matched_args))
     await ctx.scene.send_message(str(list(arp.code)))
+
+
+@funcommand()
+def add(a: float, b: float):
+    return f"{a} + {b} = {a + b}"

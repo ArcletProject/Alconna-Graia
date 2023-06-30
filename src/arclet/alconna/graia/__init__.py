@@ -23,7 +23,8 @@ from .tools import (
     shortcuts,
     startswith,
     check_account,
-    mention
+    mention,
+    funcommand,
 )
 
 Alc = AlconnaDispatcher

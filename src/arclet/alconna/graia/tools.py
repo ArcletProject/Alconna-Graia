@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import inspect
 from functools import lru_cache
-from typing import Any, Callable, TypedDict
+from typing import Any, Callable, TypedDict, cast
 
 from arclet.alconna.tools import AlconnaFormat, AlconnaString
 from graia.amnesia.message import Element, MessageChain, Text
@@ -10,12 +10,13 @@ from graia.broadcast import Decorator, DecoratorInterface, DispatcherInterface
 from graia.broadcast.builtin.decorators import Depend
 from graia.broadcast.builtin.derive import Derive
 from graia.broadcast.exceptions import ExecutionStop
-from graia.saya.factory import BufferModifier, SchemaWrapper, buffer_modifier, factory
+from graia.saya.factory import BufferModifier, SchemaWrapper, buffer_modifier, factory, ensure_buffer
 from nepattern import AllParam, BasePattern, Empty, type_parser
 from tarina import gen_subclass
 from typing_extensions import NotRequired
 
 from arclet.alconna import Alconna
+from arclet.alconna.tools.construct import AlconnaFire, FuncMounter
 
 from .adapter import AlconnaGraiaAdapter
 from .dispatcher import AlconnaDispatcher, CommandResult
@@ -350,6 +351,32 @@ def mention(path: str) -> BufferModifier:
     return wrapper
 
 
+def funcommand(
+    name: str | None= None,
+    prefixes: list[str] | None = None,
+    guild: bool = True,
+    private: bool = True,
+    private_name: str = "private",
+    guild_name: str = "guild",
+):
+    _config = {}
+    if name:
+        _config["name"] = name
+    if prefixes:
+        _config["prefixes"] = prefixes
+
+    def wrapper(func: T_Callable) -> T_Callable:
+        buffer = ensure_buffer(func)
+        instance = AlconnaGraiaAdapter.instance()
+        _wrapper = instance.handle_command(FuncMounter(func, config=_config)) # type: ignore
+        AlconnaGraiaAdapter.instance().handle_listen(
+            _wrapper, buffer, None, guild, private, private_name, guild_name
+        )
+        return func
+    return wrapper
+
+
+
 __all__ = [
     "fetch_name",
     "match_path",
@@ -363,5 +390,6 @@ __all__ = [
     "endswith",
     "MatchSuffix",
     "check_account",
-    "mention"
+    "mention",
+    "funcommand"
 ]

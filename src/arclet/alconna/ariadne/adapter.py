@@ -7,7 +7,7 @@ from graia.ariadne.app import Ariadne
 from graia.ariadne.event.message import FriendMessage, GroupMessage, MessageEvent
 from graia.ariadne.message.chain import MessageChain
 from graia.ariadne.message.element import At, Plain, Source, File, Quote
-from graia.ariadne.model import Friend, Member, Client, Stranger
+from graia.ariadne.model import Friend, Member, Client, Stranger, Group
 from graia.ariadne.util.interrupt import FunctionWaiter
 from graia.broadcast import BaseDispatcher
 from graia.broadcast.builtin.decorators import Depend
@@ -17,6 +17,8 @@ from graia.broadcast.interrupt import Waiter
 from graia.broadcast.utilles import run_always_await
 
 from arclet.alconna import Arparma, argv_config, set_default_argv_type
+from arclet.alconna.tools.construct import FuncMounter
+from tarina import is_awaitable
 
 from ..graia.model import CommandResult, TConvert
 from ..graia.adapter import AlconnaGraiaAdapter
@@ -92,7 +94,7 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
         self,
         func: Callable,
         buffer: dict[str, Any],
-        dispatcher: BaseDispatcher,
+        dispatcher: BaseDispatcher | None,
         guild: bool,
         private: bool,
         private_name: str,
@@ -103,8 +105,24 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
             events.append(GroupMessage)
         if private:
             events.append(FriendMessage)
-        buffer.setdefault("dispatchers", []).append(dispatcher)
+        buffer.setdefault("dispatchers", [])
+        if dispatcher:
+            buffer["dispatchers"].append(dispatcher)
         listen(*events)(func)
+
+    def handle_command(self, alc: FuncMounter[Any, MessageChain]) -> Callable:
+        async def wrapper(app: Ariadne, sender: Union[Group, Friend], message: MessageChain):
+            try:
+                arp, res = alc.exec(message)
+            except Exception as e:
+                await app.send_message(sender, str(e))
+                return
+            if arp.matched:
+                if is_awaitable(res):
+                    res = await res
+                if isinstance(res, (str, MessageChain)):
+                    await app.send_message(sender, res)
+        return wrapper
 
 
 class AriadneMessageChainArgv(BaseMessageChainArgv):

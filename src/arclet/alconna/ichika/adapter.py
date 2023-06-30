@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, Union
 
 from graia.amnesia.message import MessageChain
 from graia.broadcast import BaseDispatcher
@@ -14,13 +14,15 @@ from graia.broadcast.utilles import (
     run_always_await,
 )
 from ichika.client import Client
-from ichika.core import Friend, Member
+from ichika.core import Friend, Member, Group
 from ichika.graia import CLIENT_INSTANCE
 from ichika.graia.event import FriendMessage, GroupMessage, MessageEvent
 from ichika.message.elements import At, Text
 
 from arclet.alconna import Arparma
 from arclet.alconna.exceptions import SpecialOptionTriggered
+from arclet.alconna.tools.construct import FuncMounter
+from tarina import is_awaitable
 
 from ..graia.model import CommandResult, TConvert
 from ..graia.adapter import AlconnaGraiaAdapter
@@ -115,7 +117,7 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
         self,
         func: Callable,
         buffer: dict[str, Any],
-        dispatcher: BaseDispatcher,
+        dispatcher: BaseDispatcher | None,
         guild: bool,
         private: bool,
         private_name: str,
@@ -126,5 +128,28 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
             events.append(GroupMessage)
         if private:
             events.append(FriendMessage)
-        buffer.setdefault("dispatchers", []).append(dispatcher)
+        buffer.setdefault("dispatchers", [])
+        if dispatcher:
+            buffer["dispatchers"].append(dispatcher)
         listen(*events)(func)
+
+
+    def handle_command(self, alc: FuncMounter[Any, MessageChain]) -> Callable:
+        async def wrapper(client: Client, sender: Union[Group, Friend], message: MessageChain):
+            try:
+                arp, res = alc.exec(message)
+            except Exception as e:
+                if isinstance(sender, Group):
+                    await client.send_group_message(sender, str(e))
+                else:
+                    await client.send_friend_message(sender, str(e))
+                return
+            if arp.matched:
+                if is_awaitable(res):
+                    res = await res
+                if isinstance(res, (str, MessageChain)):
+                    if isinstance(sender, Group):
+                        await client.send_group_message(sender, res)
+                    else:
+                        await client.send_friend_message(sender, res)
+        return wrapper
