@@ -361,14 +361,14 @@ def funcommand(
 ):
     _config = {"raise_exception": False}
     if name:
-        _config["name"] = name
+        _config["command"] = name
     if prefixes:
         _config["prefixes"] = prefixes
 
     def wrapper(func: T_Callable) -> T_Callable:
         buffer = ensure_buffer(func)
         instance = AlconnaGraiaAdapter.instance()
-        _wrapper = instance.handle_command(FuncMounter(func, config=_config)) # type: ignore
+        _wrapper = instance.handle_command(FuncMounter(func, config=_config))
         instance.handle_listen(_wrapper, buffer, None, guild, private, private_name, guild_name)
         return func
     return wrapper
