@@ -3,8 +3,8 @@ name = "arclet-alconna-graia-workspace"
 version = "0.0.1"
 
 dependencies = [
-    "arclet-alconna<2.0.0, >=1.7.7",
-    "arclet-alconna-tools<0.7.0, >=0.6.0",
+    "arclet-alconna<2.0.0, >=1.7.10",
+    "arclet-alconna-tools<0.7.0, >=0.6.3",
     "tarina>=0.3.3",
     "nepattern<0.6.0, >=0.5.8",
     "creart-graia>=0.1.5",
@@ -56,7 +56,7 @@ includes = ["src/arclet/alconna/graia"]
 
 [tool.mina.packages.core.project]
 name = "arclet-alconna-graia"
-version = "0.14.0"
+version = "0.14.1"
 description = "Support Alconna to GraiaProject"
 authors = [
     {name = "RF-Tar-Railt", email = "rf_tar_railt@qq.com"}
@@ -66,8 +66,8 @@ license = {text = "AGPL-3.0"}
 requires-python = ">=3.8"
 keywords = ["alconna", "graia", "arclet", "ariadne"]
 dependencies = [
-    "arclet-alconna<2.0.0, >=1.7.7",
-    "arclet-alconna-tools<0.7.0, >=0.6.0",
+    "arclet-alconna<2.0.0, >=1.7.10",
+    "arclet-alconna-tools<0.7.0, >=0.6.3",
     "tarina>=0.3.3",
     "nepattern<0.6.0, >=0.5.8",
     "creart-graia>=0.1.5",
@@ -104,12 +104,12 @@ alconna_behavior = "arclet.alconna.graia.create:AlconnaBehaviorCreator"
 [tool.mina.packages.ariadne]
 includes = ["src/arclet/alconna/ariadne"]
 raw-dependencies = [
-  "arclet-alconna-graia<0.14.0, >= 0.14.0",
+    "arclet-alconna-graia<0.15.0, >= 0.14.1",
 ]
 
 [tool.mina.packages.ariadne.project]
 name = "arclet-alconna-ariadne"
-version = "0.14.0"
+version = "0.14.1"
 authors = [
     {name = "RF-Tar-Railt", email = "rf_tar_railt@qq.com"}
 ]
@@ -137,12 +137,12 @@ repository = "https://github.com/ArcletProject/Alconna-Graia"
 [tool.mina.packages.avilla]
 includes = ["src/arclet/alconna/avilla"]
 raw-dependencies = [
-  "arclet-alconna-graia<0.14.0, >= 0.14.0",
+    "arclet-alconna-graia<0.15.0, >= 0.14.1",
 ]
 
 [tool.mina.packages.avilla.project]
 name = "arclet-alconna-avilla"
-version = "0.14.0"
+version = "0.14.1"
 authors = [
     {name = "RF-Tar-Railt", email = "rf_tar_railt@qq.com"}
 ]
@@ -170,12 +170,12 @@ repository = "https://github.com/ArcletProject/Alconna-Graia"
 [tool.mina.packages.ichika]
 includes = ["src/arclet/alconna/ichika"]
 raw-dependencies = [
-  "arclet-alconna-graia<0.14.0, >= 0.14.0",
+    "arclet-alconna-graia<0.15.0, >= 0.14.1",
 ]
 
 [tool.mina.packages.ichika.project]
 name = "arclet-alconna-ichika"
-version = "0.14.0"
+version = "0.14.1"
 authors = [
     {name = "RF-Tar-Railt", email = "rf_tar_railt@qq.com"}
 ]

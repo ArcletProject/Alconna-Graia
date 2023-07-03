@@ -359,7 +359,7 @@ def funcommand(
     private_name: str = "private",
     guild_name: str = "guild",
 ):
-    _config = {}
+    _config = {"raise_exception": False}
     if name:
         _config["name"] = name
     if prefixes:
@@ -369,9 +369,7 @@ def funcommand(
         buffer = ensure_buffer(func)
         instance = AlconnaGraiaAdapter.instance()
         _wrapper = instance.handle_command(FuncMounter(func, config=_config)) # type: ignore
-        AlconnaGraiaAdapter.instance().handle_listen(
-            _wrapper, buffer, None, guild, private, private_name, guild_name
-        )
+        instance.handle_listen(_wrapper, buffer, None, guild, private, private_name, guild_name)
         return func
     return wrapper
 
