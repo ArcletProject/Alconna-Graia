@@ -5,8 +5,8 @@ from typing import Any, Callable, Union
 from avilla.core.context import Context
 from avilla.core.elements import Notice
 from avilla.core.tools.filter import Filter
-from avilla.spec.core.message import MessageEdited, MessageReceived
-from avilla.spec.core.profile import Summary
+from avilla.standard.core.message import MessageEdited, MessageReceived
+from avilla.standard.core.profile import Summary
 from graia.amnesia.message import MessageChain
 from graia.amnesia.message.element import Text
 from graia.broadcast import BaseDispatcher
@@ -102,18 +102,12 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
         dispatcher: BaseDispatcher | None,
         guild: bool,
         private: bool,
-        private_name: str,
-        guild_name: str
+        patterns: list[str] | None = None,
     ) -> None:
-        _filter = Filter().scene
+        _filter = Filter().cx.client
         _dispatchers = buffer.setdefault("dispatchers", [])
-        if not guild:
-            private_name = "friend" if private_name == "private" else private_name
-            _dispatchers.append(_filter.follows(private_name))
-        if not private:
-            guild_name = "group" if guild_name == "guild" else guild_name
-
-            _dispatchers.append(_filter.follows(guild_name))
+        if patterns:
+            _dispatchers.append(_filter.follows(*patterns))
         if dispatcher:
             _dispatchers.append(dispatcher)
         listen(MessageReceived, MessageEdited)(func)

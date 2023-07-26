@@ -33,7 +33,7 @@ Sender = Union[Friend, Member, Stranger, Client]
 class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
     def completion_waiter(self, source: MessageEvent, priority: int = 15) -> Waiter:
         async def waiter(m: MessageChain, sender: Sender):
-            if sender.id == source.sender.id:
+            if isinstance(sender, source.sender.__class__) and sender.id == source.sender.id:
                 return m
 
         return FunctionWaiter(waiter, [source.__class__], block_propagation=True, priority=priority)
@@ -97,8 +97,7 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
         dispatcher: BaseDispatcher | None,
         guild: bool,
         private: bool,
-        private_name: str,
-        guild_name: str
+        **kwargs,
     ) -> None:
         events = []
         if guild:

@@ -76,3 +76,4 @@ class CompConfig(TypedDict):
     enter: NotRequired[str]
     exit: NotRequired[str]
     timeout: NotRequired[int]
+    lite: NotRequired[bool]

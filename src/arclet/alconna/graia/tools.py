@@ -96,8 +96,7 @@ def alcommand(
     private: bool = True,
     send_error: bool = False,
     post: bool = False,
-    private_name: str = "private",
-    guild_name: str = "guild",
+    patterns: list[str] | None = None,
     comp_session: CompConfig | None = None,
 ) -> SchemaWrapper:
     """
@@ -107,12 +106,11 @@ def alcommand(
 
     Args:
         alconna (Alconna | str): 使用的 Alconna 命令
-        guild (bool): 命令是否群聊可用
-        private (bool): 命令是否私聊可用
-        send_error (bool): 是否发送错误信息
-        post (bool): 是否以事件发送输出信息
-        private_name (str): 私聊事件下消息场景名称
-        guild_name (str): 群聊事件下消息场景名称
+        guild (bool, optional): 命令是否群聊可用
+        private (bool, optional): 命令是否私聊可用
+        send_error (bool, optional): 是否发送错误信息
+        post (bool, optional): 是否以事件发送输出信息
+        patterns (list[str] | None, optional): 在可能的以 Avilla 为基础框架时使用的 selector 匹配模式
         comp_session (CompConfig | None, optional): 是否使用补全会话
     """
     if isinstance(alconna, str):
@@ -131,7 +129,7 @@ def alcommand(
 
     def wrapper(func: Callable, buffer: dict[str, Any]) -> AlconnaSchema:
         AlconnaGraiaAdapter.instance().handle_listen(
-            func, buffer, dispatcher, guild, private, private_name, guild_name
+            func, buffer, dispatcher, guild, private, patterns
         )
         return AlconnaSchema(dispatcher.command)
     return wrapper
@@ -356,8 +354,7 @@ def funcommand(
     prefixes: list[str] | None = None,
     guild: bool = True,
     private: bool = True,
-    private_name: str = "private",
-    guild_name: str = "guild",
+    patterns: list[str] | None = None,
 ):
     _config = {"raise_exception": False}
     if name:
@@ -369,7 +366,7 @@ def funcommand(
         buffer = ensure_buffer(func)
         instance = AlconnaGraiaAdapter.instance()
         _wrapper = instance.handle_command(FuncMounter(func, config=_config))
-        instance.handle_listen(_wrapper, buffer, None, guild, private, private_name, guild_name)
+        instance.handle_listen(_wrapper, buffer, None, guild, private, patterns)
         return func
     return wrapper
 

@@ -55,7 +55,7 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
             priority=priority,
         )
         async def waiter(m: MessageChain, sender: Friend | Member):
-            if source.sender.uin == sender.uid:
+            if isinstance(sender, source.sender.__class__) and source.sender.uin == sender.uid:
                 return m
 
         return waiter  # type: ignore
@@ -120,8 +120,7 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
         dispatcher: BaseDispatcher | None,
         guild: bool,
         private: bool,
-        private_name: str,
-        guild_name: str
+        **kwargs
     ) -> None:
         events = []
         if guild:

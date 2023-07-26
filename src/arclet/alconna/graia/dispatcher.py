@@ -171,7 +171,8 @@ class AlconnaDispatcher(BaseDispatcher):
                     return res
                 if (mat := _tab.parse(ans)).matched:
                     interface.tab(mat.offset)
-                    await adapter.send(self.converter, res, str(interface), source)
+                    lite = self.comp_session.get("lite", True)
+                    await adapter.send(self.converter, res, interface.current() if lite else str(interface), source)
                     continue
                 if (mat := _enter.parse(ans)).matched:
                     content = list(mat.content)

@@ -83,8 +83,7 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
         dispatcher: BaseDispatcher | None,
         guild: bool,
         private: bool,
-        private_name: str,
-        guild_name: str,
+        patterns: list[str] | None = None,
     ) -> None:
         ...
 
@@ -113,10 +112,7 @@ class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
         func: Callable,
         buffer: dict[str, Any],
         dispatcher: BaseDispatcher | None,
-        guild: bool = True,
-        private: bool = True,
-        private_name: str = "private",
-        guild_name: str = "guild",
+        **kwargs
     ) -> None:
         _dispatchers = buffer.setdefault("dispatchers", [])
         if dispatcher:
