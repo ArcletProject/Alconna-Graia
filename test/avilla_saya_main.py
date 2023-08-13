@@ -15,10 +15,11 @@ broadcast = create(Broadcast)
 saya = create(Saya)
 saya.install_behaviours(AlconnaBehaviour(broadcast))
 launart = Launart()
-launart.add_service(AlconnaGraiaService(AlconnaAvillaAdapter))
-avilla = Avilla(broadcast, launart, [ConsoleProtocol()])
+launart.add_component(AlconnaGraiaService(AlconnaAvillaAdapter))
+avilla = Avilla( launch_manager=launart)
+avilla.apply_protocols(ConsoleProtocol())
 
 with saya.module_context():
     saya.require("avilla_saya_module")
 
-launart.launch_blocking(loop=broadcast.loop)
+avilla.launch()

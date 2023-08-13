@@ -50,7 +50,7 @@ class AlconnaGraiaService(Service, Generic[TAdapter]):
 
     @property
     def required(self):
-        return {}
+        return set()
 
     @property
     def stages(self) -> set[Literal["preparing", "blocking", "cleanup"]]:
