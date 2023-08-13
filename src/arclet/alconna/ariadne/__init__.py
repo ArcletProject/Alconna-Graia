@@ -1,2 +1,3 @@
-from .adapter import AlconnaAriadneAdapter
-from .typings import ImgOrUrl, AtID
+from .adapter import AlconnaAriadneAdapter as AlconnaAriadneAdapter
+from .typings import ImgOrUrl as ImgOrUrl
+from .typings import AtID as AtID

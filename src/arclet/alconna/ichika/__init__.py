@@ -1,2 +1,3 @@
-from .adapter import AlconnaIchikaAdapter
-from .typings import ImgOrUrl, AtID
+from .adapter import AlconnaIchikaAdapter as AlconnaIchikaAdapter
+from .typings import ImgOrUrl as ImgOrUrl
+from .typings import AtID as AtID

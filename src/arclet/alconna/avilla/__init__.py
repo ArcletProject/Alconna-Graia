@@ -1,2 +1,2 @@
-from .adapter import AlconnaAvillaAdapter
-from .typings import NoticeID
+from .adapter import AlconnaAvillaAdapter as AlconnaAvillaAdapter
+from .typings import NoticeID as NoticeID
