@@ -136,13 +136,14 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
     def handle_command(self, alc: FuncMounter[Any, MessageChain]) -> Callable:
         async def wrapper(client: Client, sender: Union[Group, Friend], message: MessageChain):
             try:
-                arp, res = alc.exec(message)
+                arp = alc.parse(message)
             except Exception as e:
                 if isinstance(sender, Group):
                     await client.send_group_message(sender, str(e))
                 else:
                     await client.send_friend_message(sender, str(e))
                 return
+            res = list(alc.exec_result.values())[0]
             if arp.matched:
                 if is_awaitable(res):
                     res = await res

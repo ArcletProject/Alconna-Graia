@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
-from arclet.alconna.argv import set_default_argv_type, argv_config
-from arclet.alconna._internal._argv import Argv
+from arclet.alconna.argv import Argv, set_default_argv_type, argv_config
 from graia.amnesia.message import MessageChain
 from graia.amnesia.message.element import Text
 

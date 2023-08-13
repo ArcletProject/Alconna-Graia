@@ -116,10 +116,11 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
     def handle_command(self, alc: FuncMounter[Any, MessageChain]) -> Callable:
         async def wrapper(ctx: Context, message: MessageChain):
             try:
-                arp, res = alc.exec(message)
+                arp = alc.parse(message)
             except Exception as e:
                 await ctx.scene.send_message(str(e))
                 return
+            res = list(alc.exec_result.values())[0]
             if arp.matched:
                 if is_awaitable(res):
                     res = await res

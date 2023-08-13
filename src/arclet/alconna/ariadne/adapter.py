@@ -112,10 +112,11 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
     def handle_command(self, alc: FuncMounter[Any, MessageChain]) -> Callable:
         async def wrapper(app: Ariadne, sender: Union[Group, Friend], message: MessageChain):
             try:
-                arp, res = alc.exec(message)
+                arp = alc.parse(message)
             except Exception as e:
                 await app.send_message(sender, str(e))
                 return
+            res = list(alc.exec_result.values())[0]
             if arp.matched:
                 if is_awaitable(res):
                     res = await res

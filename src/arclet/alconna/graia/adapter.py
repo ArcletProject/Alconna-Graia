@@ -12,7 +12,7 @@ from graia.broadcast.entities.dispatcher import BaseDispatcher
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
 from graia.broadcast.interrupt.waiter import Waiter
 
-from arclet.alconna import Arparma, Alconna
+from arclet.alconna import Arparma
 from arclet.alconna.tools.construct import FuncMounter
 
 from .model import CommandResult, TConvert, TSource
@@ -144,12 +144,12 @@ class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
         async def wrapper(interface: DispatcherInterface):
             msg = await self.lookup_source(interface)
             try:
-                arp, res = alc.exec(msg)
+                arp = alc.parse(msg)
             except Exception as e:
                 print(e)
                 return
             if arp.matched:
-                print(res)
+                print(list(alc.exec_result)[0])
         return wrapper
 
 DefaultAdapter()

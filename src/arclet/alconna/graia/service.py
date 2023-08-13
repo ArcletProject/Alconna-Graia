@@ -5,7 +5,7 @@ from contextlib import suppress
 from pathlib import Path
 from typing import Generic, Literal, TypeVar
 from tarina import lang
-from launart import ExportInterface, Launart, Service
+from launart import Launart, Service
 from arclet.alconna import command_manager
 
 from .adapter import AlconnaGraiaAdapter
@@ -14,25 +14,10 @@ TAdapter = TypeVar("TAdapter", bound=AlconnaGraiaAdapter)
 lang.load(Path(__file__).parent / "i18n")
 
 
-class AlconnaGraiaInterface(ExportInterface["AlconnaGraiaService"], Generic[TAdapter]):
-
-    def __init__(self, service: AlconnaGraiaService):
-        self.service = service
-
-    @property
-    def adapter(self) -> TAdapter:
-        return self.service.adapter
-
-    def save(self):
-        self.manager.dump_cache()
-
-    manager = command_manager
-
 
 class AlconnaGraiaService(Service, Generic[TAdapter]):
     adapter: TAdapter
     id = "alconna.graia.service"
-    supported_interface_types = {AlconnaGraiaInterface}
 
     def __init__(
         self,
@@ -60,8 +45,8 @@ class AlconnaGraiaService(Service, Generic[TAdapter]):
         command_manager.cache_path = str(_path.absolute())
         super().__init__()
 
-    def get_interface(self, interface_type: type[AlconnaGraiaInterface]) -> AlconnaGraiaInterface[TAdapter]:
-        return AlconnaGraiaInterface(self)
+    def get_adapter(self) -> TAdapter:
+        return self.adapter
 
     @property
     def required(self):

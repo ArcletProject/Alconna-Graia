@@ -27,7 +27,7 @@ from arclet.alconna import Arparma, Empty, output_manager
 from arclet.alconna.exceptions import SpecialOptionTriggered
 
 from .model import CommandResult, Header, Match, Query, CompConfig, TConvert
-from .service import AlconnaGraiaInterface
+from .service import AlconnaGraiaService
 from .adapter import AlconnaGraiaAdapter
 
 if TYPE_CHECKING:
@@ -211,7 +211,11 @@ class AlconnaDispatcher(BaseDispatcher):
 
     async def beforeExecution(self, interface: DispatcherInterface):
         try:
-            adapter = Launart.current().get_interface(AlconnaGraiaInterface).adapter
+            manager = Launart.current()
+            if hasattr(manager, "get_service"):
+                adapter = manager.get_service(AlconnaGraiaService.id).get_adapter()
+            else:
+                adapter = Launart.current().get_component(AlconnaGraiaService).get_adapter()
         except (ValueError, LookupError, AttributeError):
             adapter = AlconnaGraiaAdapter.instance()
         message: MessageChain = await adapter.lookup_source(interface)

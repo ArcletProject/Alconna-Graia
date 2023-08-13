@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import inspect
 from functools import lru_cache
-from typing import Any, Callable, TypedDict, cast
+from typing import Any, Callable, TypedDict
 
 from arclet.alconna.tools import AlconnaFormat, AlconnaString
 from graia.amnesia.message import Element, MessageChain, Text
@@ -16,7 +16,7 @@ from tarina import gen_subclass
 from typing_extensions import NotRequired
 
 from arclet.alconna import Alconna
-from arclet.alconna.tools.construct import AlconnaFire, FuncMounter
+from arclet.alconna.tools.construct import FuncMounter
 
 from .adapter import AlconnaGraiaAdapter
 from .dispatcher import AlconnaDispatcher, CommandResult
