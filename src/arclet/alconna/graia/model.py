@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TypeVar, Generic, TypedDict, Literal, Callable, Awaitable, Union
+from typing import TypeVar, Generic, TypedDict, Literal, Callable, Awaitable, Union, Set
 
 from arclet.alconna import Arparma, Empty
 from typing_extensions import NotRequired, TypeAlias
@@ -71,9 +71,12 @@ class Header:
 
 
 class CompConfig(TypedDict):
-    priority: NotRequired[int]
     tab: NotRequired[str]
     enter: NotRequired[str]
     exit: NotRequired[str]
     timeout: NotRequired[int]
+    priority: NotRequired[int]
+    hide_tabs: NotRequired[bool]
+    hides: NotRequired[Set[Literal["tab", "enter", "exit"]]]
+    disables: NotRequired[Set[Literal["tab", "enter", "exit"]]]
     lite: NotRequired[bool]

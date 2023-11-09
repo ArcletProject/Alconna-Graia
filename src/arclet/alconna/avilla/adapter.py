@@ -32,7 +32,19 @@ AvillaMessageEvent = Union[MessageEdited, MessageReceived]
 
 
 class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
-    def completion_waiter(self, source: AvillaMessageEvent, priority: int = 15) -> Waiter:
+
+    def remove_tome(self, message: MessageChain, context: Context):
+        if isinstance(message[0], Notice):
+            notice: Notice = message.get_first(Notice)
+            if notice.target.last_value == context.self.last_value:
+                message.content.remove(notice)
+                if isinstance(message[0], Text):
+                    message[0].text = message[0].text.lstrip()  # type: ignore
+                    if not message[0].text:  # type: ignore
+                        message.content.pop(0)
+        return message
+
+    def completion_waiter(self, source: AvillaMessageEvent, handle, priority: int = 15) -> Waiter:
         @Waiter.create_using_function(
             [MessageReceived],
             block_propagation=True,
@@ -40,12 +52,15 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
         )
         async def waiter(event: MessageReceived):
             if event.context.client == source.context.client:
-                return event.message.content
+                return await handle(self.remove_tome(event.message.content, event.context))
 
         return waiter  # type: ignore
 
-    async def lookup_source(self, interface: DispatcherInterface[AvillaMessageEvent]) -> MessageChain:
-        return interface.event.message.content
+    async def lookup_source(self, interface: DispatcherInterface[AvillaMessageEvent], remove_tome: bool = True) -> MessageChain:
+        message = interface.event.message.content
+        if remove_tome:
+            return self.remove_tome(message, interface.event.context)
+        return message
 
     def source_id(self, source: AvillaMessageEvent | None = None) -> str:
         return source.message.id if source else "_"
@@ -112,7 +127,6 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
             _dispatchers.append(dispatcher)
         listen(MessageReceived, MessageEdited)(func)
 
-
     def handle_command(self, alc: FuncMounter[Any, MessageChain]) -> Callable:
         async def wrapper(ctx: Context, message: MessageChain):
             try:
@@ -120,10 +134,11 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
             except Exception as e:
                 await ctx.scene.send_message(str(e))
                 return
-            res = list(alc.exec_result.values())[0]
             if arp.matched:
+                res = list(alc.exec_result.values())[0]
                 if is_awaitable(res):
                     res = await res
                 if isinstance(res, (str, MessageChain)):
                     await ctx.scene.send_message(res)
+
         return wrapper

@@ -48,20 +48,35 @@ def resolve_dispatchers_mixin(dispatchers: Iterable[T_Dispatcher]) -> list[T_Dis
 
 
 class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
-    def completion_waiter(self, source: MessageEvent, priority: int = 15) -> Waiter:
+    def remove_tome(self, message: MessageChain, account: int):
+        if isinstance(message[0], At):
+            notice: At = message.get_first(At)
+            if notice.target == account:
+                message.content.remove(notice)
+                if isinstance(message[0], Text):
+                    message[0].text = message[0].text.lstrip()  # type: ignore
+                    if not message[0].text:  # type: ignore
+                        message.content.pop(0)
+        return message
+
+    def completion_waiter(self, source: MessageEvent, handle, priority: int = 15) -> Waiter:
         @Waiter.create_using_function(
             [source.__class__],
             block_propagation=True,
             priority=priority,
         )
-        async def waiter(m: MessageChain, sender: Friend | Member):
+        async def waiter(m: MessageChain, client: Client, sender: Friend | Member):
             if isinstance(sender, source.sender.__class__) and source.sender.uin == sender.uid:
-                return m
+                return await handle(m, client.uin)
 
         return waiter  # type: ignore
 
-    async def lookup_source(self, interface: DispatcherInterface[MessageEvent]) -> MessageChain:
-        return await interface.lookup_param("__message_chain__", MessageChain, MessageChain([Text("Unknown")]))
+    async def lookup_source(self, interface: DispatcherInterface[MessageEvent], remove_tome: bool = True) -> MessageChain:
+        message = await interface.lookup_param("__message_chain__", MessageChain, MessageChain([Text("Unknown")]))
+        client: Client = CLIENT_INSTANCE.get()
+        if remove_tome:
+            return self.remove_tome(message, client.uin)
+        return message
 
     def source_id(self, source: MessageEvent | None = None) -> str:
         return str(source.source.id) if source else "_"
@@ -132,7 +147,6 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
             buffer["dispatchers"].append(dispatcher)
         listen(*events)(func)
 
-
     def handle_command(self, alc: FuncMounter[Any, MessageChain]) -> Callable:
         async def wrapper(client: Client, sender: Union[Group, Friend], message: MessageChain):
             try:
@@ -143,8 +157,8 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
                 else:
                     await client.send_friend_message(sender, str(e))
                 return
-            res = list(alc.exec_result.values())[0]
             if arp.matched:
+                res = list(alc.exec_result.values())[0]
                 if is_awaitable(res):
                     res = await res
                 if isinstance(res, (str, MessageChain)):

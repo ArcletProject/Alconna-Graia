@@ -18,8 +18,6 @@ async def on_message_received(ctx: Context, arp: Arparma):
 @alcommand(Alconna("/help"))
 async def on_message_received1(ctx: Context):
     await ctx.scene.send_message(
-        [
-            Markdown(
                 """\
 ## 菜单
 - /help
@@ -29,8 +27,6 @@ async def on_message_received1(ctx: Context):
 - /pip
 - /emoji
 """
-            )
-        ]
     )
 
 

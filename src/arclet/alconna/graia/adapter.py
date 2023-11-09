@@ -46,11 +46,11 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
         return adapter_context.get()
 
     @abstractmethod
-    def completion_waiter(self, source: TSource, priority: int = 15) -> Waiter:
+    def completion_waiter(self, source: TSource, handler: Callable[[MessageChain], ...], priority: int = 15) -> Waiter:
         ...
 
     @abstractmethod
-    async def lookup_source(self, interface: DispatcherInterface[TSource]) -> MessageChain:
+    async def lookup_source(self, interface: DispatcherInterface[TSource], remove_tome: bool = True) -> MessageChain:
         ...
 
     @abstractmethod
@@ -93,18 +93,18 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
 
 
 class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
-    def completion_waiter(self, source: TSource, priority: int = 15) -> Waiter:
+    def completion_waiter(self, source: TSource, handle, priority: int = 15) -> Waiter:
         @Waiter.create_using_function(
             [source.__class__],
             block_propagation=True,
             priority=priority,
         )
         async def waiter(m: MessageChain):
-            return m
+            return await handle(m)
 
         return waiter  # type: ignore
 
-    async def lookup_source(self, interface: DispatcherInterface[TSource]) -> MessageChain:
+    async def lookup_source(self, interface: DispatcherInterface[TSource], remove_tome: bool = True) -> MessageChain:
         return await interface.lookup_param("__message_chain__", MessageChain, None)
 
     def handle_listen(
@@ -151,5 +151,6 @@ class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
             if arp.matched:
                 print(list(alc.exec_result)[0])
         return wrapper
+
 
 DefaultAdapter()

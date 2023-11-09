@@ -1,16 +1,11 @@
 import asyncio
-import traceback
 from atexit import register
-from weakref import WeakKeyDictionary
 from typing import Any, ClassVar, Literal, get_args, Optional, TYPE_CHECKING, Dict
-from arclet.alconna.typing import CommandMeta
-from arclet.alconna.args import AllParam, Args
 from arclet.alconna.completion import CompSession
 from arclet.alconna.core import Alconna
 from arclet.alconna.builtin import generate_duplication
 from arclet.alconna.duplication import Duplication
 from arclet.alconna.stub import ArgsStub, OptionStub, SubcommandStub
-from arclet.alconna.manager import command_manager
 from arclet.alconna.tools import AlconnaFormat, AlconnaString
 from graia.amnesia.message import MessageChain
 from graia.amnesia.message.element import Text
@@ -31,17 +26,17 @@ from .service import AlconnaGraiaService
 from .adapter import AlconnaGraiaAdapter
 
 if TYPE_CHECKING:
-    result_cache: WeakKeyDictionary[Alconna, LRU[str, asyncio.Future[Optional[CommandResult]]]]
+    result_cache: Dict[int, LRU[str, asyncio.Future[Optional[CommandResult]]]]
 else:
-    result_cache = WeakKeyDictionary()
+    result_cache = {}
 
 
 def get_future(alc: Alconna, source: str):
-    return result_cache[alc].get(source)
+    return result_cache[alc._hash].get(source)
 
 
 def set_future(alc: Alconna, source: str):
-    return result_cache[alc].setdefault(source, asyncio.Future())
+    return result_cache[alc._hash].setdefault(source, asyncio.Future())
 
 
 def clear():
@@ -99,6 +94,7 @@ class AlconnaDispatcher(BaseDispatcher):
         skip_for_unmatch: bool = True,
         comp_session: Optional[CompConfig] = None,
         message_converter: Optional[TConvert] = None,
+        remove_tome: bool = True,
     ):
         """
         构造 Alconna调度器
@@ -107,6 +103,7 @@ class AlconnaDispatcher(BaseDispatcher):
             send_flag ("reply", "post", "stay"): 输出信息的发送方式
             skip_for_unmatch (bool): 当指令匹配失败时是否跳过对应的事件监听器, 默认为 True
             comp_session (CompConfig, optional): 补全会话配置, 不传入则不启用补全会话
+            remove_tome (bool, optional): 是否移除首部的 @自己，默认为 True
         """
         super().__init__()
         self.command = command
@@ -114,81 +111,106 @@ class AlconnaDispatcher(BaseDispatcher):
         self.skip_for_unmatch = skip_for_unmatch
         self.comp_session = comp_session
         self.converter = message_converter or self.__class__.default_send_handler
-        result_cache.setdefault(command, LRU(10))
+        self.remove_tome = remove_tome
+        self._interface = CompSession(self.command)
+        result_cache.setdefault(command._hash, LRU(10))
+        self._comp_help = ""
+        self._waiter = None
+        if self.comp_session is not None:
+            _tab = self.comp_session.get("tab") or ".tab"
+            _enter = self.comp_session.get("enter") or ".enter"
+            _exit = self.comp_session.get("exit") or ".exit"
+            disables = self.comp_session.get("disables", set())
+            hides = self.comp_session.get("hides", set())
+            hide_tabs = self.comp_session.get("hide_tabs", False)
+            if self.comp_session.get("lite", False):
+                hide_tabs = True
+                hides = {"tab", "enter", "exit"}
+            hides |= disables
+            if len(hides) < 3:
+                template = f"\n\n{{}}{{}}{{}}{lang.require('comp/graia', 'other')}\n"
+                self._comp_help = template.format(
+                    (lang.require("comp/graia", "tab").format(cmd=_tab) + "\n")
+                    if "tab" not in hides
+                    else "",
+                    (lang.require("comp/graia", "enter").format(cmd=_enter) + "\n")
+                    if "enter" not in hides
+                    else "",
+                    (lang.require("comp/graia", "exit").format(cmd=_exit) + "\n")
+                    if "exit" not in hides
+                    else "",
+                )
+
+            async def _(message: MessageChain):
+                msg = str(message)
+                if msg.startswith(_exit) and "exit" not in disables:
+                    if msg == _exit:
+                        return False
+                    return lang.require("analyser", "param_unmatched").format(
+                        target=msg.replace(_exit, "", 1)
+                    )
+
+                elif msg.startswith(_enter) and "enter" not in disables:
+                    if msg == _enter:
+                        return True
+                    return lang.require("analyser", "param_unmatched").format(
+                        target=msg.replace(_enter, "", 1)
+                    )
+
+                elif msg.startswith(_tab) and "tab" not in disables:
+                    offset = msg.replace(_tab, "", 1).lstrip() or 1
+                    try:
+                        offset = int(offset)
+                    except ValueError:
+                        return lang.require("analyser", "param_unmatched").format(target=offset)
+                    else:
+                        self._interface.tab(offset)
+                        return (
+                            f"* {self._interface.current()}"
+                            if hide_tabs
+                            else "\n".join(self._interface.lines())
+                        )
+                else:
+                    return message
+
+            self._waiter = _
 
     async def handle(self, source: Optional[Dispatchable], msg: MessageChain, adapter: AlconnaGraiaAdapter):
         inc = it(InterruptControl)
-        interface = CompSession(self.command)
         if self.comp_session is None or not source:
             return self.command.parse(msg)  # type: ignore
         res = None
-        with interface:
+        with self._interface:
             res = self.command.parse(msg)  # type: ignore
         if res:
             return res
-        _tab = Alconna(
-            self.comp_session.get("tab", ".tab"), Args["offset", int, 1], [],
-            meta=CommandMeta(compact=True, hide=True)
-        )
-        _enter = Alconna(
-            self.comp_session.get("enter", ".enter"), Args["content", AllParam, []], [],
-            meta=CommandMeta(compact=True, hide=True)
-        )
-        _exit = Alconna(
-            self.comp_session.get("exit", ".exit"), [],
-            meta=CommandMeta(compact=True, hide=True)
-        )
-
-        def _clear():
-            command_manager.delete(_tab)
-            command_manager.delete(_enter)
-            command_manager.delete(_exit)
-            interface.clear()
-
-        while interface.available:
-            res = Arparma(self.command.path, msg, False, error_info=SpecialOptionTriggered("completion"))
-            await adapter.send(self.converter, res, str(interface), source)
-            await adapter.send(
-                self.converter, res,
-                f"{lang.require('comp/graia', 'tab').format(cmd=_tab.command)}\n"
-                f"{lang.require('comp/graia', 'enter').format(cmd=_enter.command)}\n"
-                f"{lang.require('comp/graia', 'exit').format(cmd=_exit.command)}",
-                source,
-            )
+        res = Arparma(self.command.path, msg, False, error_info=SpecialOptionTriggered("completion"))
+        while self._interface.available:
+            await adapter.send(self.converter, res, f"{str(self._interface)}{self._comp_help}", source)
             while True:
-                waiter = adapter.completion_waiter(source, self.comp_session.get('priority', 10))
+                waiter = adapter.completion_waiter(source, self._waiter, self.comp_session.get('priority', 10))
                 try:
                     ans: MessageChain = await inc.wait(
-                        waiter, timeout=self.comp_session.get('timeout', 30)
+                        waiter, timeout=self.comp_session.get('timeout', 60)
                     )
                 except asyncio.TimeoutError:
-                    _clear()
                     await adapter.send(self.converter, res, lang.require("comp/graia", "timeout"), source)
+                    self._interface.exit()
                     return res
-                if _exit.parse(ans).matched:
+                if ans is False:
                     await adapter.send(self.converter, res, lang.require("comp/graia", "exited"), source)
-                    _clear()
+                    self._interface.exit()
                     return res
-                if (mat := _tab.parse(ans)).matched:
-                    interface.tab(mat.offset)
-                    lite = self.comp_session.get("lite", True)
-                    await adapter.send(self.converter, res, interface.current() if lite else str(interface), source)
+                if isinstance(ans, str):
+                    await adapter.send(self.converter, res, ans, source)
                     continue
-                if (mat := _enter.parse(ans)).matched:
-                    content = list(mat.content)
-                    if not content or not content[0]:
-                        content = None
-                    try:
-                        with interface:
-                            res = interface.enter(content)
-                    except Exception as e:
-                        traceback.print_exc()
-                        await adapter.send(self.converter, res, str(e), source)
-                        continue
-                    break
-                else:
-                    await adapter.send(self.converter, res, interface.current(), source)
-        _clear()
+                _res = self._interface.enter(None if ans is True else ans)
+                if _res.result:
+                    res = _res.result
+                elif _res.exception and not isinstance(_res.exception, SpecialOptionTriggered):
+                    await adapter.send(self.converter, res, str(_res.exception), source)
+                break
+        self._interface.exit()
         return res
 
     async def output(
@@ -218,7 +240,7 @@ class AlconnaDispatcher(BaseDispatcher):
                 adapter = Launart.current().get_component(AlconnaGraiaService).get_adapter()
         except (ValueError, LookupError, AttributeError):
             adapter = AlconnaGraiaAdapter.instance()
-        message: MessageChain = await adapter.lookup_source(interface)
+        message: MessageChain = await adapter.lookup_source(interface, self.remove_tome)
         try:
             source = interface.event
         except LookupError:

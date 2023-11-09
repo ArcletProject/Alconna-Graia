@@ -31,15 +31,30 @@ Sender = Union[Friend, Member, Stranger, Client]
 
 
 class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
-    def completion_waiter(self, source: MessageEvent, priority: int = 15) -> Waiter:
-        async def waiter(m: MessageChain, sender: Sender):
+    
+    def remove_tome(self, message: MessageChain, account: int):
+        if isinstance(message[0], At):
+            notice: At = message.get_first(At)
+            if notice.target == account:
+                message.content.remove(notice)
+                if isinstance(message[0], Plain):
+                    message[0].text = message[0].text.lstrip()  # type: ignore
+                    if not message[0].text:  # type: ignore
+                        message.content.pop(0)
+        return message
+    
+    def completion_waiter(self, source: MessageEvent, handle, priority: int = 15) -> Waiter:
+        async def waiter(app: Ariadne, m: MessageChain, sender: Sender):
             if isinstance(sender, source.sender.__class__) and sender.id == source.sender.id:
-                return m
+                return await handle(self.remove_tome(m, app.account))
 
         return FunctionWaiter(waiter, [source.__class__], block_propagation=True, priority=priority)
 
-    async def lookup_source(self, interface: DispatcherInterface[MessageEvent]) -> MessageChain:
-        return await interface.lookup_param("__message_chain__", MessageChain, MessageChain("Unknown"))
+    async def lookup_source(self, interface: DispatcherInterface[MessageEvent], remove_tome: bool = True) -> MessageChain:
+        message = await interface.lookup_param("__message_chain__", MessageChain, MessageChain("Unknown"))
+        if remove_tome:
+            return self.remove_tome(message, Ariadne.current().account)
+        return message
 
     def source_id(self, source: MessageEvent | None = None) -> str:
         return str(source.source.id) if source else "_"
@@ -116,8 +131,8 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
             except Exception as e:
                 await app.send_message(sender, str(e))
                 return
-            res = list(alc.exec_result.values())[0]
             if arp.matched:
+                res = list(alc.exec_result.values())[0]
                 if is_awaitable(res):
                     res = await res
                 if isinstance(res, (str, MessageChain)):
