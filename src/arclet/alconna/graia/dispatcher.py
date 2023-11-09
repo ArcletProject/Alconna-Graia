@@ -185,12 +185,12 @@ class AlconnaDispatcher(BaseDispatcher):
         if res:
             return res
         res = Arparma(self.command.path, msg, False, error_info=SpecialOptionTriggered("completion"))
+        waiter = adapter.completion_waiter(source, self._waiter, self.comp_session.get('priority', 10))
         while self._interface.available:
             await adapter.send(self.converter, res, f"{str(self._interface)}{self._comp_help}", source)
             while True:
-                waiter = adapter.completion_waiter(source, self._waiter, self.comp_session.get('priority', 10))
                 try:
-                    ans: MessageChain = await inc.wait(
+                    ans = await inc.wait(
                         waiter, timeout=self.comp_session.get('timeout', 60)
                     )
                 except asyncio.TimeoutError:
