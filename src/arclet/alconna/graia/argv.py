@@ -20,5 +20,5 @@ argv_config(
     filter_out=[],
     checker=lambda x: isinstance(x, MessageChain),
     to_text=lambda x: x.text if isinstance(x, Text) else None,
-    converter=lambda x: MessageChain(x if isinstance(x, list) else [Text(x)])
+    converter=lambda x: x if isinstance(x, MessageChain) else MessageChain(x if isinstance(x, list) else [Text(x)])
 )

@@ -37,11 +37,15 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
         if isinstance(message[0], Notice):
             notice: Notice = message.get_first(Notice)
             if notice.target.last_value == context.self.last_value:
+                message = MessageChain(message.content.copy())
                 message.content.remove(notice)
                 if isinstance(message[0], Text):
-                    message[0].text = message[0].text.lstrip()  # type: ignore
-                    if not message[0].text:  # type: ignore
+                    text = message[0].text.lstrip()  # type: ignore
+                    if not text:
                         message.content.pop(0)
+                    else:
+                        message.content[0] = Text(text)
+                return message
         return message
 
     def completion_waiter(self, source: AvillaMessageEvent, handle, priority: int = 15) -> Waiter:
@@ -130,7 +134,7 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
     def handle_command(self, alc: FuncMounter[Any, MessageChain]) -> Callable:
         async def wrapper(ctx: Context, message: MessageChain):
             try:
-                arp = alc.parse(message)
+                arp = alc.parse(self.remove_tome(message, ctx))
             except Exception as e:
                 await ctx.scene.send_message(str(e))
                 return

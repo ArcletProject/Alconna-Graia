@@ -258,7 +258,10 @@ class AlconnaDispatcher(BaseDispatcher):
                 except Exception as e:
                     _res = Arparma(self.command.path, message, False, error_info=e)
                 may_help_text: Optional[str] = cap.get("output", None)
-            if not may_help_text and not _res.matched and ((not _res.head_matched) or self.skip_for_unmatch):
+            if not _res.head_matched:
+                fut.set_result(None)
+                raise ExecutionStop
+            if not may_help_text and not _res.matched and self.skip_for_unmatch:
                 fut.set_result(None)
                 raise ExecutionStop
             if not may_help_text and _res.error_info:

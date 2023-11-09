@@ -52,11 +52,15 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
         if isinstance(message[0], At):
             notice: At = message.get_first(At)
             if notice.target == account:
+                message = MessageChain(message.content.copy())
                 message.content.remove(notice)
                 if isinstance(message[0], Text):
-                    message[0].text = message[0].text.lstrip()  # type: ignore
-                    if not message[0].text:  # type: ignore
+                    text = message[0].text.lstrip()  # type: ignore
+                    if not text:
                         message.content.pop(0)
+                    else:
+                        message.content[0] = Text(text)
+                return message
         return message
 
     def completion_waiter(self, source: MessageEvent, handle, priority: int = 15) -> Waiter:
@@ -150,7 +154,7 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
     def handle_command(self, alc: FuncMounter[Any, MessageChain]) -> Callable:
         async def wrapper(client: Client, sender: Union[Group, Friend], message: MessageChain):
             try:
-                arp = alc.parse(message)
+                arp = alc.parse(self.remove_tome(message, client.uin))
             except Exception as e:
                 if isinstance(sender, Group):
                     await client.send_group_message(sender, str(e))
