@@ -112,7 +112,8 @@ class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
         func: Callable,
         buffer: dict[str, Any],
         dispatcher: BaseDispatcher | None,
-        **kwargs
+        *args,
+        **kwargs,
     ) -> None:
         _dispatchers = buffer.setdefault("dispatchers", [])
         if dispatcher:

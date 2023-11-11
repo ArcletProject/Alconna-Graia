@@ -14,7 +14,6 @@ TAdapter = TypeVar("TAdapter", bound=AlconnaGraiaAdapter)
 lang.load(Path(__file__).parent / "i18n")
 
 
-
 class AlconnaGraiaService(Service, Generic[TAdapter]):
     adapter: TAdapter
     id = "alconna.graia.service"
@@ -63,3 +62,8 @@ class AlconnaGraiaService(Service, Generic[TAdapter]):
         async with self.stage("cleanup"):
             if self.enable_cache:
                 command_manager.dump_cache()
+
+    supported_interface_types = set()
+
+    def get_interface(self, *args, **kwargs):
+        return None

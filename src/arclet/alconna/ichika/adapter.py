@@ -139,7 +139,7 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
         dispatcher: BaseDispatcher | None,
         guild: bool,
         private: bool,
-        **kwargs
+        patterns: list[str] | None = None,
     ) -> None:
         events = []
         if guild:

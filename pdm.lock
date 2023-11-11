@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform"]
 lock_version = "4.4"
-content_hash = "sha256:1f604a4ae6df1b1b3aff26063187e77927b97520cae15d1027339ef124981046"
+content_hash = "sha256:9255fe99b5e679bd662089d371f843e01aa43f572ce9f538b65929eac2d81c19"
 
 [[package]]
 name = "aiohttp"
@@ -147,7 +147,7 @@ files = [
 
 [[package]]
 name = "avilla-core"
-version = "1.0.0a9"
+version = "1.0.0a10"
 requires_python = ">=3.9"
 summary = ""
 dependencies = [
@@ -158,8 +158,8 @@ dependencies = [
     "loguru>=0.6.0",
 ]
 files = [
-    {file = "avilla_core-1.0.0a9-py3-none-any.whl", hash = "sha256:ea505ab79509a008419e7165c5f7253be26c871e99d5cbdd424ef8d5753b19cf"},
-    {file = "avilla_core-1.0.0a9.tar.gz", hash = "sha256:e34b19eaf1883b009c9a5480155153a679ded0f472137a3b60304af7784557e8"},
+    {file = "avilla_core-1.0.0a10-py3-none-any.whl", hash = "sha256:733ef87f85ecfa9092388a144bcb85e49d8c7833707f27801096e0aa34bc994a"},
+    {file = "avilla_core-1.0.0a10.tar.gz", hash = "sha256:a5cd7563076aed1392381c5e558c233285cc5a8aa1b09711930304a5edd4f555"},
 ]
 
 [[package]]

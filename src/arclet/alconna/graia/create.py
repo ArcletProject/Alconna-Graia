@@ -20,8 +20,8 @@ class AlconnaBehaviorCreator(AbstractCreator):
             author=["ArcletProject@github"],
         ),
     )
-    from graia.creart.broadcast import BroadcastCreator
-    from graia.creart.saya import SayaCreator
+    from graia.broadcast.creator import BroadcastCreator
+    from graia.saya.creator import SayaCreator
 
     @staticmethod
     @mixin(BroadcastCreator, SayaCreator)
