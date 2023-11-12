@@ -39,8 +39,8 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
             if notice.target.last_value == context.self.last_value:
                 message = MessageChain(message.content.copy())
                 message.content.remove(notice)
-                if isinstance(message[0], Text):
-                    text = message[0].text.lstrip()  # type: ignore
+                if message.content and isinstance(message.content[0], Text):
+                    text = message.content[0].text.lstrip()  # type: ignore
                     if not text:
                         message.content.pop(0)
                     else:

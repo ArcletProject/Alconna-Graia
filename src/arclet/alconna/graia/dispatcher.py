@@ -94,7 +94,7 @@ class AlconnaDispatcher(BaseDispatcher):
         skip_for_unmatch: bool = True,
         comp_session: Optional[CompConfig] = None,
         message_converter: Optional[TConvert] = None,
-        remove_tome: bool = True,
+        remove_tome: bool = False,
     ):
         """
         构造 Alconna调度器
@@ -103,7 +103,7 @@ class AlconnaDispatcher(BaseDispatcher):
             send_flag ("reply", "post", "stay"): 输出信息的发送方式
             skip_for_unmatch (bool): 当指令匹配失败时是否跳过对应的事件监听器, 默认为 True
             comp_session (CompConfig, optional): 补全会话配置, 不传入则不启用补全会话
-            remove_tome (bool, optional): 是否移除首部的 @自己，默认为 True
+            remove_tome (bool, optional): 是否移除首部的 @自己，默认为 False
         """
         super().__init__()
         self.command = command
