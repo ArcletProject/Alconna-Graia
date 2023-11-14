@@ -48,19 +48,25 @@ def resolve_dispatchers_mixin(dispatchers: Iterable[T_Dispatcher]) -> list[T_Dis
 
 
 class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
-    def remove_tome(self, message: MessageChain, account: int):
+
+    def is_tome(self, message: MessageChain, account: int):
         if isinstance(message[0], At):
             notice: At = message.get_first(At)
             if notice.target == account:
-                message = MessageChain(message.content.copy())
-                message.content.remove(notice)
-                if message.content and isinstance(message.content[0], Text):
-                    text = message.content[0].text.lstrip()  # type: ignore
-                    if not text:
-                        message.content.pop(0)
-                    else:
-                        message.content[0] = Text(text)
-                return message
+                return True
+        return False
+
+    def remove_tome(self, message: MessageChain, account: int):
+        if self.is_tome(message, account):
+            message = MessageChain(message.content.copy())
+            message.content.remove(message.get_first(At))
+            if message.content and isinstance(message.content[0], Text):
+                text = message.content[0].text.lstrip()  # type: ignore
+                if not text:
+                    message.content.pop(0)
+                else:
+                    message.content[0] = Text(text)
+            return message
         return message
 
     def completion_waiter(self, source: MessageEvent, handle, priority: int = 15) -> Waiter:
@@ -75,9 +81,16 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
 
         return waiter  # type: ignore
 
-    async def lookup_source(self, interface: DispatcherInterface[MessageEvent], remove_tome: bool = True) -> MessageChain:
+    async def lookup_source(
+        self,
+        interface: DispatcherInterface[MessageEvent],
+        need_tome: bool = True,
+        remove_tome: bool = True
+    ) -> MessageChain:
         message = await interface.lookup_param("__message_chain__", MessageChain, MessageChain([Text("Unknown")]))
         client: Client = CLIENT_INSTANCE.get()
+        if need_tome and not self.is_tome(message, client.uin):
+            raise ExecutionStop
         if remove_tome:
             return self.remove_tome(message, client.uin)
         return message
@@ -95,7 +108,7 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
         client: Client = CLIENT_INSTANCE.get()
         help_message: MessageChain = await run_always_await(
             converter,
-            str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered) else "help",
+            str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered)  else "error",
             output_text,
         )
         if isinstance(source, GroupMessage):

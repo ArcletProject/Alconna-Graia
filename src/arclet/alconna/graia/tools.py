@@ -98,6 +98,8 @@ def alcommand(
     post: bool = False,
     patterns: list[str] | None = None,
     comp_session: CompConfig | None = None,
+    need_tome: bool = False,
+    remove_tome: bool = False,
 ) -> SchemaWrapper:
     """
     saya-util 形式的注册一个消息事件监听器并携带 AlconnaDispatcher
@@ -112,6 +114,8 @@ def alcommand(
         post (bool, optional): 是否以事件发送输出信息
         patterns (list[str] | None, optional): 在可能的以 Avilla 为基础框架时使用的 selector 匹配模式
         comp_session (CompConfig | None, optional): 是否使用补全会话
+        need_tome (bool, optional): 是否需要 @ 机器人
+        remove_tome (bool, optional): 是否移除 @ 机器人
     """
     if isinstance(alconna, str):
         if not alconna.strip():
@@ -124,7 +128,7 @@ def alcommand(
         alconna = _factory.build()
     dispatcher = AlconnaDispatcher(
         alconna, send_flag="post" if post else "reply", skip_for_unmatch=not send_error,  # type: ignore
-        comp_session=comp_session,
+        comp_session=comp_session, need_tome=need_tome, remove_tome=remove_tome
     )
 
     def wrapper(func: Callable, buffer: dict[str, Any]) -> AlconnaSchema:
@@ -140,6 +144,8 @@ def from_command(
     format_command: str,
     args: dict[str, type | BasePattern] | None = None,
     post: bool = False,
+    need_tome: bool = False,
+    remove_tome: bool = False,
 ) -> SchemaWrapper:
     """
     saya-util 形式的仅注入一个 AlconnaDispatcher, 事件监听部分自行处理
@@ -148,6 +154,8 @@ def from_command(
         format_command: 格式化命令字符串
         args: 格式化填入内容
         post: 是否以事件发送输出信息
+        need_tome: 是否需要 @ 机器人
+        remove_tome: 是否移除 @ 机器人
     """
 
     def wrapper(func: Callable, buffer: dict[str, Any]):
@@ -155,7 +163,7 @@ def from_command(
         custom_args.update(args or {})
         cmd = AlconnaFormat(format_command, custom_args)
         buffer.setdefault("dispatchers", []).append(
-            AlconnaDispatcher(cmd, send_flag="post" if post else "reply")  # type: ignore
+            AlconnaDispatcher(cmd, send_flag="post" if post else "reply", need_tome=need_tome, remove_tome=remove_tome)  # type: ignore
         )
         return AlconnaSchema(cmd)
 

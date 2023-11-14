@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 from atexit import register
 from typing import Any, ClassVar, Literal, get_args, Optional, TYPE_CHECKING, Dict
 from arclet.alconna.completion import CompSession
@@ -14,7 +15,6 @@ from graia.broadcast.entities.event import Dispatchable
 from graia.broadcast.exceptions import ExecutionStop, PropagationCancelled
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
 from graia.broadcast.interrupt import InterruptControl
-from launart import Launart
 from tarina import generic_isinstance, generic_issubclass, lang, LRU
 from tarina.generic import get_origin
 from creart import it
@@ -94,6 +94,7 @@ class AlconnaDispatcher(BaseDispatcher):
         skip_for_unmatch: bool = True,
         comp_session: Optional[CompConfig] = None,
         message_converter: Optional[TConvert] = None,
+        need_tome: bool = False,
         remove_tome: bool = False,
     ):
         """
@@ -103,9 +104,11 @@ class AlconnaDispatcher(BaseDispatcher):
             send_flag ("reply", "post", "stay"): 输出信息的发送方式
             skip_for_unmatch (bool): 当指令匹配失败时是否跳过对应的事件监听器, 默认为 True
             comp_session (CompConfig, optional): 补全会话配置, 不传入则不启用补全会话
+            need_tome (bool, optional): 是否需要 @自己, 默认为 False
             remove_tome (bool, optional): 是否移除首部的 @自己，默认为 False
         """
         super().__init__()
+        self.need_tome = need_tome
         self.command = command
         self.send_flag = send_flag
         self.skip_for_unmatch = skip_for_unmatch
@@ -174,6 +177,9 @@ class AlconnaDispatcher(BaseDispatcher):
                     return message
 
             self._waiter = _
+        with contextlib.suppress(LookupError):
+            self.need_tome = self.need_tome or AlconnaGraiaService.current().global_need_tome
+            self.remove_tome = self.remove_tome or AlconnaGraiaService.current().global_remove_tome
 
     async def handle(self, source: Optional[Dispatchable], msg: MessageChain, adapter: AlconnaGraiaAdapter):
         inc = it(InterruptControl)
@@ -233,14 +239,10 @@ class AlconnaDispatcher(BaseDispatcher):
 
     async def beforeExecution(self, interface: DispatcherInterface):
         try:
-            manager = Launart.current()
-            if hasattr(manager, "get_service"):
-                adapter = manager.get_service(AlconnaGraiaService.id).get_adapter()
-            else:
-                adapter = Launart.current().get_component(AlconnaGraiaService).get_adapter()
+            adapter = AlconnaGraiaService.current().get_adapter()
         except (ValueError, LookupError, AttributeError):
             adapter = AlconnaGraiaAdapter.instance()
-        message: MessageChain = await adapter.lookup_source(interface, self.remove_tome)
+        message = await adapter.lookup_source(interface, self.need_tome, self.remove_tome)
         try:
             source = interface.event
         except LookupError:

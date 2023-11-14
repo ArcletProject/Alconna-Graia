@@ -33,19 +33,24 @@ AvillaMessageEvent = Union[MessageEdited, MessageReceived]
 
 class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
 
-    def remove_tome(self, message: MessageChain, context: Context):
+    def is_tome(self, message: MessageChain, context: Context):
         if isinstance(message[0], Notice):
             notice: Notice = message.get_first(Notice)
             if notice.target.last_value == context.self.last_value:
-                message = MessageChain(message.content.copy())
-                message.content.remove(notice)
-                if message.content and isinstance(message.content[0], Text):
-                    text = message.content[0].text.lstrip()  # type: ignore
-                    if not text:
-                        message.content.pop(0)
-                    else:
-                        message.content[0] = Text(text)
-                return message
+                return True
+        return False
+
+    def remove_tome(self, message: MessageChain, context: Context):
+        if self.is_tome(message, context):
+            message = MessageChain(message.content.copy())
+            message.content.remove(message.get_first(Notice))
+            if message.content and isinstance(message.content[0], Text):
+                text = message.content[0].text.lstrip()  # type: ignore
+                if not text:
+                    message.content.pop(0)
+                else:
+                    message.content[0] = Text(text)
+            return message
         return message
 
     def completion_waiter(self, source: AvillaMessageEvent, handle, priority: int = 15) -> Waiter:
@@ -60,8 +65,15 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
 
         return waiter  # type: ignore
 
-    async def lookup_source(self, interface: DispatcherInterface[AvillaMessageEvent], remove_tome: bool = True) -> MessageChain:
+    async def lookup_source(
+        self,
+        interface: DispatcherInterface[AvillaMessageEvent],
+        need_tome: bool = True,
+        remove_tome: bool = True
+    ) -> MessageChain:
         message = interface.event.message.content
+        if need_tome and not self.is_tome(message, interface.event.context):
+            raise ExecutionStop
         if remove_tome:
             return self.remove_tome(message, interface.event.context)
         return message
@@ -79,7 +91,7 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
         ctx: Context = source.context
         help_message: MessageChain = await run_always_await(
             converter,
-            str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered) else "help",
+            str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered) else "error",
             output_text,
         )
         await ctx.scene.send_message(help_message)

@@ -50,7 +50,12 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    async def lookup_source(self, interface: DispatcherInterface[TSource], remove_tome: bool = True) -> MessageChain:
+    async def lookup_source(
+        self,
+        interface: DispatcherInterface[TSource],
+        need_tome: bool = True,
+        remove_tome: bool = True
+    ) -> MessageChain:
         ...
 
     @abstractmethod
@@ -104,7 +109,12 @@ class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
 
         return waiter  # type: ignore
 
-    async def lookup_source(self, interface: DispatcherInterface[TSource], remove_tome: bool = True) -> MessageChain:
+    async def lookup_source(
+        self,
+        interface: DispatcherInterface[TSource],
+        need_tome: bool = True,
+        remove_tome: bool = True
+    ) -> MessageChain:
         return await interface.lookup_param("__message_chain__", MessageChain, None)
 
     def handle_listen(

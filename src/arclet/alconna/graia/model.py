@@ -9,7 +9,7 @@ from graia.amnesia.message import MessageChain
 
 TSource = TypeVar("TSource")
 T = TypeVar("T")
-OutType = Literal["help", "shortcut", "completion"]
+OutType = Literal["help", "shortcut", "completion", "error"]
 TConvert: TypeAlias = Callable[[OutType, str], Union[MessageChain, Awaitable[MessageChain]]]
 
 
