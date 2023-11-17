@@ -54,9 +54,10 @@ class AlconnaOutputMessage(Dispatchable):
     如果触发的某个命令的可能输出 (帮助信息、模糊匹配、报错等), AlconnaDisptcher的send_flag为post时, 会发送该事件
     """
 
-    def __init__(self, command: Alconna, text: str, source: Dispatchable):
+    def __init__(self, command: Alconna, otype: str, text: str, source: Dispatchable):
         self.command = command
         self.output = text
+        self.otype = otype
         self.source_event = source
 
     class Dispatcher(BaseDispatcher):
@@ -64,6 +65,8 @@ class AlconnaOutputMessage(Dispatchable):
         async def catch(cls, interface: "DispatcherInterface[AlconnaOutputMessage]"):
             if interface.name == "output" and interface.annotation == str:
                 return interface.event.output
+            if interface.name in ("otype", "output_type", "type"):
+                return interface.event.otype
             if isinstance(interface.annotation, Alconna):
                 return interface.event.command
             if issubclass(interface.annotation, type(interface.event.source_event)) or isinstance(
@@ -145,7 +148,7 @@ class AlconnaDispatcher(BaseDispatcher):
                 )
 
             async def _(message: MessageChain):
-                msg = str(message)
+                msg = str(message).lstrip()
                 if msg.startswith(_exit) and "exit" not in disables:
                     if msg == _exit:
                         return False
@@ -193,28 +196,28 @@ class AlconnaDispatcher(BaseDispatcher):
         res = Arparma(self.command.path, msg, False, error_info=SpecialOptionTriggered("completion"))
         waiter = adapter.completion_waiter(source, self._waiter, self.comp_session.get('priority', 10))
         while self._interface.available:
-            await adapter.send(self.converter, res, f"{str(self._interface)}{self._comp_help}", source)
+            await adapter.send(self.converter, "completion", f"{str(self._interface)}{self._comp_help}", source)
             while True:
                 try:
                     ans = await inc.wait(
                         waiter, timeout=self.comp_session.get('timeout', 60)
                     )
                 except asyncio.TimeoutError:
-                    await adapter.send(self.converter, res, lang.require("comp/graia", "timeout"), source)
+                    await adapter.send(self.converter, "completion", lang.require("comp/graia", "timeout"), source)
                     self._interface.exit()
                     return res
                 if ans is False:
-                    await adapter.send(self.converter, res, lang.require("comp/graia", "exited"), source)
+                    await adapter.send(self.converter, "completion", lang.require("comp/graia", "exited"), source)
                     self._interface.exit()
                     return res
                 if isinstance(ans, str):
-                    await adapter.send(self.converter, res, ans, source)
+                    await adapter.send(self.converter, "completion", ans, source)
                     continue
                 _res = self._interface.enter(None if ans is True else ans)
                 if _res.result:
                     res = _res.result
                 elif _res.exception and not isinstance(_res.exception, SpecialOptionTriggered):
-                    await adapter.send(self.converter, res, str(_res.exception), source)
+                    await adapter.send(self.converter, str(res.error_info) if isinstance(res.error_info, SpecialOptionTriggered) else "error", str(_res.exception), source)
                 break
         self._interface.exit()
         return res
@@ -227,15 +230,16 @@ class AlconnaDispatcher(BaseDispatcher):
         output_text: Optional[str] = None,
         source: Optional[Dispatchable] = None,
     ):
+        otype = str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered) else "error"
         if not source or (result.matched or not output_text):
-            return CommandResult(result, None, source)
+            return CommandResult(result, otype, None, source)
         if self.send_flag == "stay":
-            return CommandResult(result, output_text, source)
+            return CommandResult(result, otype, output_text, source)
         if self.send_flag == "reply":
-            await adapter.send(self.converter, result, output_text, source)
+            await adapter.send(self.converter, otype, output_text, source)
         elif self.send_flag == "post":
-            dii.broadcast.postEvent(AlconnaOutputMessage(self.command, output_text, source), source)
-        return CommandResult(result, None, source)
+            dii.broadcast.postEvent(AlconnaOutputMessage(self.command, otype, output_text, source), source)
+        return CommandResult(result, otype, None, source)
 
     async def beforeExecution(self, interface: DispatcherInterface):
         try:
@@ -271,7 +275,7 @@ class AlconnaDispatcher(BaseDispatcher):
             _property = await self.output(interface, adapter, _res, may_help_text, source)
             fut.set_result(_property)
         if not _property.result.matched and not _property.output:
-            raise PropagationCancelled
+            raise ExecutionStop
         interface.local_storage["alconna_result"] = _property
         return
 

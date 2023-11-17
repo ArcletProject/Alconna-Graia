@@ -20,7 +20,6 @@ from ichika.graia.event import FriendMessage, GroupMessage, MessageEvent
 from ichika.message.elements import At, Text
 
 from arclet.alconna import Arparma
-from arclet.alconna.exceptions import SpecialOptionTriggered
 from arclet.alconna.tools.construct import FuncMounter
 from tarina import is_awaitable
 
@@ -101,14 +100,14 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
     async def send(
         self,
         converter: TConvert,
-        result: Arparma[MessageChain],
+        output_type: str,
         output_text: str | None = None,
         source: MessageEvent | None = None,
     ) -> None:
         client: Client = CLIENT_INSTANCE.get()
         help_message: MessageChain = await run_always_await(
             converter,
-            str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered)  else "error",
+            output_type,
             output_text,
         )
         if isinstance(source, GroupMessage):

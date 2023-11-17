@@ -53,6 +53,7 @@ class Match(Generic[T]):
 class CommandResult(Generic[TSource]):
     """对解析结果的封装"""
     result: Arparma
+    output_type: str
     output: str | None = field(default=None)
     source: TSource = field(default=None)
 

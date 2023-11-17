@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any, Callable, Union
 
-from arclet.alconna.exceptions import SpecialOptionTriggered
 from graia.ariadne.app import Ariadne
 from graia.ariadne.event.message import FriendMessage, GroupMessage, MessageEvent
 from graia.ariadne.message.chain import MessageChain
@@ -78,14 +77,14 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
     async def send(
         self,
         converter: TConvert,
-        result: Arparma[MessageChain],
+        output_type: str,
         output_text: str | None = None,
         source: MessageEvent | None = None,
     ) -> None:
         app: Ariadne = Ariadne.current()
         help_message: MessageChain = await run_always_await(
             converter,
-            str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered) else "error",
+            output_type,
             output_text,
         )
         if isinstance(source, GroupMessage):

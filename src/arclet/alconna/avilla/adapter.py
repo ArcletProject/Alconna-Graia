@@ -17,7 +17,6 @@ from graia.broadcast.interrupt import Waiter
 from graia.broadcast.utilles import run_always_await
 
 from arclet.alconna import Arparma
-from arclet.alconna.exceptions import SpecialOptionTriggered
 from arclet.alconna.tools.construct import FuncMounter
 from tarina import is_awaitable
 
@@ -84,14 +83,14 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
     async def send(
         self,
         converter: TConvert,
-        result: Arparma[MessageChain],
+        output_type: str,
         output_text: str | None = None,
         source: AvillaMessageEvent | None = None,
     ) -> None:
         ctx: Context = source.context
         help_message: MessageChain = await run_always_await(
             converter,
-            str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered) else "error",
+            output_type,
             output_text,
         )
         await ctx.scene.send_message(help_message)

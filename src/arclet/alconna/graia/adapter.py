@@ -12,7 +12,6 @@ from graia.broadcast.entities.dispatcher import BaseDispatcher
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
 from graia.broadcast.interrupt.waiter import Waiter
 
-from arclet.alconna import Arparma
 from arclet.alconna.tools.construct import FuncMounter
 
 from .model import CommandResult, TConvert, TSource
@@ -62,7 +61,7 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
     async def send(
         self,
         converter: TConvert,
-        result: Arparma[MessageChain],
+        output_type: str,
         output_text: str | None = None,
         source: TSource | None = None,
     ) -> None:
@@ -141,7 +140,7 @@ class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
     async def send(
         self,
         converter: TConvert,
-        result: Arparma[MessageChain],
+        output_type: str,
         output_text: str | None = None,
         source: TSource | None = None,
     ) -> None:
