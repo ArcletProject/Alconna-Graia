@@ -15,7 +15,7 @@ from graia.broadcast.interfaces.dispatcher import DispatcherInterface
 from graia.broadcast.interrupt import Waiter
 from graia.broadcast.utilles import run_always_await
 
-from arclet.alconna import Arparma, argv_config, set_default_argv_type
+from arclet.alconna import argv_config, set_default_argv_type
 from arclet.alconna.tools.construct import FuncMounter
 from tarina import is_awaitable
 
@@ -32,7 +32,7 @@ Sender = Union[Friend, Member, Stranger, Client]
 class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
 
     def is_tome(self, message: MessageChain, account: int):
-        if isinstance(message.content[0], At):
+        if message.content and isinstance(message.content[0], At):
             notice: At = message.get_first(At)
             if notice.target == account:
                 return True
@@ -102,21 +102,6 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
                 return event.sender.nickname
             else:
                 return event.sender.name
-
-        return Depend(__wrapper__)
-
-    def check_account(self, path: str) -> Depend:
-        async def __wrapper__(app: Ariadne, arp: Arparma):
-            match: At | str | bytes = arp.query(path, b"\0")
-            if isinstance(match, bytes):
-                return True
-            if isinstance(match, str):
-                bot_name = (await app.get_bot_profile()).nickname
-                if bot_name == match:
-                    return True
-            if isinstance(match, At) and match.target == app.account:
-                return True
-            raise ExecutionStop
 
         return Depend(__wrapper__)
 

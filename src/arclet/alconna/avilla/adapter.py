@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from typing import Any, Callable, Union
 
+from avilla.core.selector import Selector
 from avilla.core.context import Context
 from avilla.core.elements import Notice
 from avilla.core.tools.filter import Filter
 from avilla.standard.core.message import MessageEdited, MessageReceived
-from avilla.standard.core.profile import Summary
+from avilla.standard.core.profile import Nick
 from graia.amnesia.message import MessageChain
 from graia.amnesia.message.element import Text
 from graia.broadcast import BaseDispatcher
@@ -16,7 +17,6 @@ from graia.broadcast.interfaces.dispatcher import DispatcherInterface
 from graia.broadcast.interrupt import Waiter
 from graia.broadcast.utilles import run_always_await
 
-from arclet.alconna import Arparma
 from arclet.alconna.tools.construct import FuncMounter
 from tarina import is_awaitable
 
@@ -32,15 +32,15 @@ AvillaMessageEvent = Union[MessageEdited, MessageReceived]
 
 class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
 
-    def is_tome(self, message: MessageChain, context: Context):
-        if isinstance(message[0], Notice):
+    def is_tome(self, message: MessageChain, account: Selector):
+        if message.content and isinstance(message[0], Notice):
             notice: Notice = message.get_first(Notice)
-            if notice.target.last_value == context.self.last_value:
+            if notice.target.last_value == account.last_value:
                 return True
         return False
 
-    def remove_tome(self, message: MessageChain, context: Context):
-        if self.is_tome(message, context):
+    def remove_tome(self, message: MessageChain, account: Selector):
+        if self.is_tome(message, account):
             message = MessageChain(message.content.copy())
             message.content.remove(message.get_first(Notice))
             if message.content and isinstance(message.content[0], Text):
@@ -60,7 +60,7 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
         )
         async def waiter(event: MessageReceived):
             if event.context.client == source.context.client:
-                return await handle(self.remove_tome(event.message.content, event.context))
+                return await handle(self.remove_tome(event.message.content, event.context.self))
 
         return waiter  # type: ignore
 
@@ -71,10 +71,10 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
         remove_tome: bool = True
     ) -> MessageChain:
         message = interface.event.message.content
-        if need_tome and not self.is_tome(message, interface.event.context):
+        if need_tome and not self.is_tome(message, interface.event.context.self):
             raise ExecutionStop
         if remove_tome:
-            return self.remove_tome(message, interface.event.context)
+            return self.remove_tome(message, interface.event.context.self)
         return message
 
     def source_id(self, source: AvillaMessageEvent | None = None) -> str:
@@ -98,30 +98,16 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
     def fetch_name(self, path: str) -> Depend:
         async def __wrapper__(ctx: Context, result: CommandResult[MessageReceived]):
             arp = result.result
-            if t := arp.all_matched_args.get(path, None):
-                return (
-                    t.target.pattern.get("display")
-                    or (await ctx.pull(Summary, target=result.source.context.client)).name
-                    if isinstance(t, Notice)
-                    else t
-                )
+            if t := arp.query[Union[str, Notice]](path):
+                if isinstance(t, Notice):
+                    if t.display:
+                        return t.display
+                    nick = await ctx.client.pull(Nick)
+                    return nick.nickname or nick.name
+                return t
             else:
-                return (await ctx.pull(Summary, target=result.source.context.client)).name
-
-        return Depend(__wrapper__)
-
-    def check_account(self, path: str) -> Depend:
-        async def __wrapper__(ctx: Context, arp: Arparma):
-            match: Notice | str | bytes = arp.query(path, b"\0")
-            if isinstance(match, bytes):
-                return True
-            if isinstance(match, str):
-                bot_name = (await ctx.pull(Summary, target=ctx.self)).name
-                if bot_name == match:
-                    return True
-            if isinstance(match, Notice) and match.target == ctx.self:
-                return True
-            raise ExecutionStop
+                nick = await ctx.client.pull(Nick)
+                return nick.nickname or nick.name
 
         return Depend(__wrapper__)
 
@@ -145,7 +131,7 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
     def handle_command(self, alc: FuncMounter[Any, MessageChain]) -> Callable:
         async def wrapper(ctx: Context, message: MessageChain):
             try:
-                arp = alc.parse(self.remove_tome(message, ctx))
+                arp = alc.parse(self.remove_tome(message, ctx.self))
             except Exception as e:
                 await ctx.scene.send_message(str(e))
                 return

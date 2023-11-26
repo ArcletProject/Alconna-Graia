@@ -19,7 +19,6 @@ from ichika.graia import CLIENT_INSTANCE
 from ichika.graia.event import FriendMessage, GroupMessage, MessageEvent
 from ichika.message.elements import At, Text
 
-from arclet.alconna import Arparma
 from arclet.alconna.tools.construct import FuncMounter
 from tarina import is_awaitable
 
@@ -49,7 +48,7 @@ def resolve_dispatchers_mixin(dispatchers: Iterable[T_Dispatcher]) -> list[T_Dis
 class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
 
     def is_tome(self, message: MessageChain, account: int):
-        if isinstance(message[0], At):
+        if message.content and isinstance(message[0], At):
             notice: At = message.get_first(At)
             if notice.target == account:
                 return True
@@ -126,21 +125,6 @@ class AlconnaIchikaAdapter(AlconnaGraiaAdapter[MessageEvent]):
                 return event.sender.nickname
             else:
                 return event.sender.name
-
-        return Depend(__wrapper__)
-
-    def check_account(self, path: str) -> Depend:
-        async def __wrapper__(client: Client, arp: Arparma):
-            match: At | str | bytes = arp.query(path, b"\0")
-            if isinstance(match, bytes):
-                return True
-            if isinstance(match, str):
-                bot_name = (await client.get_account_info()).nickname
-                if bot_name == match:
-                    return True
-            if isinstance(match, At) and match.target == client.uin:
-                return True
-            raise ExecutionStop
 
         return Depend(__wrapper__)
 

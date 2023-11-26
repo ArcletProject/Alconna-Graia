@@ -18,14 +18,12 @@ from .tools import MatchPrefix as MatchPrefix
 from .tools import MatchSuffix as MatchSuffix
 from .tools import alcommand as alcommand
 from .tools import assign as assign
-from .tools import check_account as check_account
 from .tools import endswith as endswith
 from .tools import fetch_name as fetch_name
 from .tools import from_command as from_command
 from .tools import funcommand as funcommand
 from .tools import match_path as match_path
 from .tools import match_value as match_value
-from .tools import mention as mention
 from .tools import shortcuts as shortcuts
 from .tools import startswith as startswith
 

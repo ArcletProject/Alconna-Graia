@@ -40,6 +40,10 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
         AlconnaGraiaAdapter.__adapter_class__ = cls
         super().__init_subclass__()
 
+    @abstractmethod
+    def is_tome(self, message: MessageChain, account: Any) -> bool:
+        ...
+
     @classmethod
     def instance(cls):
         return adapter_context.get()
@@ -76,10 +80,6 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def check_account(self, path: str) -> Depend:
-        ...
-
-    @abstractmethod
     def handle_listen(
         self,
         func: Callable,
@@ -97,6 +97,10 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
 
 
 class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
+
+    def is_tome(self, message: MessageChain, account: Any) -> bool:
+        return False
+
     def completion_waiter(self, source: TSource, handle, priority: int = 15) -> Waiter:
         @Waiter.create_using_function(
             [source.__class__],
@@ -133,9 +137,6 @@ class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
             return result.result.all_matched_args.get(path)
 
         return Depend(wrapper)
-
-    def check_account(self, path: str) -> Depend:
-        return Depend(lambda: True)
 
     async def send(
         self,

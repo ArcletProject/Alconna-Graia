@@ -145,3 +145,22 @@ async def on_message_received7(ctx: Context, arp: Arparma):
 @funcommand()
 def add(a: float, b: float):
     return f"{a} + {b} = {a + b}"
+
+
+cmd = Alconna(
+    "command",
+    Option("foo"),
+    Option("bar"),
+)
+
+
+@alcommand(cmd)
+@assign("foo")
+async def on_message_received8(ctx: Context):
+    await ctx.scene.send_message("Hello, Foo!")
+
+
+@alcommand(cmd, need_tome=True)
+@assign("bar")
+async def on_message_received9(ctx: Context):
+    await ctx.scene.send_message("Hello, Bar!")

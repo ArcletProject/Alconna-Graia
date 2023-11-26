@@ -12,7 +12,7 @@ from graia.amnesia.message import MessageChain
 from graia.amnesia.message.element import Text
 from graia.broadcast.entities.dispatcher import BaseDispatcher
 from graia.broadcast.entities.event import Dispatchable
-from graia.broadcast.exceptions import ExecutionStop, PropagationCancelled
+from graia.broadcast.exceptions import ExecutionStop
 from graia.broadcast.interfaces.dispatcher import DispatcherInterface
 from graia.broadcast.interrupt import InterruptControl
 from tarina import generic_isinstance, generic_issubclass, lang, LRU

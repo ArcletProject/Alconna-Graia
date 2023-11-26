@@ -331,32 +331,6 @@ def endswith(suffix: Any, include: bool = False, bind: str | None = None) -> Buf
     return wrapper
 
 
-def check_account(path: str):
-    """
-    依据可能的指定路径, 检查路径是否可能指示为当前 bot 账号
-
-    Args:
-        path: 指定的路径
-    """
-
-    return AlconnaGraiaAdapter.instance().check_account(path)
-
-
-@buffer_modifier
-def mention(path: str) -> BufferModifier:
-    """
-    检查路径是否可能指示为当前 bot 账号
-
-    Args:
-        path: 指定的路径
-    """
-
-    def wrapper(buffer: dict[str, Any]):
-        buffer.setdefault("decorators", []).append(check_account(path))
-
-    return wrapper
-
-
 def funcommand(
     name: str | None= None,
     prefixes: list[str] | None = None,
