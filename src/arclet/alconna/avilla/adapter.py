@@ -78,7 +78,7 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
         return message
 
     def source_id(self, source: AvillaMessageEvent | None = None) -> str:
-        return source.message.id if source else "_"
+        return f"{source.message.id}@{source.context.account}" if source else "_"
 
     async def send(
         self,

@@ -366,7 +366,5 @@ __all__ = [
     "MatchPrefix",
     "endswith",
     "MatchSuffix",
-    "check_account",
-    "mention",
     "funcommand"
 ]
