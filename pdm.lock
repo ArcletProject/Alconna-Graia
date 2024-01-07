@@ -4,8 +4,8 @@
 [metadata]
 groups = ["default", "dev"]
 strategy = ["cross_platform"]
-lock_version = "4.4"
-content_hash = "sha256:9255fe99b5e679bd662089d371f843e01aa43f572ce9f538b65929eac2d81c19"
+lock_version = "4.4.1"
+content_hash = "sha256:b04301d23475ae8049ddf858f2a047d60022e13211899949dcfc8da130754180"
 
 [[package]]
 name = "aiohttp"
@@ -85,7 +85,7 @@ files = [
 
 [[package]]
 name = "arclet-alconna"
-version = "1.7.38"
+version = "1.7.42"
 requires_python = ">=3.8"
 summary = "A High-performance, Generality, Humane Command Line Arguments Parser Library."
 dependencies = [
@@ -94,22 +94,22 @@ dependencies = [
     "typing-extensions>=4.5.0",
 ]
 files = [
-    {file = "arclet_alconna-1.7.38-py3-none-any.whl", hash = "sha256:e2248605bb7425c69a9cbe1e5f797d50945f30f054aaa9af73a237d8307d3432"},
-    {file = "arclet_alconna-1.7.38.tar.gz", hash = "sha256:90af6498993e7bc21223259758a021d811329b341a9add7868b9497705af050b"},
+    {file = "arclet_alconna-1.7.42-py3-none-any.whl", hash = "sha256:fa78944121d4afa4e2c0247a98967ddb1e76cf63b94c8c3f4f393c52f6d23e75"},
+    {file = "arclet_alconna-1.7.42.tar.gz", hash = "sha256:a5a1cca37d0c3d58607ee22485e636fa0b01d40eb43194e542b2c3d6a5d2e70b"},
 ]
 
 [[package]]
 name = "arclet-alconna-tools"
-version = "0.6.8"
+version = "0.6.10"
 requires_python = ">=3.8"
 summary = "Builtin Tools for Alconna"
 dependencies = [
-    "arclet-alconna>=1.7.33",
+    "arclet-alconna>=1.7.39",
     "nepattern>=0.5.15",
 ]
 files = [
-    {file = "arclet-alconna-tools-0.6.8.tar.gz", hash = "sha256:a36ddc9c311cae3e1d9df0d6b11eb8d69c57304bbca744dc2c9532e53093cc6f"},
-    {file = "arclet_alconna_tools-0.6.8-py3-none-any.whl", hash = "sha256:eff5254e19b3fb24222164f419302f5f8849b8c14ddf8d96199747adc1916a13"},
+    {file = "arclet-alconna-tools-0.6.10.tar.gz", hash = "sha256:655e0b8ea76e6454dede4129513c3f40c38aeb60054139c2db2f2fa6f7c7c995"},
+    {file = "arclet_alconna_tools-0.6.10-py3-none-any.whl", hash = "sha256:21d7676d2f110f78d6570ad9f7e7f2ffd10bd2ec9bc502deb9a3cb4ce3fee8c0"},
 ]
 
 [[package]]
@@ -147,7 +147,7 @@ files = [
 
 [[package]]
 name = "avilla-core"
-version = "1.0.0a16"
+version = "1.0.0a20"
 requires_python = ">=3.9"
 summary = ""
 dependencies = [
@@ -158,21 +158,21 @@ dependencies = [
     "loguru>=0.6.0",
 ]
 files = [
-    {file = "avilla_core-1.0.0a16-py3-none-any.whl", hash = "sha256:3143e64aad122f1bb31854db74016364001328877709a7bcabbfba5d70e146ce"},
-    {file = "avilla_core-1.0.0a16.tar.gz", hash = "sha256:429da003b75769778a348cb32a1b9789eb32cb2a51e3372fbd6f1e38c575a2e1"},
+    {file = "avilla_core-1.0.0a20-py3-none-any.whl", hash = "sha256:706493e8409ac0e2d5df49eb5acbf3edb77dde688fc3882a2e8513e026a7bef1"},
+    {file = "avilla_core-1.0.0a20.tar.gz", hash = "sha256:6edb76228c4e954648595a77da438c558be965e2d045f268785beeeccc4c6579"},
 ]
 
 [[package]]
 name = "avilla-qqapi"
-version = "1.0.0a20"
+version = "1.0.0a25"
 requires_python = ">=3.9"
 summary = ""
 dependencies = [
     "aiohttp>=3.8.1",
 ]
 files = [
-    {file = "avilla_qqapi-1.0.0a20-py3-none-any.whl", hash = "sha256:953af0e70f434fad426ee186cdcb4931a8b6a6a6d13d3b7a36a5fea82dcc52dd"},
-    {file = "avilla_qqapi-1.0.0a20.tar.gz", hash = "sha256:63cbb100764945c1e2bbb48122eb998b4c17f1429817c27f05ff4f2bfabe77b1"},
+    {file = "avilla_qqapi-1.0.0a25-py3-none-any.whl", hash = "sha256:87152cf5fcfca897fad01e490a52a86a56ebef5fefa54827ab668e8b968665fc"},
+    {file = "avilla_qqapi-1.0.0a25.tar.gz", hash = "sha256:a4de7c05a1dcbdb59824a979e356c31651b70304ed3c73d0e083028193ee055c"},
 ]
 
 [[package]]

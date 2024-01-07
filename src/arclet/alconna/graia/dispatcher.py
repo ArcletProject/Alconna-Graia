@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 from atexit import register
+from collections import deque
 from typing import Any, ClassVar, Literal, get_args, Optional, TYPE_CHECKING, Dict
 from arclet.alconna.completion import CompSession
 from arclet.alconna.core import Alconna
@@ -27,8 +28,10 @@ from .adapter import AlconnaGraiaAdapter
 
 if TYPE_CHECKING:
     result_cache: Dict[int, LRU[str, asyncio.Future[Optional[CommandResult]]]]
+    output_cache: Dict[int, deque]
 else:
     result_cache = {}
+    output_cache = {}
 
 
 def get_future(alc: Alconna, source: str):
@@ -42,7 +45,10 @@ def set_future(alc: Alconna, source: str):
 def clear():
     for lru in result_cache.values():
         lru.clear()
+    for dq in output_cache.values():
+        dq.clear()
     result_cache.clear()
+    output_cache.clear()
 
 
 register(clear)
@@ -120,6 +126,7 @@ class AlconnaDispatcher(BaseDispatcher):
         self.remove_tome = remove_tome
         self._interface = CompSession(self.command)
         result_cache.setdefault(command._hash, LRU(10))
+        output_cache.setdefault(command._hash, deque(maxlen=20))
         self._comp_help = ""
         self._waiter = None
         if self.comp_session is not None:
@@ -184,7 +191,7 @@ class AlconnaDispatcher(BaseDispatcher):
             self.need_tome = self.need_tome or AlconnaGraiaService.current().global_need_tome
             self.remove_tome = self.remove_tome or AlconnaGraiaService.current().global_remove_tome
 
-    async def handle(self, source: Optional[Dispatchable], msg: MessageChain, adapter: AlconnaGraiaAdapter):
+    async def handle(self, source: Optional[Dispatchable], msg: MessageChain, adapter: AlconnaGraiaAdapter, dii: DispatcherInterface):
         inc = it(InterruptControl)
         if self.comp_session is None or not source:
             return self.command.parse(msg)  # type: ignore
@@ -203,21 +210,21 @@ class AlconnaDispatcher(BaseDispatcher):
                         waiter, timeout=self.comp_session.get('timeout', 60)
                     )
                 except asyncio.TimeoutError:
-                    await adapter.send(self.converter, "completion", lang.require("comp/graia", "timeout"), source)
+                    await self.output(dii, adapter, res, lang.require("comp/graia", "timeout"), source)
                     self._interface.exit()
                     return res
                 if ans is False:
-                    await adapter.send(self.converter, "completion", lang.require("comp/graia", "exited"), source)
+                    await self.output(dii, adapter, res, lang.require("comp/graia", "exited"), source)
                     self._interface.exit()
                     return res
                 if isinstance(ans, str):
-                    await adapter.send(self.converter, "completion", ans, source)
+                    await self.output(dii, adapter, res, ans, source)
                     continue
                 _res = self._interface.enter(None if ans is True else ans)
                 if _res.result:
                     res = _res.result
                 elif _res.exception and not isinstance(_res.exception, SpecialOptionTriggered):
-                    await adapter.send(self.converter, str(res.error_info) if isinstance(res.error_info, SpecialOptionTriggered) else "error", str(_res.exception), source)
+                    await self.output(dii, adapter, res, str(_res.exception), source)
                 break
         self._interface.exit()
         return res
@@ -260,7 +267,7 @@ class AlconnaDispatcher(BaseDispatcher):
             with output_manager.capture(self.command.name) as cap:
                 output_manager.set_action(lambda x: x, self.command.name)
                 try:
-                    _res = await self.handle(source, message, adapter)
+                    _res = await self.handle(source, message, adapter, interface)
                 except Exception as e:
                     _res = Arparma(self.command.path, message, False, error_info=e)
                 may_help_text: Optional[str] = cap.get("output", None)
@@ -272,6 +279,10 @@ class AlconnaDispatcher(BaseDispatcher):
                 raise ExecutionStop
             if not may_help_text and _res.error_info:
                 may_help_text = repr(_res.error_info)
+            if may_help_text:
+                output_cache[self.command._hash].append(may_help_text)
+            else:
+                output_cache[self.command._hash].clear()
             _property = await self.output(interface, adapter, _res, may_help_text, source)
             fut.set_result(_property)
         if not _property.result.matched and not _property.output:
