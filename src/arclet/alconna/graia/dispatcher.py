@@ -1,7 +1,6 @@
 import asyncio
 import contextlib
 from atexit import register
-from collections import deque
 from typing import Any, ClassVar, Literal, get_args, Optional, TYPE_CHECKING, Dict
 from arclet.alconna.completion import CompSession
 from arclet.alconna.core import Alconna
@@ -28,7 +27,7 @@ from .adapter import AlconnaGraiaAdapter
 
 if TYPE_CHECKING:
     result_cache: Dict[int, LRU[str, asyncio.Future[Optional[CommandResult]]]]
-    output_cache: Dict[int, deque]
+    output_cache: Dict[int, LRU[str, str]]
 else:
     result_cache = {}
     output_cache = {}
@@ -126,7 +125,7 @@ class AlconnaDispatcher(BaseDispatcher):
         self.remove_tome = remove_tome
         self._interface = CompSession(self.command)
         result_cache.setdefault(command._hash, LRU(10))
-        output_cache.setdefault(command._hash, deque(maxlen=20))
+        output_cache.setdefault(command._hash, LRU(10))
         self._comp_help = ""
         self._waiter = None
         if self.comp_session is not None:
@@ -279,10 +278,8 @@ class AlconnaDispatcher(BaseDispatcher):
                 raise ExecutionStop
             if not may_help_text and _res.error_info:
                 may_help_text = repr(_res.error_info)
-            if may_help_text:
-                output_cache[self.command._hash].append(may_help_text)
-            else:
-                output_cache[self.command._hash].clear()
+            if may_help_text is not None:
+                output_cache[self.command._hash][adapter.source_id(source)] = may_help_text
             _property = await self.output(interface, adapter, _res, may_help_text, source)
             fut.set_result(_property)
         if not _property.result.matched and not _property.output:
