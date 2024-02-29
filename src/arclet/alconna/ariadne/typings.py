@@ -1,21 +1,22 @@
+from typing import Union
 from nepattern import (
     URL,
     BasePattern,
-    PatternModel,
+    MatchMode,
     UnionPattern,
 )
-from nepattern.main import INTEGER
-from graia.ariadne.message.element import Image, At
+from nepattern.base import INTEGER
+from graia.ariadne.message.element import Image, At  # type: ignore
 
 ImgOrUrl = (
     UnionPattern(
         [
             BasePattern(
-                model=PatternModel.TYPE_CONVERT,
+                mode=MatchMode.TYPE_CONVERT,
                 origin=str,
                 converter=lambda _, x: x.url,
                 alias="img",
-                accepts=[Image],
+                accepts=Image,
             ),
             URL,
         ]
@@ -27,21 +28,21 @@ ImgOrUrl = (
 """
 
 AtID = (
-    UnionPattern(
+    UnionPattern[Union[str, At]](
         [
             BasePattern(
-                model=PatternModel.TYPE_CONVERT,
+                mode=MatchMode.TYPE_CONVERT,
                 origin=int,
                 alias="At",
-                accepts=[At],
+                accepts=At,
                 converter=lambda _, x: x.target,
             ),
             BasePattern(
                 r"@(\d+)",
-                model=PatternModel.REGEX_CONVERT,
+                mode=MatchMode.REGEX_CONVERT,
                 origin=int,
                 alias="@xxx",
-                accepts=[str],
+                accepts=str,
             ),
             INTEGER,
         ]

@@ -1,27 +1,28 @@
 from nepattern import (
     BasePattern,
-    PatternModel,
+    MatchMode,
     UnionPattern,
 )
-from nepattern.main import INTEGER
+from typing import Union
+from nepattern.base import INTEGER
 from avilla.core.elements import Notice
 
 NoticeID = (
-    UnionPattern(
+    UnionPattern[Union[str, Notice]](
         [
             BasePattern(
-                model=PatternModel.TYPE_CONVERT,
+                mode=MatchMode.TYPE_CONVERT,
                 origin=int,
                 alias="Notice",
-                accepts=[Notice],
-                converter=lambda _, x: int(x.target.pattern["member"]),
+                accepts=Notice,
+                converter=lambda _, x: int(x.target.pattern["member"]),  # type: ignore
             ),
             BasePattern(
                 r"@(\d+)",
-                model=PatternModel.REGEX_CONVERT,
+                mode=MatchMode.REGEX_CONVERT,
                 origin=int,
                 alias="@xxx",
-                accepts=[str],
+                accepts=str,
             ),
             INTEGER,
         ]

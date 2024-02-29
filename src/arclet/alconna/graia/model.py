@@ -6,8 +6,9 @@ from typing import TypeVar, Generic, TypedDict, Literal, Callable, Awaitable, Un
 from arclet.alconna import Arparma, Empty
 from typing_extensions import NotRequired, TypeAlias
 from graia.amnesia.message import MessageChain
+from graia.broadcast.entities.event import Dispatchable
 
-TSource = TypeVar("TSource")
+TSource = TypeVar("TSource", bound=Dispatchable)
 T = TypeVar("T")
 OutType = Literal["help", "shortcut", "completion", "error"]
 TConvert: TypeAlias = Callable[[OutType, str], Union[MessageChain, Awaitable[MessageChain]]]
@@ -55,7 +56,7 @@ class CommandResult(Generic[TSource]):
     result: Arparma
     output_type: str
     output: str | None = field(default=None)
-    source: TSource = field(default=None)
+    source: TSource | None = field(default=None)
 
 
 @dataclass

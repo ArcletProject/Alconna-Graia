@@ -84,8 +84,8 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
         self,
         converter: TConvert,
         output_type: str,
-        output_text: str | None = None,
-        source: AvillaMessageEvent | None = None,
+        output_text: str | None,
+        source: AvillaMessageEvent,
     ) -> None:
         ctx: Context = source.context
         help_message: MessageChain = await run_always_await(

@@ -49,7 +49,7 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
         return adapter_context.get()
 
     @abstractmethod
-    def completion_waiter(self, source: TSource, handler: Callable[[MessageChain], ...], priority: int = 15) -> Waiter:
+    def completion_waiter(self, source: TSource, handler: Callable[[MessageChain], Any], priority: int = 15) -> Waiter:
         ...
 
     @abstractmethod
@@ -66,8 +66,8 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
         self,
         converter: TConvert,
         output_type: str,
-        output_text: str | None = None,
-        source: TSource | None = None,
+        output_text: str | None,
+        source: TSource | None,
     ) -> None:
         ...
 
@@ -92,7 +92,7 @@ class AlconnaGraiaAdapter(Generic[TSource], metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def handle_command(self, alc: FuncMounter[Any, TSource]) -> Callable:
+    def handle_command(self, alc: FuncMounter[Any, Any]) -> Callable:
         ...
 
 
@@ -142,8 +142,8 @@ class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
         self,
         converter: TConvert,
         output_type: str,
-        output_text: str | None = None,
-        source: TSource | None = None,
+        output_text: str | None,
+        source: TSource | None,
     ) -> None:
         print(output_text)
         return
@@ -151,7 +151,7 @@ class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
     def source_id(self, source: TSource | None = None) -> str:
         return f"{id(source)}"
 
-    def handle_command(self, alc: FuncMounter[Any, TSource]) -> Callable:
+    def handle_command(self, alc: FuncMounter[Any, Any]) -> Callable:
         async def wrapper(interface: DispatcherInterface):
             msg = await self.lookup_source(interface)
             try:

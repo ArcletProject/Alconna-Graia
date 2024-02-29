@@ -43,7 +43,7 @@ class AlconnaGraiaService(Service, Generic[TAdapter]):
             if isinstance(adapter_type, str):
                 with suppress(Exception):
                     importlib.import_module(f"arclet.alconna.{adapter_type}")
-            self.adapter = AlconnaGraiaAdapter.__adapter_class__()
+            self.adapter = AlconnaGraiaAdapter.__adapter_class__()  # type: ignore
         self.enable_cache = enable_cache
         self.global_need_tome = global_need_tome
         self.global_remove_tome = global_remove_tome

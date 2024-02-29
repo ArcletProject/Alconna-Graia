@@ -21,16 +21,14 @@ from creart import it
 from arclet.alconna import Arparma, Empty, output_manager
 from arclet.alconna.exceptions import SpecialOptionTriggered
 
-from .model import CommandResult, Header, Match, Query, CompConfig, TConvert
+from .model import CommandResult, Header, Match, Query, CompConfig, TConvert, TSource
 from .service import AlconnaGraiaService
 from .adapter import AlconnaGraiaAdapter
 
-if TYPE_CHECKING:
-    result_cache: Dict[int, LRU[str, asyncio.Future[Optional[CommandResult]]]]
-    output_cache: Dict[int, LRU[str, str]]
-else:
-    result_cache = {}
-    output_cache = {}
+
+result_cache: "Dict[int, LRU[str, asyncio.Future[Optional[CommandResult]]]]" = {}
+output_cache: "Dict[int, LRU[str, str]]" = {}
+
 
 
 def get_future(alc: Alconna, source: str):
@@ -190,7 +188,7 @@ class AlconnaDispatcher(BaseDispatcher):
             self.need_tome = self.need_tome or AlconnaGraiaService.current().global_need_tome
             self.remove_tome = self.remove_tome or AlconnaGraiaService.current().global_remove_tome
 
-    async def handle(self, source: Optional[Dispatchable], msg: MessageChain, adapter: AlconnaGraiaAdapter, dii: DispatcherInterface):
+    async def handle(self, source: Optional[TSource], msg: MessageChain, adapter: AlconnaGraiaAdapter[TSource], dii: DispatcherInterface[TSource]):
         inc = it(InterruptControl)
         if self.comp_session is None or not source:
             return self.command.parse(msg)  # type: ignore
@@ -200,7 +198,7 @@ class AlconnaDispatcher(BaseDispatcher):
         if res:
             return res
         res = Arparma(self.command.path, msg, False, error_info=SpecialOptionTriggered("completion"))
-        waiter = adapter.completion_waiter(source, self._waiter, self.comp_session.get('priority', 10))
+        waiter = adapter.completion_waiter(source, self._waiter, self.comp_session.get('priority', 10))  # type: ignore
         while self._interface.available:
             await adapter.send(self.converter, "completion", f"{str(self._interface)}{self._comp_help}", source)
             while True:
@@ -231,10 +229,10 @@ class AlconnaDispatcher(BaseDispatcher):
     async def output(
         self,
         dii: DispatcherInterface,
-        adapter: AlconnaGraiaAdapter,
+        adapter: AlconnaGraiaAdapter[TSource],
         result: Arparma[MessageChain],
         output_text: Optional[str] = None,
-        source: Optional[Dispatchable] = None,
+        source: Optional[TSource] = None,
     ):
         otype = str(result.error_info) if isinstance(result.error_info, SpecialOptionTriggered) else "error"
         if not source or (result.matched or not output_text):

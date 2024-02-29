@@ -11,12 +11,12 @@ from graia.broadcast.builtin.decorators import Depend
 from graia.broadcast.builtin.derive import Derive
 from graia.broadcast.exceptions import ExecutionStop
 from graia.saya.factory import BufferModifier, SchemaWrapper, buffer_modifier, factory, ensure_buffer
-from nepattern import AllParam, BasePattern, Empty, type_parser
+from nepattern import BasePattern, Empty, parser
 from tarina import gen_subclass
 from typing_extensions import NotRequired
 
-from arclet.alconna import Alconna
-from arclet.alconna.tools.construct import FuncMounter
+from arclet.alconna import Alconna, AllParam
+from arclet.alconna.tools.construct import FuncMounter, MountConfig
 
 from .adapter import AlconnaGraiaAdapter
 from .dispatcher import AlconnaDispatcher, CommandResult
@@ -216,7 +216,7 @@ class MatchPrefix(Decorator, Derive[MessageChain]):
             prefix: 检测的前缀, 支持格式有 a|b , ['a', At(...)] 等
             extract: 是否为提取模式, 默认为 False
         """
-        pattern = type_parser(prefix)
+        pattern = parser(prefix)
         if pattern in (AllParam, Empty):
             raise ValueError(prefix)
         self.pattern = pattern.prefixed()
@@ -258,7 +258,7 @@ class MatchSuffix(Decorator, Derive[MessageChain]):
             suffix: 检测的前缀, 支持格式有 a|b , ['a', At(...)] 等
             extract: 是否为提取模式, 默认为 False
         """
-        pattern = type_parser(suffix)
+        pattern = parser(suffix)
         if pattern in (AllParam, Empty):
             raise ValueError(suffix)
         self.pattern = pattern.suffixed()
@@ -338,7 +338,7 @@ def funcommand(
     private: bool = True,
     patterns: list[str] | None = None,
 ):
-    _config = {"raise_exception": False}
+    _config: MountConfig = {"raise_exception": False}
     if name:
         _config["command"] = name
     if prefixes:

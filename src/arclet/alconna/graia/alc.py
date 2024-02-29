@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Any, Callable, cast
 from tarina import init_spec
 from graia.saya.factory import BufferModifier, SchemaWrapper, buffer_modifier, factory
 
@@ -61,7 +61,7 @@ def main_args(args: Args) -> BufferModifier:
 def argument(arg: Arg) -> BufferModifier:
     def wrapper(buffer: dict[str, Any]):
         if args := buffer.get("alc_args"):
-            args: Args
+            args = cast(Args, args)
             args.__merge__(arg)
         else:
             buffer["alc_args"] = Args().__merge__(arg)
