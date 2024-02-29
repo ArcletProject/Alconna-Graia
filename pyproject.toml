@@ -1,6 +1,6 @@
 [project]
 name = "arclet-alconna-graia-workspace"
-version = "0.0.1"
+version = "0"
 
 dependencies = [
     "arclet-alconna<2.0.0, >=1.8.1",
@@ -17,13 +17,13 @@ dependencies = [
 requires-python = ">=3.9"
 
 [build-system]
-requires = ["mina-build"]
+requires = ["mina-build<0.6"]
 build-backend = "mina.backend"
 
 [tool]
 
 [tool.mina]
-enabled = false
+enabled = true
 
 [tool.black]
 include = '\.pyi?$'
@@ -42,12 +42,9 @@ dev = [
     "avilla-console>=0.2.0",
     "avilla-qqapi>=1.0.0a20",
 ]
+
 [tool.pdm.scripts]
-buildall = "pdm mina build -a"
+buildall = "pdm mina build --all"
 pub = "pdm publish --no-build"
 puball = {composite = ["buildall", "pub"]}
-[tool.pdm.options]
-add = ["--no-isolation", "--no-self"]
-install = ["--no-isolation"]
-update = ["--no-isolation"]
-sync = ["--no-isolation"]
+

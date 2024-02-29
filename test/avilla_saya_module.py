@@ -121,16 +121,13 @@ code = Alconna(
 code.shortcut(
     "命令概览",
     {
-        "command": MessageChain(
-            [Text("执行\nfrom arclet.alconna import command_manager\nprint(command_manager)")]
-        )
+        "command": "执行\nfrom arclet.alconna import command_manager\nprint(command_manager)"
     }
 )
 code.shortcut(
     "echo",
     {
-        "command": MessageChain(
-            [Text("执行 --pure-text\nprint(\\'{*}\\')")])
+        "command": "执行 --pure-text\nprint(\\'{*}\\')"
     }
 )
 
