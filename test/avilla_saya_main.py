@@ -1,5 +1,5 @@
 import sys
-sys.path.append("D:\\Download\\Projects\\Alconna-Graia")
+sys.path.append("D:\\Projects\\Alconna-graia")
 
 from creart import create
 from launart import Launart
@@ -16,7 +16,7 @@ saya = create(Saya)
 saya.install_behaviours(AlconnaBehaviour(broadcast))
 launart = Launart()
 launart.add_component(AlconnaGraiaService(AlconnaAvillaAdapter))
-avilla = Avilla( launch_manager=launart)
+avilla = Avilla(launch_manager=launart)
 avilla.apply_protocols(ConsoleProtocol())
 
 with saya.module_context():
