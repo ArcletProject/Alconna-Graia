@@ -30,7 +30,6 @@ result_cache: "Dict[int, LRU[str, asyncio.Future[Optional[CommandResult]]]]" = {
 output_cache: "Dict[int, LRU[str, str]]" = {}
 
 
-
 def get_future(alc: Alconna, source: str):
     return result_cache[alc._hash].get(source)
 

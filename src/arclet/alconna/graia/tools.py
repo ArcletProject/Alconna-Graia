@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import inspect
 from functools import lru_cache
 from typing import Any, Callable, TypedDict
@@ -11,7 +12,7 @@ from graia.broadcast.builtin.decorators import Depend
 from graia.broadcast.builtin.derive import Derive
 from graia.broadcast.exceptions import ExecutionStop
 from graia.saya.factory import BufferModifier, SchemaWrapper, buffer_modifier, factory, ensure_buffer
-from nepattern import BasePattern, Empty, parser
+from nepattern import BasePattern, Empty, parser, MatchMode
 from tarina import gen_subclass
 from typing_extensions import NotRequired
 
@@ -205,6 +206,38 @@ def _get_filter_out() -> list[type[Element]]:
     return res
 
 
+def prefixed(pat: BasePattern):
+    if pat.mode not in (MatchMode.REGEX_MATCH, MatchMode.REGEX_CONVERT):
+        return pat
+    new_pat = BasePattern(
+        pattern=pat.pattern,
+        mode=pat.mode,
+        origin=pat.origin,
+        converter=pat.converter,
+        alias=pat.alias,
+        previous=pat.previous,
+        validators=pat.validators,
+    )
+    new_pat.regex_pattern = re.compile(f"^{new_pat.pattern}")
+    return new_pat
+
+
+def suffixed(pat: BasePattern):
+    if pat.mode not in (MatchMode.REGEX_MATCH, MatchMode.REGEX_CONVERT):
+        return pat
+    new_pat = BasePattern(
+        pattern=pat.pattern,
+        mode=pat.mode,
+        origin=pat.origin,
+        converter=pat.converter,
+        alias=pat.alias,
+        previous=pat.previous,
+        validators=pat.validators,
+    )
+    new_pat.regex_pattern = re.compile(f"{new_pat.pattern}$")
+    return new_pat
+
+
 class MatchPrefix(Decorator, Derive[MessageChain]):
     pre = True
 
@@ -216,10 +249,10 @@ class MatchPrefix(Decorator, Derive[MessageChain]):
             prefix: 检测的前缀, 支持格式有 a|b , ['a', At(...)] 等
             extract: 是否为提取模式, 默认为 False
         """
-        pattern = parser(prefix)
+        pattern = BasePattern(prefix, mode=MatchMode.REGEX_MATCH) if isinstance(prefix, str) else parser(prefix)
         if pattern in (AllParam, Empty):
             raise ValueError(prefix)
-        self.pattern = pattern.prefixed()
+        self.pattern = prefixed(pattern)
         self.extract = extract
 
     async def target(self, interface: DecoratorInterface):
@@ -258,10 +291,10 @@ class MatchSuffix(Decorator, Derive[MessageChain]):
             suffix: 检测的前缀, 支持格式有 a|b , ['a', At(...)] 等
             extract: 是否为提取模式, 默认为 False
         """
-        pattern = parser(suffix)
+        pattern = BasePattern(suffix, mode=MatchMode.REGEX_MATCH) if isinstance(suffix, str) else parser(suffix)
         if pattern in (AllParam, Empty):
             raise ValueError(suffix)
-        self.pattern = pattern.suffixed()
+        self.pattern = suffixed(pattern)
         self.extract = extract
 
     async def target(self, interface: DecoratorInterface):
@@ -351,7 +384,6 @@ def funcommand(
         instance.handle_listen(_wrapper, buffer, None, guild, private, patterns)
         return func
     return wrapper
-
 
 
 __all__ = [
