@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform"]
 lock_version = "4.4.1"
-content_hash = "sha256:e5feda0d70c69cb03939c1b8fa35e54a12e60a43127b0804f0564d986ebda842"
+content_hash = "sha256:c022c0c22c3c6fda9b3f8b2fc14f444793523228cbceb3f887b281c67a01a060"
 
 [[package]]
 name = "aiohttp"
@@ -99,17 +99,17 @@ files = [
 
 [[package]]
 name = "arclet-alconna"
-version = "1.8.8"
+version = "1.8.11"
 requires_python = ">=3.8"
 summary = "A High-performance, Generality, Humane Command Line Arguments Parser Library."
 dependencies = [
-    "nepattern<1.0.0,>=0.6.4",
+    "nepattern<1.0.0,>=0.7.0",
     "tarina>=0.4.4",
     "typing-extensions>=4.5.0",
 ]
 files = [
-    {file = "arclet_alconna-1.8.8-py3-none-any.whl", hash = "sha256:0b5d1d3d4ae32894bd83d53b99194d446f117431d07ec11957d1e19cfaffb2c3"},
-    {file = "arclet_alconna-1.8.8.tar.gz", hash = "sha256:d3e045a6141af472d1ca88f396eb6e048c04e2b8c61f848096d65c3460ca04e8"},
+    {file = "arclet_alconna-1.8.11-py3-none-any.whl", hash = "sha256:8a0c188400214abe2b72b2e6f4f23ed8d3021270654c15bc46cad62b725b7a44"},
+    {file = "arclet_alconna-1.8.11.tar.gz", hash = "sha256:3fed5e946709d63b9d7ee7cddf32b145e1f931b8ea9d0b8174cac753d965e9c8"},
 ]
 
 [[package]]
@@ -536,7 +536,7 @@ files = [
 
 [[package]]
 name = "nepattern"
-version = "0.6.5"
+version = "0.7.2"
 requires_python = ">=3.8"
 summary = "a complex pattern, support typing"
 dependencies = [
@@ -544,8 +544,8 @@ dependencies = [
     "typing-extensions>=4.5.0",
 ]
 files = [
-    {file = "nepattern-0.6.5-py3-none-any.whl", hash = "sha256:6c06dc6b2e06b9b2d98c4dee024c63e10d1301dc90091548b94cf76c7dfbd8fb"},
-    {file = "nepattern-0.6.5.tar.gz", hash = "sha256:dc91ad72cfa907b270ac1e99b6589cddb576d1ae52948b9f9367c86a58ec0ea8"},
+    {file = "nepattern-0.7.2-py3-none-any.whl", hash = "sha256:75406623a4a533628a6fb1996a7cc79d7b535a268e2a8bf4b405197175baecca"},
+    {file = "nepattern-0.7.2.tar.gz", hash = "sha256:7869e7998d870c920611b7a25649fb451c57bf2de450fb5d2e87408ff2917885"},
 ]
 
 [[package]]

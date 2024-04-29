@@ -51,10 +51,10 @@ class AlconnaAriadneAdapter(AlconnaGraiaAdapter[MessageEvent]):
             return message
         return message
     
-    def completion_waiter(self, source: MessageEvent, handle, priority: int = 15) -> Waiter:
+    def completion_waiter(self, source: MessageEvent, handler, priority: int = 15) -> Waiter:
         async def waiter(app: Ariadne, m: MessageChain, sender: Sender):
             if isinstance(sender, source.sender.__class__) and sender.id == source.sender.id:
-                return await handle(self.remove_tome(m, app.account))
+                return await handler(self.remove_tome(m, app.account))
 
         return FunctionWaiter(waiter, [source.__class__], block_propagation=True, priority=priority)
 

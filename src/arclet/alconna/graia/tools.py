@@ -209,15 +209,7 @@ def _get_filter_out() -> list[type[Element]]:
 def prefixed(pat: BasePattern):
     if pat.mode not in (MatchMode.REGEX_MATCH, MatchMode.REGEX_CONVERT):
         return pat
-    new_pat = BasePattern(
-        pattern=pat.pattern,
-        mode=pat.mode,
-        origin=pat.origin,
-        converter=pat.converter,
-        alias=pat.alias,
-        previous=pat.previous,
-        validators=pat.validators,
-    )
+    new_pat = pat.copy()
     new_pat.regex_pattern = re.compile(f"^{new_pat.pattern}")
     return new_pat
 
@@ -225,15 +217,7 @@ def prefixed(pat: BasePattern):
 def suffixed(pat: BasePattern):
     if pat.mode not in (MatchMode.REGEX_MATCH, MatchMode.REGEX_CONVERT):
         return pat
-    new_pat = BasePattern(
-        pattern=pat.pattern,
-        mode=pat.mode,
-        origin=pat.origin,
-        converter=pat.converter,
-        alias=pat.alias,
-        previous=pat.previous,
-        validators=pat.validators,
-    )
+    new_pat = pat.copy()
     new_pat.regex_pattern = re.compile(f"{new_pat.pattern}$")
     return new_pat
 

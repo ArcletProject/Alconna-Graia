@@ -101,14 +101,14 @@ class DefaultAdapter(AlconnaGraiaAdapter[TSource]):
     def is_tome(self, message: MessageChain, account: Any) -> bool:
         return False
 
-    def completion_waiter(self, source: TSource, handle, priority: int = 15) -> Waiter:
+    def completion_waiter(self, source: TSource, handler, priority: int = 15) -> Waiter:
         @Waiter.create_using_function(
             [source.__class__],
             block_propagation=True,
             priority=priority,
         )
         async def waiter(m: MessageChain):
-            return await handle(m)
+            return await handler(m)
 
         return waiter  # type: ignore
 

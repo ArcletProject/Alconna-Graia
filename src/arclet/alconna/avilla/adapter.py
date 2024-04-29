@@ -52,7 +52,7 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
             return message
         return message
 
-    def completion_waiter(self, source: AvillaMessageEvent, handle, priority: int = 15) -> Waiter:
+    def completion_waiter(self, source: AvillaMessageEvent, handler, priority: int = 15) -> Waiter:
         @Waiter.create_using_function(
             [MessageReceived],
             block_propagation=True,
@@ -60,7 +60,7 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
         )
         async def waiter(event: MessageReceived):
             if event.context.client == source.context.client:
-                return await handle(self.remove_tome(event.message.content, event.context.self))
+                return await handler(self.remove_tome(event.message.content, event.context.self))
 
         return waiter  # type: ignore
 
@@ -98,7 +98,8 @@ class AlconnaAvillaAdapter(AlconnaGraiaAdapter[AvillaMessageEvent]):
     def fetch_name(self, path: str) -> Depend:
         async def __wrapper__(ctx: Context, result: CommandResult[MessageReceived]):
             arp = result.result
-            if t := arp.query[Union[str, Notice]](path):
+            Tname = Union[str, Notice]
+            if t := arp.query[Tname](path):
                 if isinstance(t, Notice):
                     if t.display:
                         return t.display
