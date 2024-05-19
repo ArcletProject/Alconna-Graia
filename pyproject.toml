@@ -3,10 +3,10 @@ name = "arclet-alconna-graia-workspace"
 version = "0"
 
 dependencies = [
-    "arclet-alconna<2.0.0, >=1.8.11",
-    "arclet-alconna-tools<0.8.0, >=0.7.0",
-    "tarina>=0.4.2",
-    "nepattern<0.8.0, >=0.7.0",
+    "arclet-alconna<2.0.0, >=1.8.12",
+    "arclet-alconna-tools<0.8.0, >=0.7.4",
+    "tarina>=0.5.0",
+    "nepattern<0.8.0, >=0.7.3",
     "graia-amnesia>=0.5.0",
     "graia-broadcast>=0.18.2",
     "graia-saya>=0.0.17",

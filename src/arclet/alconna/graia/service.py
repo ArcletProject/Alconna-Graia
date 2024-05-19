@@ -5,14 +5,14 @@ from contextvars import ContextVar
 from contextlib import suppress
 from pathlib import Path
 from typing import Generic, Literal, TypeVar
-from tarina import lang
 from launart import Launart, Service
 from arclet.alconna import command_manager
 
+from .i18n import lang as lang  # type: ignore
 from .adapter import AlconnaGraiaAdapter
 
 TAdapter = TypeVar("TAdapter", bound=AlconnaGraiaAdapter)
-lang.load(Path(__file__).parent / "i18n")
+
 
 CtxService: ContextVar[AlconnaGraiaService] = ContextVar("alconna_graia_service")
 

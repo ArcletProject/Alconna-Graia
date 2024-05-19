@@ -349,7 +349,7 @@ def endswith(suffix: Any, include: bool = False, bind: str | None = None) -> Buf
 
 
 def funcommand(
-    name: str | None= None,
+    name: str | None = None,
     prefixes: list[str] | None = None,
     guild: bool = True,
     private: bool = True,

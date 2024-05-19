@@ -1,12 +1,12 @@
 includes = ["src/arclet/alconna/ariadne"]
 raw-dependencies = [
-    "arclet-alconna-graia<0.19.0, >= 0.18.2",
+    "arclet-alconna-graia<0.19.0, >= 0.18.3",
     "graia-ariadne<1.0.0, >=0.11.0",
 ]
 
 [project]
 name = "arclet-alconna-ariadne"
-version = "0.18.2"
+version = "0.18.3"
 authors = [
     {name = "RF-Tar-Railt", email = "rf_tar_railt@qq.com"}
 ]
