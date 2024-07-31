@@ -1,3 +1,9 @@
+> [!WARNING]
+> 该项目暂时归档，不再维护，直到除 [`Avilla`](https://github.com/GraiaProject/Avilla) 以外的
+> 其他 [`GraiaProject`](https://github.com/GraiaProject) 项目有 `Alconna` 的使用需求
+> 
+> 关于本仓库中关于 `Avilla` 的部分，现已移至 [`Alconna-Avilla`](https://github.com/ArcletProject/Alconna-Avilla)
+
 # Alconna Graia
 
 该项目为 [`Alconna`](https://github.com/ArcletProject/Alconna) 为 [`GraiaProject`](https://github.com/GraiaProject) 下项目的内建支持
